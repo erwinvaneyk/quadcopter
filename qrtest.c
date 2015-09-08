@@ -167,6 +167,77 @@ int 	getchar(void)
 }
 
 
+#include <stdint.h>
+#define HEADER 0xAA //1010 1010
+uint8_t mode;
+uint8_t command;
+uint16_t data;
+uint8_t checksum;
+/*------------------------------------------------------------------
+ * get_packet -- construct packet. return -1 on failure.
+ *------------------------------------------------------------------
+ */
+int 	get_packet(void)  // Maybe CHANGE GLOBAL PARAMETERS?
+{
+	//for now just brute furce
+	//but should maybe store it back in some struct
+	//and use process_packet to do the rest!
+	uint8_t	c;
+
+	if (optr == iptr) //nothing to process
+		return -1;
+
+	c = (uint8_t)fifo[optr++];
+	if (c == HEADER) //start of the packet
+		{
+			mode = 	  (uint8_t)fifo[optr++ % FIFOSIZE];
+			command = (uint8_t)fifo[optr++ % FIFOSIZE];
+			data = (uint16_t)fifo[optr++ % 	FIFOSIZE];
+			checksum = (uint8_t)fifo[optr++ % FIFOSIZE]; 
+
+///MUST CHECK THE CHECKSUM BEFORE APPLYING CHANGES
+			//possibly discard pkt if curropt
+		}
+
+
+	if (optr > FIFOSIZE)
+		//optr = 0;
+		optr = optr %FIFOSIZE;
+	return 0;
+}
+
+void process_packet(void)  //this is ugly at the moment
+{
+	if (mode == 0x01) //Manual mode, should put #defines everywhere
+		{
+			if (command == 'L')
+			{
+				if (data==0x0000) //hover, values in manual mode
+				{
+						ae[0]=0;
+						ae[1]=0;
+						ae[2]=0;
+						ae[3]=0;
+				}
+				else if (data==0x0001) //level1
+					{ //change global settings
+						//for now:
+						ae[0]=20;
+						ae[1]=20;
+						ae[2]=20;
+						ae[3]=20;
+					}
+					else if (data==0x0002)  //level2
+					{
+						ae[0]=40;
+						ae[1]=40;
+						ae[2]=40;
+						ae[3]=40;
+					}
+			}
+		}
+}
+
 /*------------------------------------------------------------------
  * isr_wireless_rx -- wireless rx interrupt handler
  *------------------------------------------------------------------
@@ -339,9 +410,11 @@ int main()
         ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
 
 	while (! demo_done) {
-		c = getchar();
+		//c = getchar();
+		c=get_packet();
 		if (c != -1) {
-			process_key(c);
+			//process_key(c);
+			process_packet(); //maybe
 		}
 		print_state();
                 X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );

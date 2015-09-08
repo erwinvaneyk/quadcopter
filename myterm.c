@@ -198,6 +198,17 @@ int 	rs232_putchar(char c)
 	return result;
 }
 
+int 	rs232_put_pkt(struct PACKET* packet)
+{ 
+	int result;
+	char *data = (char*)packet;
+	do {
+		result = (int) write(fd_RS232, data, PACKET_SIZE);
+	} while (result == 0);   
+
+	assert(result == PACKET_SIZE);
+	return result;
+}
 
 
 /*----------------------------------------------------------------
@@ -211,8 +222,10 @@ int main(int argc, char **argv)
 //void generate_pkt(struct pkt* packet, uint8_t mode, uint8_t command, uint16_t data);
 	int i;
 	struct PACKET pkt;
-	generate_pkt(&pkt, MANUAL_MODE, LIFT, LEVEL1);
-	show_pkt(&pkt);
+	//generate_pkt(&pkt, MANUAL_MODE, LIFT, LEVEL1);
+	//show_pkt(&pkt);
+//	rs232_put_pkt(&pkt);
+
 /*
 	printf ("SIZE: %d\n", sizeof(pkt));
 	char *tx = (char*)&pkt;
@@ -267,10 +280,53 @@ int main(int argc, char **argv)
 	
 	/* send & receive
 	 */
+
+	int level = 0;
 	for (;;) 
 	{
-		if ((c = term_getchar_nb()) != -1) 
+		/*if ((c = term_getchar_nb()) != -1) 
 			rs232_putchar(c);
+			*/
+
+		if ((c = term_getchar_nb()) != -1) 
+		{
+			if (c == 'a') // LIFT UP
+			{	
+				//also need to make a function that will automatically
+				//take care of leveling up or down,
+				//depending on the current situatuon
+				if (level == 0) //hover
+					{
+						generate_pkt(&pkt, MANUAL_MODE, LIFT, LEVEL1);
+						level++;
+					}
+				else if (level == 1)
+					{
+						generate_pkt(&pkt, MANUAL_MODE, LIFT, LEVEL2);
+						level++;
+					}
+				rs232_put_pkt(&pkt);
+			}
+				
+			else if (c == 'z')  // LIFT DOWN
+			{
+				if (level == 2)
+				{
+					generate_pkt(&pkt, MANUAL_MODE, LIFT, LEVEL1);
+					level--;
+				}
+				else if (level == 1)
+				{
+					generate_pkt(&pkt, MANUAL_MODE, LIFT, HOVER);
+					level--;
+				}
+				rs232_put_pkt(&pkt);
+			}
+			else
+				rs232_putchar(c);
+		}
+	
+
 		
 		if ((c = rs232_getchar_nb()) != -1) 
 			term_putchar(c);
