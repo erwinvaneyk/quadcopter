@@ -34,3 +34,45 @@
 	*/
 		printf("\n");
 	}
+
+	uint16_t level_convert(int level)
+	{
+		switch(level){
+			case 0:
+				return HOVER;
+			case 1:
+				return LEVEL1;
+			case 2:
+				return LEVEL2;
+			case 3:
+				return LEVEL3;
+			case 4:
+				return LEVEL4;
+			case 5:
+				return LEVEL5;
+			case 6:
+				return LEVEL6;
+			case 7:
+				return LEVEL7;
+			case 8:
+				return LEVEL8;
+			case -1:
+				return LEVEL_N1;
+			case -2:
+				return LEVEL_N2;
+			case -3:
+				return LEVEL_N3;
+			case -4:
+				return LEVEL_N4;
+			case -5:
+				return LEVEL_N5;
+			case -6:
+				return LEVEL_N6;
+			case -7:
+				return LEVEL_N7;
+			case -8:
+				return LEVEL_N8;
+			default :
+				return HOVER; 
+		}
+	}
