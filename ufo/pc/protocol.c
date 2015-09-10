@@ -13,8 +13,7 @@
 		packet->mode 	= mode;
 		packet->command = command;
 		packet->data 	= data;
-		packet->checksum = 0xFF;		// <--- hmm..... need to implement this
-		printf("input: %s\n", data);
+		packet->checksum = mode ^ command ^ (data&0x00FF) ^ ( data>>8 &0x00FF );
 	};
 
 	//DEBUG purpose
@@ -25,13 +24,6 @@
 		printf("COMMAND: %x\n", packet->command);
 		printf("DATA: %x\n", packet->data);
 		printf("CHECKSUM: %x\n", packet->checksum);
-	/*	int i;
-		char *data = (char*)packet;
-		for (i=0; i<sizeof(struct PACKET); i++)
-		{
-			printf("%02x ", data[i] & 0xff);
-		}
-	*/
 		printf("\n");
 	}
 

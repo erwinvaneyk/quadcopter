@@ -55,10 +55,6 @@
 #define LEVEL_N8 	0x0018
  	 //room to add levels upto 0x001F
 
-
-//CHECKSUM hmm....
-//????
-
 #include <stdint.h>
 
 struct PACKET {
@@ -73,8 +69,6 @@ struct PACKET {
 
 void generate_pkt(struct PACKET* packet, uint8_t mode, uint8_t command, uint16_t data);
 void show_pkt(struct PACKET* packet);
-
-
 uint16_t level_convert(int level);
 
 #endif

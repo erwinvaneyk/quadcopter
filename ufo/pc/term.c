@@ -4,6 +4,8 @@
  * Arjan J.C. van Gemund (+ few mods by Mark Dufour)
  *------------------------------------------------------------
  */
+
+#define DEBUG 
 #define	FALSE		0
 #define	TRUE		1
 
@@ -89,6 +91,9 @@ int main(int argc, char **argv)
 					{	
 						level++;
 						generate_pkt(&pkt, MANUAL_MODE, LIFT, level_convert(level));
+#ifdef DEBUG
+show_pkt(&pkt);
+#endif					
 					}
 				rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
 			}
@@ -99,6 +104,9 @@ int main(int argc, char **argv)
 				{
 					level--;
 					generate_pkt(&pkt, MANUAL_MODE, LIFT, level_convert(level));
+#ifdef DEBUG
+show_pkt(&pkt);
+#endif	
 				}
 				rs232_put_pkt(&pkt);
 			}
