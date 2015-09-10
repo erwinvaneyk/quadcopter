@@ -1,6 +1,6 @@
 CC=lcc-x32
 CFLAGS=-I$(X32INC)
-OBJS=protocol.o rs232.o consoleio.o
+OBJS=protocol.o rs232.o consoleio.o joystickio.o
 
 .PHONY: clean stubbed stubbedrun uploadrun test
 
@@ -15,8 +15,8 @@ stubbedrun: stubbed uploadrun
 clean:
 	rm -f term $(OBJS) $(OBJS:.o=.d)
 
-term: term.c protocol.c rs232.c consoleio.c
-	gcc -Wall term.c protocol.c rs232.c consoleio.c -o term -lrt
+term: term.c protocol.c rs232.c consoleio.c joystickio.c
+	gcc -Wall term.c protocol.c rs232.c consoleio.c joystickio.c -o term -lrt
 
 %.o : %.c
 	@$(COMPILE.c) -M -o $@ $< > $*.d

@@ -67,6 +67,9 @@
  #define LEVEL_N13 	0x001D
  #define LEVEL_N14 	0x001E
  #define LEVEL_N15 	0x001F
+
+#define NUM_LEVELS 	17
+
 #include <stdint.h>
 
 struct PACKET {
