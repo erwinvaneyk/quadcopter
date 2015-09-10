@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <x32.h>
 #include "assert.h"
+#include "defines.h"
 
 /* define some peripheral short hands
  */
@@ -168,7 +169,7 @@ int 	getchar(void)
 
 
 #include <stdint.h>
-#define HEADER 0xAA //1010 1010
+//#define HEADER 0xAA //1010 1010
 uint8_t mode;
 uint8_t command;
 uint16_t data;
@@ -206,34 +207,15 @@ int 	get_packet(void)  // Maybe CHANGE GLOBAL PARAMETERS?
 	return 0;
 }
 
-void process_packet(void)  //this is ugly at the moment
+void process_packet(void)  //we need to process packet and decide what should be done
 {
-	if (mode == 0x01) //Manual mode, should put #defines everywhere
+	if (mode == MANUAL_MODE)
 		{
-			if (command == 'L')
+			if (command == LIFT)
 			{
-				if (data==0x0000) //hover, values in manual mode
-				{
-						ae[0]=0;
-						ae[1]=0;
-						ae[2]=0;
-						ae[3]=0;
-				}
-				else if (data==0x0001) //level1
-					{ //change global settings
-						//for now:
-						ae[0]=20;
-						ae[1]=20;
-						ae[2]=20;
-						ae[3]=20;
-					}
-					else if (data==0x0002)  //level2
-					{
-						ae[0]=40;
-						ae[1]=40;
-						ae[2]=40;
-						ae[3]=40;
-					}
+				//set engine RPM
+				if (data&0x0010==0x0010)//level up only in MANUAL mode
+				ae[0]=ae[1]=ae[2]=ae[3]= 30 * (data&0x000F); //just random 30
 			}
 		}
 }

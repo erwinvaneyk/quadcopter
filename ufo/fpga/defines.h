@@ -1,12 +1,3 @@
-/*------------------------------------------------------------
- * Communication PROTOCOL
- * 
- * <protocol.h>
- *------------------------------------------------------------
- */
-#ifndef PROTOCOL_H_
-#define PROTOCOL_H_
-
 /*--------------------------
  define protocol specifics
  */
@@ -43,7 +34,7 @@
 #define LEVEL6 	0x0006
 #define LEVEL7 	0x0007
 #define LEVEL8 	0x0008
- 	//room to add levels upto 0x000F
+
 //1 bit to indicate negative value
 #define LEVEL_N1 	0x0011
 #define LEVEL_N2 	0x0012
@@ -53,28 +44,3 @@
 #define LEVEL_N6 	0x0016
 #define LEVEL_N7 	0x0017
 #define LEVEL_N8 	0x0018
- 	 //room to add levels upto 0x001F
-
-
-//CHECKSUM hmm....
-//????
-
-#include <stdint.h>
-
-struct PACKET {
-		uint8_t header;
-		uint8_t mode;
-		uint8_t command;
-		uint16_t data;
-		uint8_t checksum;
-	} __attribute__ ((packed)) ;
-
-//typedef struct PACKET packet;
-
-void generate_pkt(struct PACKET* packet, uint8_t mode, uint8_t command, uint16_t data);
-void show_pkt(struct PACKET* packet);
-
-
-uint16_t level_convert(int level);
-
-#endif
