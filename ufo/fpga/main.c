@@ -191,31 +191,38 @@ int 	get_packet(void)  // Maybe CHANGE GLOBAL PARAMETERS?
 	c = (uint8_t)fifo[optr++];
 	if (c == HEADER) //start of the packet
 		{
-			mode = 	  (uint8_t)fifo[optr++ % FIFOSIZE];
-			command = (uint8_t)fifo[optr++ % FIFOSIZE];
-			data = (uint16_t)fifo[optr++ % 	FIFOSIZE];
-			checksum = (uint8_t)fifo[optr++ % FIFOSIZE]; 
-
+		mode = 	  (uint8_t)fifo[optr++ % FIFOSIZE];
+		command = (uint8_t)fifo[optr++ % FIFOSIZE];
+		data = (uint16_t)fifo[optr++ % 	FIFOSIZE];
+		checksum = (uint8_t)fifo[optr++ % FIFOSIZE];
+		if (optr > FIFOSIZE) {
+			//optr = 0;
+			optr = optr %FIFOSIZE;
+		}
+		return 0; 
 ///MUST CHECK THE CHECKSUM BEFORE APPLYING CHANGES
 			//possibly discard pkt if curropt
+	} else {
+		if (optr > FIFOSIZE) {
+			//optr = 0;
+			optr = optr %FIFOSIZE;
 		}
-
-
-	if (optr > FIFOSIZE)
-		//optr = 0;
-		optr = optr %FIFOSIZE;
-	return 0;
+		return -1;
+	}
 }
 
 void process_packet(void)  //we need to process packet and decide what should be done
 {
+	printf("%x\n", data);
 	if (mode == MANUAL_MODE)
 		{
 			if (command == LIFT)
 			{
 				//set engine RPM
-				if (data&0x0010==0x0010)//level up only in MANUAL mode
-				ae[0]=ae[1]=ae[2]=ae[3]= 30 * (data&0x000F); //just random 30
+				//if (data&0x0010==0x0010) {//level up only in MANUAL mode
+					printf("=> %d\n", data&0x000F);
+					ae[0]=ae[1]=ae[2]=ae[3]= 30 * (data&0x000F); //just random 30
+				//}
 			}
 		}
 }
@@ -397,8 +404,8 @@ int main()
 		if (c != -1) {
 			//process_key(c);
 			process_packet(); //maybe
+			print_state();
 		}
-		print_state();
                 X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
 		if (button == 1){
 			printf("You have pushed the button!!!\r\n");
