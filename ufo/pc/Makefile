@@ -1,6 +1,6 @@
 CC=lcc-x32
 CFLAGS=-I$(X32INC)
-OBJS=qrtest.o
+OBJS=protocol.o
 
 .PHONY: clean stubbed stubbedrun uploadrun test
 
@@ -13,13 +13,13 @@ stubbed: qrtest.ce
 stubbedrun: stubbed uploadrun
 
 clean:
-	rm -f qrtest.ce $(OBJS) $(OBJS:.o=.d)
+	rm -f term $(OBJS) $(OBJS:.o=.d)
 
 uploadrun: qrtest.ce
 	x32-upload qrtest.ce -c $(X32_PACKAGE_SERIAL) -e
 
-term: myterm.c protocol.c
-	gcc -Wall myterm.c protocol.c -o term -lrt
+term: term.c protocol.c
+	gcc -Wall term.c protocol.c -o term -lrt
 
 test: qrtest.ce
 	x32-upload test.ce -c $(X32_PACKAGE_SERIAL)
