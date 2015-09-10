@@ -1,6 +1,6 @@
 CC=lcc-x32
 CFLAGS=-I$(X32INC)
-OBJS=protocol.o
+OBJS=protocol.o rs232.o consoleio.o
 
 .PHONY: clean stubbed stubbedrun uploadrun test
 
@@ -15,17 +15,8 @@ stubbedrun: stubbed uploadrun
 clean:
 	rm -f term $(OBJS) $(OBJS:.o=.d)
 
-uploadrun: qrtest.ce
-	x32-upload qrtest.ce -c $(X32_PACKAGE_SERIAL) -e
-
-term: term.c protocol.c
-	gcc -Wall term.c protocol.c -o term -lrt
-
-test: qrtest.ce
-	x32-upload test.ce -c $(X32_PACKAGE_SERIAL)
-
-test.ce: test.c
-	$(CC) $(CFLAGS) test.c -lib $(X32INC) -o test.ce
+term: term.c protocol.c rs232.c consoleio.c
+	gcc -Wall term.c protocol.c rs232.c consoleio.c -o term -lrt
 
 %.o : %.c
 	@$(COMPILE.c) -M -o $@ $< > $*.d
