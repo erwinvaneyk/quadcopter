@@ -13,6 +13,7 @@
  *  Version Jan 1, 2010
  *------------------------------------------------------------------
  */
+#define DEBUG
 
 #include <stdio.h>
 #include <x32.h>
@@ -172,43 +173,68 @@ int 	getchar(void)
 //#define HEADER 0xAA //1010 1010
 uint8_t mode;
 uint8_t command;
-uint16_t data;
+uint8_t data; //for simplicity we do this now
+uint8_t data2;
 uint8_t checksum;
+
+uint8_t checker;
 /*------------------------------------------------------------------
  * get_packet -- construct packet. return -1 on failure.
  *------------------------------------------------------------------
  */
-int 	get_packet(void)  // Maybe CHANGE GLOBAL PARAMETERS?
-{
-	//for now just brute furce
-	//but should maybe store it back in some struct
-	//and use process_packet to do the rest!
-	uint8_t	c;
 
+int scan()
+{	
+	if (optr<FIFOSIZE)
+		return optr++;
+	else return optr=0;
+}
+int 	get_packet(void)
+{
+	uint8_t	c;
 	if (optr == iptr) //nothing to process
 		return -1;
 
 	c = (uint8_t)fifo[optr++];
 	if (c == HEADER) //start of the packet
 		{
-		mode = 	  (uint8_t)fifo[optr++ % FIFOSIZE];
-		command = (uint8_t)fifo[optr++ % FIFOSIZE];
-		data = (uint16_t)fifo[optr++ % 	FIFOSIZE];
-		checksum = (uint8_t)fifo[optr++ % FIFOSIZE];
-		if (optr > FIFOSIZE) {
-			//optr = 0;
-			optr = optr %FIFOSIZE;
+			fifo[optr-1] = 0x00; //corrupt the header, otherwise we get into loops later
+			mode 	=	(uint8_t)fifo[scan()];
+			command =	(uint8_t)fifo[scan()];
+			data 	=	(uint8_t)fifo[scan()];
+			data2 	=	(uint8_t)fifo[scan()];
+			checksum =	(uint8_t)fifo[scan()];
+		checker = mode ^ command ^ data ^ data2 ^ checksum;
+#ifdef DEBUG
+printf("iptr is: %d,  optr id: %d \n", iptr, optr);
+printf("mode is: %x \n", mode);
+printf("cmnd is: %x \n", command);
+printf("data is: %x \n", data);
+printf("data is: %x \n", data2);
+printf("chsm is: %x \n", checksum);
+printf("MAGIC  : %x \n", checker);
+#endif
+
+		//check checksum
+		if ( (int)checker != 0)
+		{
+		 printf("Invalid packet recieved! Discarding!\n");
+		 return -1; //ERROR, invalid 
 		}
-		return 0; 
-///MUST CHECK THE CHECKSUM BEFORE APPLYING CHANGES
-			//possibly discard pkt if curropt
-	} else {
-		if (optr > FIFOSIZE) {
-			//optr = 0;
-			optr = optr %FIFOSIZE;
-		}
-		return -1;
 	}
+
+	else 
+	{
+		optr++; //goto next charachter in the FIFO to find the HEADER
+		return -1; //so basically this will check in the next polling of the polling loop. An alternative
+			//is to iterate here through the FIFO
+	}
+	if (optr > FIFOSIZE) {
+			//optr = optr %FIFOSIZE;
+			optr = 0;
+		}
+
+return 0;
 }
 
 void process_packet(void)  //we need to process packet and decide what should be done
