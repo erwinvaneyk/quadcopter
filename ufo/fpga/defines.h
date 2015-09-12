@@ -1,12 +1,3 @@
-/*------------------------------------------------------------
- * Communication PROTOCOL
- * 
- * <protocol.h>
- *------------------------------------------------------------
- */
-#ifndef PROTOCOL_H_
-#define PROTOCOL_H_
-
 /*--------------------------
  define protocol specifics
  */
@@ -34,7 +25,7 @@
 
 
 //DATA
-#define HOVER 	0x0000 //level zero
+#define HOVER 	0x0000
 #define LEVEL1 	0x0001
 #define LEVEL2 	0x0002
 #define LEVEL3 	0x0003
@@ -67,20 +58,3 @@
  #define LEVEL_N13 	0x001D
  #define LEVEL_N14 	0x001E
  #define LEVEL_N15 	0x001F
-#include <stdint.h>
-
-struct PACKET {
-		uint8_t header;
-		uint8_t mode;
-		uint8_t command;
-		uint16_t data;
-		uint8_t checksum;
-	} __attribute__ ((packed)) ;
-
-//typedef struct PACKET packet;
-
-void generate_pkt(struct PACKET* packet, uint8_t mode, uint8_t command, uint16_t data);
-void show_pkt(struct PACKET* packet);
-uint16_t level_convert(int level);
-
-#endif

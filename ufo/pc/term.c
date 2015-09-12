@@ -4,6 +4,8 @@
  * Arjan J.C. van Gemund (+ few mods by Mark Dufour)
  *------------------------------------------------------------
  */
+
+#define DEBUG 
 #define	FALSE		0
 #define	TRUE		1
 
@@ -15,6 +17,7 @@
 #include "rs232.h"
 #include "protocol.h"
 #include "consoleio.h"
+#include <signal.h>
 
 int serial_device = 0;
 /*----------------------------------------------------------------
@@ -23,27 +26,11 @@ int serial_device = 0;
  */
 int main(int argc, char **argv)
 {
-
-//USAGE
-//void generate_pkt(struct pkt* packet, uint8_t mode, uint8_t command, uint16_t data);
 	int i;
 	struct PACKET pkt;
-	//generate_pkt(&pkt, MANUAL_MODE, LIFT, LEVEL1);
-	//show_pkt(&pkt);
-//	rs232_put_pkt(&pkt);
-
-/*
-	printf ("SIZE: %d\n", sizeof(pkt));
-	char *tx = (char*)&pkt;
-	for (i=0; i<sizeof(pkt); i++)
-		{
-			printf("%x ", tx[i]);
-		}
-*/
 	int 	bad_input = 0;
 	char	c;
 	
-
 	/* Check input 
 	 */
 	if (argc == 1) 
@@ -98,42 +85,33 @@ int main(int argc, char **argv)
 		{
 			if (c == 'a') // LIFT UP
 			{	
-				//also need to make a function that will automatically
-				//take care of leveling up or down,
-				//depending on the current situatuon
-				if (level == 0) //hover
-					{
-						generate_pkt(&pkt, MANUAL_MODE, LIFT, LEVEL1);
+				if (level < 15) //highest level
+					{	
 						level++;
+						generate_pkt(&pkt, MANUAL_MODE, LIFT, level_convert(level));
+#ifdef DEBUG
+show_pkt(&pkt);
+#endif					
 					}
-				else if (level == 1)
-					{
-						generate_pkt(&pkt, MANUAL_MODE, LIFT, LEVEL2);
-						level++;
-					}
-				rs232_put_pkt(&pkt);
+				rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
 			}
 				
 			else if (c == 'z')  // LIFT DOWN
 			{
-				if (level == 2)
+				if (level>-15)
 				{
-					generate_pkt(&pkt, MANUAL_MODE, LIFT, LEVEL1);
 					level--;
-				}
-				else if (level == 1)
-				{
-					generate_pkt(&pkt, MANUAL_MODE, LIFT, HOVER);
-					level--;
+					generate_pkt(&pkt, MANUAL_MODE, LIFT, level_convert(level));
+#ifdef DEBUG
+show_pkt(&pkt);
+#endif	
 				}
 				rs232_put_pkt(&pkt);
 			}
 			else
-				rs232_putchar(c);
+				rs232_putchar(c); //still need to discuss this
 		}
 	
-
-		
 		if ((c = rs232_getchar_nb()) != -1) 
 			term_putchar(c);
 	}
@@ -144,5 +122,3 @@ int main(int argc, char **argv)
   	
 	return 0;
 }
-
-

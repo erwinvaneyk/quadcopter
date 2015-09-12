@@ -13,11 +13,15 @@
  *  Version Jan 1, 2010
  *------------------------------------------------------------------
  */
+#define DEBUG
+#define TRUE 1
+#define FALSE 0
 
 #include <stdio.h>
 #include <x32.h>
 #include "assert.h"
-
+#include "defines.h"
+#include <stdint.h>
 /* define some peripheral short hands
  */
 #define X32_instruction_counter           peripherals[0x03]
@@ -52,7 +56,7 @@
 
 // RX FIFO
 #define FIFOSIZE 16
-char	fifo[FIFOSIZE]; 
+uint8_t	fifo[FIFOSIZE]; 
 int	iptr, optr;
 
 
@@ -144,7 +148,11 @@ void isr_rs232_rx(void)
 	 */
 	while (X32_rs232_char) {
 		fifo[iptr++] = X32_rs232_data;
-		if (iptr > FIFOSIZE)
+#ifdef DEBUG
+printf("ISR uart: iptr: %d", iptr-1);		
+printf(" => %x\n", fifo[iptr-1]);
+#endif
+		if (iptr >= FIFOSIZE)
 			iptr = 0;
 	}
 
@@ -167,73 +175,86 @@ int 	getchar(void)
 }
 
 
-#include <stdint.h>
-#define HEADER 0xAA //1010 1010
+//#define HEADER 0xAA //1010 1010
 uint8_t mode;
 uint8_t command;
-uint16_t data;
+uint8_t data; //for simplicity we do this now
+uint8_t data2;
 uint8_t checksum;
+uint8_t checker;
+
 /*------------------------------------------------------------------
  * get_packet -- construct packet. return -1 on failure.
  *------------------------------------------------------------------
  */
-int 	get_packet(void)  // Maybe CHANGE GLOBAL PARAMETERS?
-{
-	//for now just brute furce
-	//but should maybe store it back in some struct
-	//and use process_packet to do the rest!
-	uint8_t	c;
 
+int move_optr()
+{	
+
+		if (optr == FIFOSIZE-1)
+			optr = 0;
+		else optr++;
+}
+
+int 	get_packet(void)
+{
+	uint8_t	c;
 	if (optr == iptr) //nothing to process
 		return -1;
 
 	c = (uint8_t)fifo[optr++];
 	if (c == HEADER) //start of the packet
 		{
-			mode = 	  (uint8_t)fifo[optr++ % FIFOSIZE];
-			command = (uint8_t)fifo[optr++ % FIFOSIZE];
-			data = (uint16_t)fifo[optr++ % 	FIFOSIZE];
-			checksum = (uint8_t)fifo[optr++ % FIFOSIZE]; 
-
-///MUST CHECK THE CHECKSUM BEFORE APPLYING CHANGES
-			//possibly discard pkt if curropt
+			fifo[optr-1] = 0x00; //corrupt the header, otherwise we get into loops later
+			mode 	=	(uint8_t)fifo[optr];
+			move_optr();
+			command =	(uint8_t)fifo[optr];
+			move_optr();
+			data 	=	(uint8_t)fifo[optr];
+			move_optr();
+			data2 	=	(uint8_t)fifo[optr];
+			move_optr();
+			checksum =	(uint8_t)fifo[optr];
+			move_optr();
+			checker = mode ^ command ^ data ^ data2 ^ checksum;
+#ifdef DEBUG
+printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
+printf("mode is: %x \n", mode);
+printf("cmnd is: %x \n", command);
+printf("data is: %x \n", data);
+printf("data is: %x \n", data2);
+printf("chsm is: %x \n", checksum);
+printf("MAGIC  : %x \n", checker);
+#endif
+			//check checksum
+			if ( (int)checker != 0)
+			{
+#ifdef DEBUG
+printf("Invalid packet recieved! Discarding!\n");
+#endif
+			 return -1; //ERROR, invalid packet
+			}
 		}
-
-
-	if (optr > FIFOSIZE)
-		//optr = 0;
-		optr = optr %FIFOSIZE;
-	return 0;
+	else
+	{
+		//reset buffer pointers if we get out of sync
+		optr = iptr = 0;
+		return -1;
+	}
+return 0;
 }
 
-void process_packet(void)  //this is ugly at the moment
+void process_packet(void)  //we need to process packet and decide what should be done
 {
-	if (mode == 0x01) //Manual mode, should put #defines everywhere
+	if (mode == MANUAL_MODE)
 		{
-			if (command == 'L')
+			if (command == LIFT)
 			{
-				if (data==0x0000) //hover, values in manual mode
-				{
-						ae[0]=0;
-						ae[1]=0;
-						ae[2]=0;
-						ae[3]=0;
-				}
-				else if (data==0x0001) //level1
-					{ //change global settings
-						//for now:
-						ae[0]=20;
-						ae[1]=20;
-						ae[2]=20;
-						ae[3]=20;
-					}
-					else if (data==0x0002)  //level2
-					{
-						ae[0]=40;
-						ae[1]=40;
-						ae[2]=40;
-						ae[3]=40;
-					}
+				//set engine RPM
+				if ( (data&0x10) == 0x00) 
+					{//level up only in MANUAL mode
+						ae[0]=ae[1]=ae[2]=ae[3]= 15 * (data&0x0F); //just random 30
+		 			}
 			}
 		}
 }
@@ -402,28 +423,33 @@ int main()
 	/* initialize some other stuff
 	 */
         iptr = optr = 0;
-	X32_leds = 0;
-	demo_done = 0;
+		X32_leds = 0;
 
 	/* start the test loop
 	 */
         ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
 
-	while (! demo_done) {
-		//c = getchar();
+	while (TRUE)
+	{
+
 		c=get_packet();
 		if (c != -1) {
-			//process_key(c);
 			process_packet(); //maybe
+			print_state();
 		}
-		print_state();
-                X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
+        
+
+        X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
 		if (button == 1){
 			printf("You have pushed the button!!!\r\n");
 			button = 0;
 		}
 		delay_ms(20);
 	}
+
+
+	//Possible put the critical mode and safe mode here, such that
+	//if we break from main loop we start with these modes straight away
 
 	printf("Exit\r\n");
 
