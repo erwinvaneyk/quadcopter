@@ -251,10 +251,10 @@ void process_packet(void)  //we need to process packet and decide what should be
 			if (command == LIFT)
 			{
 				//set engine RPM
-				//if (data&0x0010==0x0010) {//level up only in MANUAL mode
-					printf("data => %x\n", data&0x0F);
-					ae[0]=ae[1]=ae[2]=ae[3]= 15 * (data&0x0F); //just random 30
-				//}
+				if ( (data&0x10) == 0x00) 
+					{//level up only in MANUAL mode
+						ae[0]=ae[1]=ae[2]=ae[3]= 15 * (data&0x0F); //just random 30
+		 			}
 			}
 		}
 }
