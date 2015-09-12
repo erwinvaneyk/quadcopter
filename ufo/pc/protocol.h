@@ -43,7 +43,14 @@
 #define LEVEL6 	0x0006
 #define LEVEL7 	0x0007
 #define LEVEL8 	0x0008
- 	//room to add levels upto 0x000F
+ #define LEVEL9 	0x0009
+ #define LEVEL10 	0x000A
+ #define LEVEL11 	0x000B
+ #define LEVEL12 	0x000C
+ #define LEVEL13 	0x000D
+ #define LEVEL14 	0x000E
+ #define LEVEL15 	0x000F
+
 //1 bit to indicate negative value
 #define LEVEL_N1 	0x0011
 #define LEVEL_N2 	0x0012
@@ -53,8 +60,13 @@
 #define LEVEL_N6 	0x0016
 #define LEVEL_N7 	0x0017
 #define LEVEL_N8 	0x0018
- 	 //room to add levels upto 0x001F
-
+ #define LEVEL_N9 	0x0019
+ #define LEVEL_N10 	0x001A
+ #define LEVEL_N11 	0x001B
+ #define LEVEL_N12 	0x001C
+ #define LEVEL_N13 	0x001D
+ #define LEVEL_N14 	0x001E
+ #define LEVEL_N15 	0x001F
 #include <stdint.h>
 
 struct PACKET {

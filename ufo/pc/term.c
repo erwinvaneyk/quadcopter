@@ -17,6 +17,7 @@
 #include "rs232.h"
 #include "protocol.h"
 #include "consoleio.h"
+#include <signal.h>
 
 int serial_device = 0;
 /*----------------------------------------------------------------
@@ -84,10 +85,7 @@ int main(int argc, char **argv)
 		{
 			if (c == 'a') // LIFT UP
 			{	
-				//also need to make a function that will automatically
-				//take care of leveling up or down,
-				//depending on the current situatuon
-				if (level < 8) //highest level
+				if (level < 15) //highest level
 					{	
 						level++;
 						generate_pkt(&pkt, MANUAL_MODE, LIFT, level_convert(level));
@@ -100,7 +98,7 @@ show_pkt(&pkt);
 				
 			else if (c == 'z')  // LIFT DOWN
 			{
-				if (level>-8)
+				if (level>-15)
 				{
 					level--;
 					generate_pkt(&pkt, MANUAL_MODE, LIFT, level_convert(level));
@@ -124,5 +122,3 @@ show_pkt(&pkt);
   	
 	return 0;
 }
-
-
