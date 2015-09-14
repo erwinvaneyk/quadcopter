@@ -12,14 +12,48 @@
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
+#include <assert.h>
 #include <string.h>
 #include <stdint.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+#include <signal.h>
 #include "rs232.h"
 #include "protocol.h"
-#include "consoleio.h"
-#include <signal.h>
+#include "consoleio.h" 
+#include "joystickio.h"
 
 int serial_device = 0;
+int fd;
+
+
+int getSerialDevice(char **argv) {
+	if (strncmp(argv[1],"serial",3) == 0)
+		return 0;
+	else if (strncmp(argv[1],"usb",3) == 0)
+		return 1;
+	else if (strncmp(argv[1],"wifi",3) == 0)
+		return 2;
+	else
+		return -1;
+}
+
+void    mon_delay_ms(unsigned int ms)
+{
+        struct timespec req, rem;
+
+        req.tv_sec = ms / 1000;
+        req.tv_nsec = 1000000 * (ms % 1000);
+        assert(nanosleep(&req,&rem) == 0);
+}
+
 /*----------------------------------------------------------------
  * main -- execute terminal
  *----------------------------------------------------------------
@@ -30,6 +64,12 @@ int main(int argc, char **argv)
 	struct PACKET pkt;
 	int 	bad_input = 0;
 	char	c;
+	// fd is for the joystick
+	if ((fd = open(JS_DEV, O_RDONLY)) < 0) {
+		perror("jstest");
+		exit(1);
+	}
+
 	
 	/* Check input 
 	 */
@@ -38,17 +78,10 @@ int main(int argc, char **argv)
 	
 	else if (argc == 2) 
 	{
-		if (strncmp(argv[1],"serial",3) == 0)
-			serial_device = 0;
-
-		else if (strncmp(argv[1],"usb",3) == 0)
-			serial_device = 1;
-
-		else if (strncmp(argv[1],"wifi",3) == 0)
-			serial_device = 2;
-
-		else 
-			bad_input = 1;	
+		serial_device = getSerialDevice(argv);
+		if(serial_device == -1) {
+			bad_input = 1;
+		}
 	} 
 	else 
 		bad_input = 1;
@@ -75,11 +108,21 @@ int main(int argc, char **argv)
 	 */
 
 	int level = 0;
+	struct js_event js;
+	struct PACKET pkt;
+	struct JOYSTICK joystick;
+	
 	for (;;) 
 	{
+		// Delay for 100 ms
+		mon_delay_ms(100);
 		/*if ((c = term_getchar_nb()) != -1) 
 			rs232_putchar(c);
 			*/
+		// Check up on joystick
+		processJoystickEvent(fd, js, &joystick);
+		show_joystick(&joystick);
+		// Check keyboard
 
 		if ((c = term_getchar_nb()) != -1) 
 		{

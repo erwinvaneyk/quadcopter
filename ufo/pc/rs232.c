@@ -23,13 +23,13 @@ int rs232_open(int serial_device)
 	if (serial_device == 0) 
 	{   
 		fd_RS232 = open(SERIAL_DEVICE, O_RDWR | O_NOCTTY);
-		fprintf(stderr,"using %d\n", SERIAL_DEVICE); 
+		fprintf(stderr,"using %s\n", SERIAL_DEVICE); 
 
 	} 
 	else if ( (serial_device == 1) || (serial_device == 2) ) 
 	{
         fd_RS232 = open(USB_DEVICE, O_RDWR | O_NOCTTY);
-		fprintf(stderr,"using %d\n", USB_DEVICE); 
+		fprintf(stderr,"using %s\n", USB_DEVICE); 
 	} 
 
 	assert(fd_RS232>=0);
@@ -71,6 +71,7 @@ int rs232_open(int serial_device)
 	result = tcsetattr (fd_RS232, TCSANOW, &tty); /* non-canonical */
 
 	tcflush(fd_RS232, TCIOFLUSH); /* flush I/O buffer */
+	return result;
 }
 
 
@@ -80,6 +81,7 @@ int rs232_close(void)
 
   	result = close(fd_RS232);
   	assert (result==0);
+  	return result;
 }
 
 
