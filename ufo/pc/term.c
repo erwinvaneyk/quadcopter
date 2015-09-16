@@ -24,14 +24,25 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <stdbool.h>
 #include <signal.h>
+
 #include "rs232.h"
 #include "protocol.h"
 #include "consoleio.h" 
 #include "joystickio.h"
+#include "input.h"
+#include "keyboardio.h"
 
 int serial_device = 0;
 int fd;
+
+// Input models
+struct js_event js;
+struct JOYSTICK joystick;
+struct INPUT joystickInput;
+struct INPUT keyboardInput;
+struct INPUT inputModel;
 
 
 int getSerialDevice(char **argv) {
@@ -52,6 +63,13 @@ void    mon_delay_ms(unsigned int ms)
         req.tv_sec = ms / 1000;
         req.tv_nsec = 1000000 * (ms % 1000);
         assert(nanosleep(&req,&rem) == 0);
+}
+
+void processInput() {
+	processJoystickEvent(fd, js, &joystick);
+	processKeyboardEvent(&keyboardInput);
+	updateJoystickInputModel(&joystickInput, &joystick);
+	updateInputModel(&inputModel, &keyboardInput, &joystickInput);
 }
 
 /*----------------------------------------------------------------
@@ -107,9 +125,6 @@ int main(int argc, char **argv)
 	 */
 
 	int level = 0;
-	struct js_event js;
-	//struct PACKET pkt;
-	struct JOYSTICK joystick;
 	
 	for (;;) 
 	{
@@ -119,12 +134,21 @@ int main(int argc, char **argv)
 			rs232_putchar(c);
 			*/
 		// Check up on joystick
-		processJoystickEvent(fd, js, &joystick);
 		//1show_joystick(&joystick);
 		// Check keyboard
 
-
-
+		// process input (new style :D)
+		processInput();
+		if(inputModel->updated) {
+			#ifdef DEBUG
+				show_input(&inputModel);
+			#endif
+			// Send packet TODO: periodically
+			input_to_pkt(&inputModel, &pkt);
+			rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
+			inputModel->updated = false;
+		}
+/*
 		if ((c = term_getchar_nb()) != -1) 
 		{
 			if (c == 'a') // LIFT UP
@@ -157,7 +181,7 @@ show_pkt(&pkt);
 		}
 	
 		if ((c = rs232_getchar_nb()) != -1) 
-			term_putchar(c);
+			term_putchar(c);*/
 	}
 
 	term_exitio();
