@@ -154,14 +154,14 @@ int main(int argc, char **argv)
 
 		// process input (new style :D)
 		processInput();
-		if(inputModel->updated) {
+		if(inputModel.updated) {
 			#ifdef DEBUG
 				show_input(&inputModel);
 			#endif
 			// Send packet TODO: periodically
 			input_to_pkt(&inputModel, &pkt);
 			rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
-			inputModel->updated = false;
+			inputModel.updated = false;
 		}
 /*
 		if ((c = term_getchar_nb()) != -1) 
