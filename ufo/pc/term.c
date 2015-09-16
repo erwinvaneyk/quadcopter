@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 
 	int level = 0;
 	struct js_event js;
-	struct PACKET pkt;
+	//struct PACKET pkt;
 	struct JOYSTICK joystick;
 	
 	for (;;) 

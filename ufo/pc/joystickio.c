@@ -16,7 +16,7 @@
 #include "joystickio.h"
 #include "protocol.h"
 
-short normalizeAxis(short axis_value, short buckets, bool ) {
+short normalizeAxis(short axis_value, short buckets) {
 	assert(buckets > 0);
 	short normalizedValue = (axis_value / 2) + ((SHRT_MAX / 2 + 1)); 
 	short bucket_size = SHRT_MAX / buckets + 1;
