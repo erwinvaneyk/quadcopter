@@ -202,6 +202,7 @@ int get_packet(void)
 	if (c == HEADER) //start of the packet
 		{
 			fifo[optr-1] = 0x00; //corrupt the header, otherwise we get into loops later
+			if (optr==FIFOSIZE) optr=0;
 			modecommand	= (uint8_t)fifo[optr];
 			move_optr();
 			data1 	=	(uint8_t)fifo[optr];
@@ -433,9 +434,9 @@ int main()
 
 		c=get_packet();
 		if (c != -1) {
-			process_packet(); //maybe
+			process_packet();
+			print_state();
 		}
-        print_state();
 
         X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
 		if (button == 1){
