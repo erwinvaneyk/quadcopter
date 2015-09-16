@@ -222,22 +222,22 @@ int 	get_packet(void)
 			checksum =	(uint8_t)fifo[optr];
 			move_optr();
 			checker = modecommand ^ data1 ^ data2 ^ data3 ^ data4 ^ checksum;
-#ifdef DEBUG
-printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
-printf("mode is: %x \n", modecommand);
-printf("LIFT is: %x \n", data1);
-printf("YAW is: %x \n", data2);
-printf("PITCH is: %x \n", data3);
-printf("ROLL is: %x \n", data4);
-printf("Checksum is: %x \n", checksum);
-printf("MAGIC  : %x \n", checker);
-#endif
+			#ifdef DEBUG
+			printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
+			printf("mode is: %x \n", modecommand);
+			printf("LIFT is: %x \n", data1);
+			printf("YAW is: %x \n", data2);
+			printf("PITCH is: %x \n", data3);
+			printf("ROLL is: %x \n", data4);
+			printf("Checksum is: %x \n", checksum);
+			printf("MAGIC  : %x \n", checker);
+			#endif
 			//check checksum
 			if ( (int)checker != 0)
 			{
-#ifdef DEBUG
-printf("Invalid packet recieved! Discarding!\n");
-#endif
+				#ifdef DEBUG
+				printf("Invalid packet recieved! Discarding!\n");
+				#endif
 			 return -1; //ERROR, invalid packet
 			}
 		}
