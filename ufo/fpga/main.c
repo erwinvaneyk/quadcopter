@@ -199,7 +199,7 @@ void move_optr()
 		else optr++;
 }
 
-int 	get_packet(void)
+int get_packet(void)
 {
 	uint8_t	c;
 	if (optr == iptr) //nothing to process
@@ -209,6 +209,7 @@ int 	get_packet(void)
 	if (c == HEADER) //start of the packet
 		{
 			fifo[optr-1] = 0x00; //corrupt the header, otherwise we get into loops later
+			if (optr==FIFOSIZE) optr=0;
 			modecommand	= (uint8_t)fifo[optr];
 			move_optr();
 			data1 	=	(uint8_t)fifo[optr];
@@ -440,7 +441,7 @@ int main()
 
 		c=get_packet();
 		if (c != -1) {
-			process_packet(); //maybe
+			process_packet();
 			print_state();
 		}
         
