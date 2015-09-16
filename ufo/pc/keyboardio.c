@@ -2,8 +2,7 @@
 #include "consoleio.h"
 #include "input.h"
 
-void processKeyboardEvent(struct INPUT* keyboardInput) {
-	int c;
+void processKeyboardEvent(char c, struct INPUT* keyboardInput) {
 	if ((c = term_getchar_nb()) != -1) {
 		switch(c) {
 			case 'a':
@@ -21,6 +20,7 @@ void processKeyboardEvent(struct INPUT* keyboardInput) {
 				break;
 			// TODO: add other keys
 		}
+		keyboardInput->updated = true;
 		term_putchar(c);
 	}
 }

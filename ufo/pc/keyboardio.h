@@ -3,6 +3,6 @@
 
 #include "input.h"
 
-void processKeyboardEvent(struct INPUT* keyboardInput);
+void processKeyboardEvent(char c, struct INPUT* keyboardInput);
 
 #endif
