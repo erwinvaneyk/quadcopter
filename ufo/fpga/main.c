@@ -209,7 +209,7 @@ int 	get_packet(void)
 	if (c == HEADER) //start of the packet
 		{
 			fifo[optr-1] = 0x00; //corrupt the header, otherwise we get into loops later
-			modecommand	=	(uint8_t)fifo[optr];
+			modecommand	= (uint8_t)fifo[optr];
 			move_optr();
 			data1 	=	(uint8_t)fifo[optr];
 			move_optr();

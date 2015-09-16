@@ -145,6 +145,8 @@ int main(int argc, char **argv)
 			#endif
 			// Send packet TODO: periodically
 			input_to_pkt(&inputModel, &pkt);
+			printf("SHOW PACKET!\n");
+			show_pkt(&pkt);
 			rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
 			inputModel.updated = false;
 		}
