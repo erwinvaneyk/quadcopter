@@ -21,6 +21,5 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput) {
 			// TODO: add other keys
 		}
 		keyboardInput->updated = true;
-		term_putchar(c);
 	}
 }
