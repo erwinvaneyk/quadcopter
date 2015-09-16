@@ -30,13 +30,13 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput) {
 				}
 				break;
 			case 65: // pitch up
-				if (keyboardInput->pitch > -MAX_LEVEL) {
-					keyboardInput->pitch--;
+				if (keyboardInput->pitch < MAX_LEVEL) {
+					keyboardInput->pitch++;
 				}
 				break;
 			case 66: // pitch down
-				if (keyboardInput->pitch < MAX_LEVEL) {
-					keyboardInput->pitch++;
+				if (keyboardInput->pitch > -MAX_LEVEL) {
+					keyboardInput->pitch--;
 				}
 				break;
 			case 68: // roll right

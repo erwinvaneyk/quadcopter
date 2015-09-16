@@ -47,9 +47,10 @@
 		uint32_t data;
 
 		data = level_convert(inputModel->roll) << 8;
-		data = data | level_convert(inputModel->pitch) << 8;
-		data = data | level_convert(inputModel->yaw) << 8;
+		data = (data | level_convert(inputModel->pitch)) << 8;
+		data = (data | level_convert(inputModel->yaw)) << 8;
 		data = data | level_convert(inputModel->lift);
+
 
 		return data;
 	}
@@ -71,7 +72,7 @@
 		printf("\n");
 	}
 
-	uint16_t level_convert(int level)
+	uint8_t level_convert(int level)
 	{
 		switch(level){
 			case 0:

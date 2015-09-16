@@ -1,6 +1,16 @@
 #include "input.h"
 #include <stdio.h>
-#define WITHIN_BOUNDS(X, Y) (((X) < (Y) && (X) > -(Y)) ? (X) : (Y))
+
+int within_bounds(int x, int y) {
+	if(x > y) {
+		return y;
+	}
+	if(x < -y) {
+		return -y;
+	}
+	return x;
+
+}
 
 // TODO: check validity of input-models
 void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT* joystick) {
@@ -8,10 +18,10 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 		return;
 
 	// Update controls 
-	model->lift = WITHIN_BOUNDS(keyboard->lift + joystick->lift, MAX_LEVEL);
-	model->yaw = WITHIN_BOUNDS(keyboard->yaw + joystick->yaw, MAX_LEVEL);
-	model->roll = WITHIN_BOUNDS(keyboard->roll + joystick->roll, MAX_LEVEL);
-	model->pitch = WITHIN_BOUNDS(keyboard->pitch + joystick->pitch, MAX_LEVEL);
+	model->lift = within_bounds(keyboard->lift + joystick->lift, MAX_LEVEL);
+	model->yaw = within_bounds(keyboard->yaw + joystick->yaw, MAX_LEVEL);
+	model->roll = within_bounds(keyboard->roll + joystick->roll, MAX_LEVEL);
+	model->pitch = within_bounds(keyboard->pitch + joystick->pitch, MAX_LEVEL);
 
 	// Update mode (keyboard's mode overrides joystick's mode)
 	if(keyboard->mode > -1) {

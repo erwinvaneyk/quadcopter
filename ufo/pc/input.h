@@ -10,11 +10,11 @@
  * Lift, yaw, pitch, roll in levels
  */
 struct INPUT {
-	short lift;
-	short yaw;
-	short pitch;
-	short roll;
-	short mode;
+	int lift;
+	int yaw;
+	int pitch;
+	int roll;
+	int mode;
 	bool updated; // a simple flag to indicate whether the input has been updated
 	// TODO: add control params and others when we have those implemented..
 };
