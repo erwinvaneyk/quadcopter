@@ -36,6 +36,7 @@
 
 int serial_device = 0;
 int fd;
+char	c;
 
 // Input models
 struct js_event js;
@@ -67,7 +68,7 @@ void    mon_delay_ms(unsigned int ms)
 
 void processInput() {
 	//processJoystickEvent(fd, js, &joystick);
-	processKeyboardEvent(&keyboardInput);
+	processKeyboardEvent(c, &keyboardInput);
 	updateJoystickInputModel(&joystickInput, &joystick);
 	updateInputModel(&inputModel, &keyboardInput, &joystickInput);
 }
@@ -80,7 +81,6 @@ int main(int argc, char **argv)
 {
 	struct PACKET pkt;
 	int 	bad_input = 0;
-	char	c;
 	// fd is for the joystick
 	if ((fd = open(JS_DEV, O_RDONLY)) < 0) {
 		perror("jstest");
