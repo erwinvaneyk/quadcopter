@@ -176,10 +176,13 @@ int 	getchar(void)
 
 
 //#define HEADER 0xAA //1010 1010
-uint8_t mode;
-uint8_t command;
-uint8_t data; //for simplicity we do this now
+uint8_t modecommand;
+
+uint8_t data1;
 uint8_t data2;
+uint8_t data3;
+uint8_t data4;
+
 uint8_t checksum;
 uint8_t checker;
 
@@ -188,7 +191,7 @@ uint8_t checker;
  *------------------------------------------------------------------
  */
 
-int move_optr()
+void move_optr()
 {	
 
 		if (optr == FIFOSIZE-1)
@@ -206,24 +209,27 @@ int 	get_packet(void)
 	if (c == HEADER) //start of the packet
 		{
 			fifo[optr-1] = 0x00; //corrupt the header, otherwise we get into loops later
-			mode 	=	(uint8_t)fifo[optr];
+			modecommand	=	(uint8_t)fifo[optr];
 			move_optr();
-			command =	(uint8_t)fifo[optr];
-			move_optr();
-			data 	=	(uint8_t)fifo[optr];
+			data1 	=	(uint8_t)fifo[optr];
 			move_optr();
 			data2 	=	(uint8_t)fifo[optr];
 			move_optr();
+			data3 	=	(uint8_t)fifo[optr];
+			move_optr();
+			data4 	=	(uint8_t)fifo[optr];
+			move_optr();
 			checksum =	(uint8_t)fifo[optr];
 			move_optr();
-			checker = mode ^ command ^ data ^ data2 ^ checksum;
+			checker = modecommand ^ data1 ^ data2 ^ data3 ^ data4 ^ checksum;
 #ifdef DEBUG
 printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
-printf("mode is: %x \n", mode);
-printf("cmnd is: %x \n", command);
-printf("data is: %x \n", data);
-printf("data is: %x \n", data2);
-printf("chsm is: %x \n", checksum);
+printf("mode is: %x \n", modecommand);
+printf("LIFT is: %x \n", data1);
+printf("YAW is: %x \n", data2);
+printf("PITCH is: %x \n", data3);
+printf("ROLL is: %x \n", data4);
+printf("Checksum is: %x \n", checksum);
 printf("MAGIC  : %x \n", checker);
 #endif
 			//check checksum
@@ -246,16 +252,16 @@ return 0;
 
 void process_packet(void)  //we need to process packet and decide what should be done
 {
-	if (mode == MANUAL_MODE)
+	if (modecommand == MANUAL_MODE)
 		{
-			if (command == LIFT)
-			{
+			//if (command == LIFT)
+			//{
 				//set engine RPM
-				if ( (data&0x10) == 0x00) 
+				if ( (data1&0x10) == 0x00) 
 					{//level up only in MANUAL mode
-						ae[0]=ae[1]=ae[2]=ae[3]= 15 * (data&0x0F); //just random 30
+						ae[0]=ae[1]=ae[2]=ae[3]= 15 * (data1&0x0F); //just random 30
 		 			}
-			}
+			//}
 		}
 }
 
@@ -444,7 +450,7 @@ int main()
 			printf("You have pushed the button!!!\r\n");
 			button = 0;
 		}
-		delay_ms(20);
+		//delay_ms(20);
 	}
 
 

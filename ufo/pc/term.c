@@ -66,7 +66,7 @@ void    mon_delay_ms(unsigned int ms)
 }
 
 void processInput() {
-	processJoystickEvent(fd, js, &joystick);
+	//processJoystickEvent(fd, js, &joystick);
 	processKeyboardEvent(&keyboardInput);
 	updateJoystickInputModel(&joystickInput, &joystick);
 	updateInputModel(&inputModel, &keyboardInput, &joystickInput);
