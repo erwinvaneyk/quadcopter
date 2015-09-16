@@ -12,7 +12,6 @@
 #include <errno.h>
 #include <string.h>
 
-#include "joystick.h"
 #include "joystickio.h"
 #include "protocol.h"
 
@@ -40,9 +39,10 @@ void processJoystickEvent(int fd, struct js_event js, struct JOYSTICK* joystick)
 				joystick->button[js.number] = js.value;
 				break;
 			case JS_EVENT_AXIS:
-				joystick->axis[js.number] = js.value;
+				joystick->axis[js.number] = js.value > 0;
 				break;
 		}
+		joystick->updated = true;
 	}
 }
 

@@ -68,7 +68,7 @@
  #define LEVEL_N14 	0x001E
  #define LEVEL_N15 	0x001F
 
-#define NUM_LEVELS 	17
+#define NUM_LEVELS 	30
 
 #include <stdint.h>
 

@@ -60,7 +60,6 @@ void    mon_delay_ms(unsigned int ms)
  */
 int main(int argc, char **argv)
 {
-	int i;
 	struct PACKET pkt;
 	int 	bad_input = 0;
 	char	c;
@@ -115,14 +114,16 @@ int main(int argc, char **argv)
 	for (;;) 
 	{
 		// Delay for 100 ms
-		mon_delay_ms(100);
+		//mon_delay_ms(100);
 		/*if ((c = term_getchar_nb()) != -1) 
 			rs232_putchar(c);
 			*/
 		// Check up on joystick
 		processJoystickEvent(fd, js, &joystick);
-		show_joystick(&joystick);
+		//1show_joystick(&joystick);
 		// Check keyboard
+
+
 
 		if ((c = term_getchar_nb()) != -1) 
 		{

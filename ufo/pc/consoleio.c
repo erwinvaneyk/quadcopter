@@ -47,7 +47,6 @@ int	term_getchar_nb()
 
         if (read(0,line,1)) // note: destructive read
         		return (int) line[0];
-        
         return -1;
 }
 
