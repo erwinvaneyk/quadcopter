@@ -6,26 +6,20 @@
 //HEADER
 #define HEADER 0xAA //1010 1010
 
-//MODES
-#define SAFE_MODE		0x00
-#define PANIC_MODE		0xFF
-#define MANUAL_MODE		0x01
-#define CALIBRATE_MODE	0x02
-#define YAW_CONTROL		0x03
-#define FULL_CONTROL	0x04
+//MODES or COMMANDS
+#define COMMAND_MODE	0x00
+#define SAFE_MODE		0x01
+#define MANUAL_MODE		0x02
+#define CALIBRATE_MODE	0x03
+#define YAW_CONTROL		0x04
+#define FULL_CONTROL	0x05
+#define PANIC_MODE		0x0F
 
-
-//COMMANDS
-#define LIFT	'L'  // <-- change this to codes, that way we can incorporate many at a time
-#define ROLL	'R'
-#define PITCH	'P'
-#define YAW 	'Y'
-#define P0 		'P'//control loop parameters
-#define P1 		'P'//
+#define SEND_TELEMETRY	0x07
 
 
 //DATA
-#define HOVER 	0x0000
+#define HOVER 	0x0000 //level zero
 #define LEVEL1 	0x0001
 #define LEVEL2 	0x0002
 #define LEVEL3 	0x0003

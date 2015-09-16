@@ -12,7 +12,7 @@
  define protocol specifics
  */
 
-#define PACKET_SIZE 6
+#define PACKET_SIZE 7
 //HEADER
 #define HEADER 0xAA //1010 1010
 
