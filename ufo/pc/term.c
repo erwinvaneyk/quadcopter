@@ -62,7 +62,6 @@ void    mon_delay_ms(unsigned int ms)
  */
 int main(int argc, char **argv)
 {
-
 	//Period
 	long T = 50000; //50ms
 	struct timeval check, timer1, timer2;
@@ -72,8 +71,6 @@ int main(int argc, char **argv)
 	timer2.tv_usec= 0;
 	int FLAG = 1; //to start the timer, is there a better way to do it?
 
-
-	int i;
 	struct PACKET pkt;
 	int 	bad_input = 0;
 	char	c;
@@ -139,6 +136,8 @@ int main(int argc, char **argv)
 	//	processJoystickEvent(fd, js, &joystick);
 	//	show_joystick(&joystick);
 		// Check keyboard
+
+
 
 		if ((c = term_getchar_nb()) != -1) 
 		{

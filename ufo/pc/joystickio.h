@@ -1,11 +1,14 @@
-#include "joystick.h"
+#include "driver_joystick.h"
+#include <stdbool.h>
+
 /*
  * Definitions for the output of the joystick
  */
 
 struct JOYSTICK {
 	short	axis[6];
-	short	button[12];
+	bool	button[12];
+	bool	updated;
 };
 
 // Axis
