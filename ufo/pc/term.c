@@ -194,7 +194,7 @@ show_pkt(&pkt);
 			else
 				rs232_putchar(c); //still need to discuss this
 		}
-	
+		*/
 		if ((c = rs232_getchar_nb()) != -1) 
 			term_putchar(c);
 
