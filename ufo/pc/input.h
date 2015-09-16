@@ -1,3 +1,6 @@
+#ifndef _INPUTH_
+#define _INPUTH_
+
 #include "protocol.h"
 #include "joystickio.h"
 #include <stdbool.h>
@@ -16,12 +19,14 @@ struct INPUT {
 	// TODO: add control params and others when we have those implemented..
 };
 
-#define NUMB_LEVELS 31;
-#define MAX_LEVEL 15;
-#define MODES 6; // counting from 0
+#define NUMB_LEVELS 31
+#define MAX_LEVEL 15
+#define MODES 6 // counting from 0
 
-void updateInputModel(struct *INPUT model, struct *INPUT keyboard. struct *INPUT joystick);
+void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT* joystick);
 
-void processJoystickInput(struct *INPUT joystickInputModel, struct *JOYSTICK joystick);
+void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK* joystick);
 
 void show_input(struct INPUT* input);
+
+#endif

@@ -7,6 +7,7 @@
 #ifndef PROTOCOL_H_
 #define PROTOCOL_H_
 
+#include "input.h"
 /*--------------------------
  define protocol specifics
  */
@@ -15,24 +16,18 @@
 //HEADER
 #define HEADER 0xAA //1010 1010
 
-//MODES
-#define SAFE_MODE		0x00
-#define PANIC_MODE		0xFF
-#define MANUAL_MODE		0x01
-#define CALIBRATE_MODE	0x02
-#define YAW_CONTROL		0x03
-#define FULL_CONTROL	0x04
+//MODES or COMMANDS
+#define COMMAND_MODE	0x00
+#define SAFE_MODE		0x01
+#define MANUAL_MODE		0x02
+#define CALIBRATE_MODE	0x03
+#define YAW_CONTROL		0x04
+#define FULL_CONTROL	0x05
+#define PANIC_MODE		0x0F
 
 #define ACK				0xF0
 
-
-//COMMANDS
-#define LIFT	'L'  // <-- change this to codes, that way we can incorporate many at a time
-#define ROLL	'R'
-#define PITCH	'P'
-#define YAW 	'Y'
-#define P0 		'P'//control loop parameters
-#define P1 		'P'//
+#define SEND_TELEMETRY	0x07
 
 
 //DATA
@@ -70,21 +65,21 @@
  #define LEVEL_N14 	0x001E
  #define LEVEL_N15 	0x001F
 
-#define NUM_LEVELS 	30
+#define NUM_LEVELS 	31
 
 #include <stdint.h>
 
 struct PACKET {
 		uint8_t header;
-		uint8_t mode;
-		uint8_t command;
-		uint16_t data;
+		uint8_t modecommand;
+		uint32_t data;
 		uint8_t checksum;
 	} __attribute__ ((packed)) ;
 
 //typedef struct PACKET packet;
 
 void generate_pkt(struct PACKET* packet, uint8_t mode, uint8_t command, uint16_t data);
+void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet);
 void show_pkt(struct PACKET* packet);
 uint16_t level_convert(int level);
 

@@ -1,3 +1,6 @@
+#ifndef _JOYSTICKIOH_
+#define _JOYSTICKIOH_
+
 #include "driver_joystick.h"
 #include <stdbool.h>
 
@@ -22,10 +25,12 @@ struct JOYSTICK {
 #define JS_AXIS_YAW			2
 
 // throttle: [-32767 = down, 32767 = up]
-#define JS_AXIS_THROTTLE 	3
+#define JS_AXIS_LIFT	 	3
 
  // Buttons are numbered 0 - 11
 
 short normalizeAxis(short axis_value, short buckets);
 void processJoystickEvent(int fd, struct js_event js, struct JOYSTICK* joystick);
 void show_joystick(struct JOYSTICK* joystick);
+
+#endif

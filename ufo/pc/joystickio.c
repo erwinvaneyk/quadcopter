@@ -46,11 +46,10 @@ void processJoystickEvent(int fd, struct js_event js, struct JOYSTICK* joystick)
 	}
 }
 
-
 //DEBUG purpose
 void show_joystick(struct JOYSTICK* joystick){
 	printf("PITCH: %x\n", joystick->axis[JS_AXIS_PITCH]);
 	printf("ROLL: %x\n", joystick->axis[JS_AXIS_ROLL]);
-	printf("THROTTLE: %x\n", joystick->axis[JS_AXIS_THROTTLE]);
+	printf("LIFT: %x\n", joystick->axis[JS_AXIS_LIFT]);
 	printf("YAW: %x\n", joystick->axis[JS_AXIS_YAW]);
 }

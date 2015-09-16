@@ -1,8 +1,9 @@
 #include "input.h"
-#include "joystickio.h"
+#include <stdio.h>
 #define WITHIN_BOUNDS(X, Y) (((X) < (Y) && (X) > -(Y)) ? (X) : (Y))
 
-void updateInputModel(struct *INPUT model, struct *INPUT keyboard. struct *INPUT joystick) {
+// TODO: check validity of input-models
+void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT* joystick) {
 	if (!keyboard->updated && !joystick->updated) 
 		return;
 
@@ -15,7 +16,7 @@ void updateInputModel(struct *INPUT model, struct *INPUT keyboard. struct *INPUT
 	// Update mode (keyboard's mode overrides joystick's mode)
 	if(keyboard->mode > -1) {
 		model->mode = keyboard->mode;
-	} else if(joystick.mode > -1) {
+	} else if(joystick->mode > -1) {
 		model->mode = joystick->mode;
 	}
 	keyboard->mode = -1;
@@ -27,22 +28,21 @@ void updateInputModel(struct *INPUT model, struct *INPUT keyboard. struct *INPUT
 	model->updated = true;
 }
 
-void processJoystickInput(struct *INPUT joystickInputModel, struct *JOYSTICK joystick) {
-	if(!joystick.updated)
+void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK* joystick) {
+	if(!joystick->updated)
 		return;
 
 	// update controls
-	joystick->pitch = normalizeAxis(joystick->axis[JS_AXIS_PITCH], NUMB_LEVELS) - MAX_LEVEL;
-	joystick->yaw = normalizeAxis(joystick->axis[JS_AXIS_YAW], NUMB_LEVELS) - MAX_LEVEL;
-	joystick->roll = normalizeAxis(joystick->axis[JS_AXIS_ROLL], NUMB_LEVELS) - MAX_LEVEL;
-	joystick->lift = normalizeAxis(joystick->axis[JS_AXIS_LIFT], NUMB_LEVELS) - MAX_LEVEL;
+	joystickInputModel->pitch = normalizeAxis(joystick->axis[JS_AXIS_PITCH], NUMB_LEVELS) - MAX_LEVEL;
+	joystickInputModel->yaw = normalizeAxis(joystick->axis[JS_AXIS_YAW], NUMB_LEVELS) - MAX_LEVEL;
+	joystickInputModel->roll = normalizeAxis(joystick->axis[JS_AXIS_ROLL], NUMB_LEVELS) - MAX_LEVEL;
+	joystickInputModel->lift = normalizeAxis(joystick->axis[JS_AXIS_LIFT], NUMB_LEVELS) - MAX_LEVEL;
 
 	// Update mode
 	int i;
 	for(i = 0; i < MODES; i++) {
 		if(joystick->button[i]) {
 			joystickInputModel->mode = i;
-			updated = true;
 			break;
 		}
 	}
