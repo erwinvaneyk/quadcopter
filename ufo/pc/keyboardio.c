@@ -18,6 +18,9 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput) {
 			case 'u':
 				keyboardInput->mode = 7;
 				break;
+			case '2': // Manual mode
+				keyboardInput->mode = 2;
+				break;
 			// TODO: add other keys
 		}
 		keyboardInput->updated = true;
