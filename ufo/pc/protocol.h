@@ -23,6 +23,8 @@
 #define YAW_CONTROL		0x03
 #define FULL_CONTROL	0x04
 
+#define ACK				0xF0
+
 
 //COMMANDS
 #define LIFT	'L'  // <-- change this to codes, that way we can incorporate many at a time

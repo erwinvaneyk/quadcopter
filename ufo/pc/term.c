@@ -1,11 +1,13 @@
 /*------------------------------------------------------------
- * Simple terminal in C
+ * Terminal
  * 
- * Arjan J.C. van Gemund (+ few mods by Mark Dufour)
+ *
+ *
+ *
  *------------------------------------------------------------
  */
 
-#define DEBUG 
+//#define DEBUG 
 #define	FALSE		0
 #define	TRUE		1
 
@@ -60,6 +62,17 @@ void    mon_delay_ms(unsigned int ms)
  */
 int main(int argc, char **argv)
 {
+
+	//Period
+	long T = 50000; //50ms
+	struct timeval check, timer1, timer2;
+	//timer1.tv_sec = 0;
+	timer1.tv_usec= 0;
+	//timer2.tv_sec = 0;
+	timer2.tv_usec= 0;
+	int FLAG = 1; //to start the timer, is there a better way to do it?
+
+
 	int i;
 	struct PACKET pkt;
 	int 	bad_input = 0;
@@ -112,16 +125,19 @@ int main(int argc, char **argv)
 	//struct PACKET pkt;
 	struct JOYSTICK joystick;
 	
+
+	generate_pkt(&pkt, ACK, 0x00, 0x00); //empty packet
+
 	for (;;) 
 	{
 		// Delay for 100 ms
-		mon_delay_ms(100);
+		//mon_delay_ms(100);
 		/*if ((c = term_getchar_nb()) != -1) 
 			rs232_putchar(c);
 			*/
 		// Check up on joystick
-		processJoystickEvent(fd, js, &joystick);
-		show_joystick(&joystick);
+	//	processJoystickEvent(fd, js, &joystick);
+	//	show_joystick(&joystick);
 		// Check keyboard
 
 		if ((c = term_getchar_nb()) != -1) 
@@ -136,7 +152,7 @@ int main(int argc, char **argv)
 show_pkt(&pkt);
 #endif					
 					}
-				rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
+				//rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
 			}
 				
 			else if (c == 'z')  // LIFT DOWN
@@ -149,7 +165,7 @@ show_pkt(&pkt);
 show_pkt(&pkt);
 #endif	
 				}
-				rs232_put_pkt(&pkt);
+				//rs232_put_pkt(&pkt);
 			}
 			else
 				rs232_putchar(c); //still need to discuss this
@@ -157,6 +173,20 @@ show_pkt(&pkt);
 	
 		if ((c = rs232_getchar_nb()) != -1) 
 			term_putchar(c);
+
+/* Send packets in a periodic fashion
+NEED TO CHECK THIS
+	 */
+	gettimeofday(&timer1, NULL);
+	if ((labs(((timer1.tv_usec + timer1.tv_sec*1000000) - (timer2.tv_usec + timer2.tv_sec*1000000))) > T))
+		{
+#ifdef DEBUG
+printf("Sending packet->\n");
+#endif
+			rs232_put_pkt(&pkt); //send packet
+			generate_pkt(&pkt, ACK, 0x00, 0x00); //reset packet
+			gettimeofday(&timer2, NULL);//reset timer		
+		}
 	}
 
 	term_exitio();

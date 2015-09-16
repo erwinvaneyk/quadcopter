@@ -1,19 +1,12 @@
 /*------------------------------------------------------------------
- *  qrtest.c -- test QR engines and sensors
+ *  main.c
  *
- *  reads ae[0-3] from stdin
- *  (q,w,e,r increment ae[0-3], a,s,d,f decrement)
  *
- *  prints ae[0-3],sax,say,saz,sp,sq,sr,delta_t on stdout
- *  where delta_t is the qr-isr exec time
  *
- *  Arjan J.C. van Gemund
- *  Embedded Software Lab
  *
- *  Version Jan 1, 2010
  *------------------------------------------------------------------
  */
-#define DEBUG
+//#define DEBUG
 #define TRUE 1
 #define FALSE 0
 
@@ -196,7 +189,7 @@ int move_optr()
 		else optr++;
 }
 
-int 	get_packet(void)
+int get_packet(void)
 {
 	uint8_t	c;
 	if (optr == iptr) //nothing to process
@@ -435,9 +428,8 @@ int main()
 		c=get_packet();
 		if (c != -1) {
 			process_packet(); //maybe
-			print_state();
 		}
-        
+        print_state();
 
         X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
 		if (button == 1){
