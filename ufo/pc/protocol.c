@@ -24,19 +24,18 @@
 
 	uint8_t convert_modecommand(int mode) {
 		switch(mode) {
-			case 0:
+			case SAFE_MODE_INT:
 				return SAFE_MODE;
-			case 1:
+			case PANIC_MODE_INT:
 				return PANIC_MODE;
-			case 2:
+			case MANUAL_MODE_INT:
 				return MANUAL_MODE;
-			case 3:
+			case CALIBRATE_MODE_INT:
 				return CALIBRATE_MODE;
-			case 4:
+			case YAW_CONTROL_INT:
 				return YAW_CONTROL;
-			case 5:
+			case FULL_CONTROL_INT:
 				return FULL_CONTROL;
-
 			case 7:
 				return SEND_TELEMETRY;
 			default:
