@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <time.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -37,6 +38,7 @@
 int serial_device = 0;
 int fd;
 char	c;
+int wait;
 
 // Input models
 struct js_event js;
@@ -67,7 +69,14 @@ void    mon_delay_ms(unsigned int ms)
 }
 
 void processInput() {
-	processJoystickEvent(fd, js, &joystick);
+	if(wait <= 0) {
+		#ifdef DEBUG
+			show_joystick(joystick);
+		#endif
+		processJoystickEvent(fd, js, &joystick);
+		wait = 9000;
+	}
+	wait--;
 	processKeyboardEvent(c, &keyboardInput);
 	updateJoystickInputModel(&joystickInput, &joystick);
 	updateInputModel(&inputModel, &keyboardInput, &joystickInput);

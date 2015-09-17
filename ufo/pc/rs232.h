@@ -8,7 +8,7 @@
 #include "protocol.h"
 
 #define SERIAL_DEVICE	"/dev/ttyS0"
-#define USB_DEVICE		"/dev/ttyUSB0"
+#define USB_DEVICE		"/dev/ttyUSB1"
 #define WIFI_DEVICE 	"/dev/ttyUSB0" /* may need to change this */
 
 int fd_RS232;

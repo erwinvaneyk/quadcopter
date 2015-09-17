@@ -36,10 +36,10 @@ void processJoystickEvent(int fd, struct js_event js, struct JOYSTICK* joystick)
 	if(read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event))  {	
 		switch(js.type & ~JS_EVENT_INIT) {
 			case JS_EVENT_BUTTON:
-				joystick->button[js.number] = js.value;
+				joystick->button[js.number] = js.value > 0;
 				break;
 			case JS_EVENT_AXIS:
-				joystick->axis[js.number] = js.value > 0;
+				joystick->axis[js.number] = js.value;
 				break;
 		}
 		joystick->updated = true;
@@ -48,8 +48,9 @@ void processJoystickEvent(int fd, struct js_event js, struct JOYSTICK* joystick)
 
 //DEBUG purpose
 void show_joystick(struct JOYSTICK* joystick){
-	printf("PITCH: %x\n", joystick->axis[JS_AXIS_PITCH]);
-	printf("ROLL: %x\n", joystick->axis[JS_AXIS_ROLL]);
-	printf("LIFT: %x\n", joystick->axis[JS_AXIS_LIFT]);
-	printf("YAW: %x\n", joystick->axis[JS_AXIS_YAW]);
+	printf("JOYSTICK: {\n");
+	printf("	PITCH: %x\n", joystick->axis[JS_AXIS_PITCH]);
+	printf("	ROLL: %x\n", joystick->axis[JS_AXIS_ROLL]);
+	printf("	LIFT: %x\n", joystick->axis[JS_AXIS_LIFT]);
+	printf("	YAW: %x\n}\n", joystick->axis[JS_AXIS_YAW]);
 }
