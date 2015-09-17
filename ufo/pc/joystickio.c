@@ -33,13 +33,19 @@ short normalizeAxis(short axis_value, short buckets) {
 }
 
 void processJoystickEvent(int fd, struct js_event js, struct JOYSTICK* joystick) {
-	if(read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event))  {	
+	fcntl(fd, F_SETFL, O_NONBLOCK); // SHould be set in some init
+
+	if(read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event))  {
 		switch(js.type & ~JS_EVENT_INIT) {
 			case JS_EVENT_BUTTON:
 				joystick->button[js.number] = js.value > 0;
 				break;
 			case JS_EVENT_AXIS:
-				joystick->axis[js.number] = js.value;
+				if(js.number == 3) { // lift is inverted on the js
+					joystick->axis[js.number] = -js.value;	
+				} else {
+					joystick->axis[js.number] = js.value;
+				}
 				break;
 		}
 		joystick->updated = true;
