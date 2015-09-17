@@ -41,11 +41,7 @@ void processJoystickEvent(int fd, struct js_event js, struct JOYSTICK* joystick)
 				joystick->button[js.number] = js.value > 0;
 				break;
 			case JS_EVENT_AXIS:
-				if(js.number == 3) { // lift is inverted on the js
-					joystick->axis[js.number] = -js.value;	
-				} else {
-					joystick->axis[js.number] = js.value;
-				}
+				joystick->axis[js.number] = -js.value;
 				break;
 		}
 		joystick->updated = true;
