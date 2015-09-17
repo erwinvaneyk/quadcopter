@@ -17,11 +17,6 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 	if (!keyboard->updated && !joystick->updated) 
 		return;
 
-	// Update controls 
-	model->lift = within_bounds(keyboard->lift + joystick->lift, MAX_LEVEL);
-	model->yaw = within_bounds(keyboard->yaw + joystick->yaw, MAX_LEVEL);
-	model->roll = within_bounds(keyboard->roll + joystick->roll, MAX_LEVEL);
-	model->pitch = within_bounds(keyboard->pitch + joystick->pitch, MAX_LEVEL);
 
 	// Update mode (keyboard's mode overrides joystick's mode)
 	if(keyboard->mode > -1) {
@@ -31,6 +26,24 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 	}
 	keyboard->mode = -1;
 	joystick->mode = -1;
+
+	// Update controls
+
+	if (model->mode == MANUAL_MODE_INT)
+	{
+		model->lift = within_bounds(keyboard->lift + joystick->lift, MAX_LEVEL);
+		model->yaw = within_bounds(keyboard->yaw + joystick->yaw, MAX_LEVEL);
+		model->roll = within_bounds(keyboard->roll + joystick->roll, MAX_LEVEL);
+		model->pitch = within_bounds(keyboard->pitch + joystick->pitch, MAX_LEVEL);
+	}
+	else if (model->mode == SAFE_MODE_INT)
+	{
+		model->lift 	= 0;
+		model->yaw 		= 0;
+		model->roll 	= 0;
+		model->pitch 	= 0;
+	}
+
 
 	// Update flags
 	keyboard->updated = false;
@@ -42,12 +55,6 @@ void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK*
 	if(!joystick->updated)
 		return;
 
-	// update controls
-	joystickInputModel->pitch = normalizeAxis(joystick->axis[JS_AXIS_PITCH], NUMB_LEVELS) - MAX_LEVEL;
-	joystickInputModel->yaw = normalizeAxis(joystick->axis[JS_AXIS_YAW], NUMB_LEVELS) - MAX_LEVEL;
-	joystickInputModel->roll = normalizeAxis(joystick->axis[JS_AXIS_ROLL], NUMB_LEVELS) - MAX_LEVEL;
-	joystickInputModel->lift = normalizeAxis(joystick->axis[JS_AXIS_LIFT], NUMB_LEVELS) - MAX_LEVEL;
-
 	// Update mode
 	int i;
 	for(i = 0; i < MODES; i++) {
@@ -56,6 +63,12 @@ void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK*
 			break;
 		}
 	}
+
+	// update controls
+	joystickInputModel->pitch = normalizeAxis(joystick->axis[JS_AXIS_PITCH], NUMB_LEVELS) - MAX_LEVEL;
+	joystickInputModel->yaw = normalizeAxis(joystick->axis[JS_AXIS_YAW], NUMB_LEVELS) - MAX_LEVEL;
+	joystickInputModel->roll = normalizeAxis(joystick->axis[JS_AXIS_ROLL], NUMB_LEVELS) - MAX_LEVEL;
+	joystickInputModel->lift = normalizeAxis(joystick->axis[JS_AXIS_LIFT], NUMB_LEVELS) - MAX_LEVEL;
 
 	// Update flags
 	joystick->updated = false;

@@ -272,43 +272,55 @@ void process_packet(void)  //we need to process packet and decide what should be
 		 		//ROLL
 		 		if ( (data4&0x10) == 0x00) 
 					{
-						ae[1]=ae[1] + 10 * (data4&0x0F); //lean left
-						ae[3]=ae[3] - 10 * (data4&0x0F);
+						
+						ae[1]=ae[1] + 5 * (data4&0x0F); //lean left
+
+					if (ae[3] > 30)
+						ae[3]=ae[3] - 5 * (data4&0x0F);
 		 			}
 		 		else
 		 			{
-						ae[1]=ae[1] - 10 * (data4&0x0F); //lean right
-						ae[3]=ae[3] + 10 * (data4&0x0F);
+		 			if (ae[1] > 30)
+						ae[1]=ae[1] - 5 * (data4&0x0F); //lean right
+						ae[3]=ae[3] + 5 * (data4&0x0F);
 		 			}
 
 				//PITCH
 		 		if ( (data3&0x10) == 0x00) 
 					{
-						ae[0] = ae[0] - 10 * (data3&0x0F); //lean forward
-						ae[2] = ae[2] + 10 * (data3&0x0F); 
+					if (ae[0] > 30)
+						ae[0] = ae[0] - 5 * (data3&0x0F); //lean forward
+						ae[2] = ae[2] + 5 * (data3&0x0F); 
 		 			}
 		 		else
 		 			{
-						ae[0] = ae[0] + 10 * (data3&0x0F); //lean backward
-						ae[2] = ae[2] - 10 * (data3&0x0F); 
+						ae[0] = ae[0] + 5 * (data3&0x0F); //lean backward
+					if (ae[2] > 30)
+						ae[2] = ae[2] - 5 * (data3&0x0F); 
 		 			}
 
 		 		//YAW
 		 		if ( (data2&0x10) == 0x00) 
 					{
-						ae[0] = ae[0] + 10 * (data2&0x0F);
-						ae[2] = ae[2] + 10 * (data2&0x0F);
+						ae[0] = ae[0] + 5 * (data2&0x0F);
+						ae[2] = ae[2] + 5 * (data2&0x0F);
 						
-						ae[1] = ae[1] - 10 * (data2&0x0F);
-						ae[3] = ae[3] - 10 * (data2&0x0F);
+						if ((ae[1] > 30) && (ae[3] > 30))
+						{
+							ae[1] = ae[1] - 5 * (data2&0x0F);
+							ae[3] = ae[3] - 5 * (data2&0x0F);
+						}
+
 		 			}
 		 		else
 		 		{
-		 				ae[0] = ae[0] - 10 * (data2&0x0F);
-						ae[2] = ae[2] - 10 * (data2&0x0F);
-						
-						ae[1] = ae[1] + 10 * (data2&0x0F);
-						ae[3] = ae[3] + 10 * (data2&0x0F);
+						ae[1] = ae[1] + 5 * (data2&0x0F);
+						ae[3] = ae[3] + 5 * (data2&0x0F);
+			 			if ((ae[0] > 30) && (ae[2] > 30))
+						{
+			 				ae[0] = ae[0] - 5 * (data2&0x0F);
+							ae[2] = ae[2] - 5 * (data2&0x0F);
+						}
 		 		}
 
 		 		
