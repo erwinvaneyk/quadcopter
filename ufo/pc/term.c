@@ -81,6 +81,7 @@ int main(int argc, char **argv)
 {
 	struct PACKET pkt;
 	int 	bad_input = 0;
+	int link_status;
 	// fd is for the joystick
 	if ((fd = open(JS_DEV, O_RDONLY)) < 0) {
 		perror("jstest");
@@ -112,13 +113,16 @@ int main(int argc, char **argv)
 	term_puts("\nTerminal program (Embedded Software Lab), ");
 
 	term_initio();
-	rs232_open(serial_device);
+	link_status = rs232_open(serial_device);
+	if(link_status == -1) {
+		term_puts("FPGA not detected! Connect it to communicate.\n");
+	}
 
 	term_puts("Type ^C to exit\n");
 
 	/* discard any incoming text
 	 */
-	while ((c = rs232_getchar_nb()) != -1)
+	while (link_status > -1 && (c = rs232_getchar_nb()) != -1)
 		fputc(c,stderr);
 	
 	/* send & receive
@@ -147,7 +151,9 @@ int main(int argc, char **argv)
 			input_to_pkt(&inputModel, &pkt);
 			printf("SHOW PACKET!\n");
 			show_pkt(&pkt);
-			rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
+			if(link_status > -1) {
+				rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
+			}
 			inputModel.updated = false;
 		}
 /*
@@ -182,12 +188,14 @@ show_pkt(&pkt);
 				rs232_putchar(c); //still need to discuss this
 		}
 		*/
-		if ((c = rs232_getchar_nb()) != -1) 
+		if (link_status > -1 && (c = rs232_getchar_nb()) != -1) 
 			term_putchar(c);
 	}
 
 	term_exitio();
-	rs232_close();
+	if(link_status > -1) {
+		rs232_close();
+	}
 	term_puts("\n<exit>\n");
   	
 	return 0;
