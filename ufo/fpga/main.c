@@ -13,7 +13,7 @@
  *  Version Jan 1, 2010
  *------------------------------------------------------------------
  */
-#define DEBUG
+//#define DEBUG
 #define TRUE 1
 #define FALSE 0
 
@@ -251,17 +251,67 @@ int get_packet(void)
 return 0;
 }
 
+/*
+	ae0
+	$
+ae3---ae1
+	|
+	ae2
+*/
+
 void process_packet(void)  //we need to process packet and decide what should be done
 {
 	if (modecommand == MANUAL_MODE)
 		{
-			//if (command == LIFT)
-			//{
-				//set engine RPM
-				if ( (data1&0x10) == 0x00) 
-					{//level up only in MANUAL mode
-						ae[0]=ae[1]=ae[2]=ae[3]= 15 * (data1&0x0F); //just random 30
+				//LIFT
+				if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
+					{
+						ae[0]=ae[1]=ae[2]=ae[3]= 15 * (data1&0x0F);
 		 			}
+
+		 		//ROLL
+		 		if ( (data4&0x10) == 0x00) 
+					{
+						ae[1]=ae[1] + 10 * (data4&0x0F); //lean left
+						ae[3]=ae[3] - 10 * (data4&0x0F);
+		 			}
+		 		else
+		 			{
+						ae[1]=ae[1] - 10 * (data4&0x0F); //lean right
+						ae[3]=ae[3] + 10 * (data4&0x0F);
+		 			}
+
+				//PITCH
+		 		if ( (data3&0x10) == 0x00) 
+					{
+						ae[0] = ae[0] - 10 * (data3&0x0F); //lean forward
+						ae[2] = ae[2] + 10 * (data3&0x0F); 
+		 			}
+		 		else
+		 			{
+						ae[0] = ae[0] + 10 * (data3&0x0F); //lean backward
+						ae[2] = ae[2] - 10 * (data3&0x0F); 
+		 			}
+
+		 		//YAW
+		 		if ( (data2&0x10) == 0x00) 
+					{
+						ae[0] = ae[0] + 10 * (data2&0x0F);
+						ae[2] = ae[2] + 10 * (data2&0x0F);
+						
+						ae[1] = ae[1] - 10 * (data2&0x0F);
+						ae[3] = ae[3] - 10 * (data2&0x0F);
+		 			}
+		 		else
+		 		{
+		 				ae[0] = ae[0] - 10 * (data2&0x0F);
+						ae[2] = ae[2] - 10 * (data2&0x0F);
+						
+						ae[1] = ae[1] + 10 * (data2&0x0F);
+						ae[3] = ae[3] + 10 * (data2&0x0F);
+		 		}
+
+		 		
 			//}
 		}
 }
@@ -322,6 +372,7 @@ void toggle_led(int i)
 
 /*------------------------------------------------------------------
  * process_key -- process command keys
+ * @deprecated
  *------------------------------------------------------------------
  */
 void process_key(char c) 
@@ -442,8 +493,8 @@ int main()
 		c=get_packet();
 		if (c != -1) {
 			process_packet();
-			print_state();
 		}
+			print_state();
         
 
         X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
