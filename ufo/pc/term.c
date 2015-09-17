@@ -37,8 +37,7 @@
 
 int serial_device = 0;
 int fd;
-char	c;
-int wait;
+char c;
 
 // Input models
 struct js_event js;
@@ -69,11 +68,7 @@ void    mon_delay_ms(unsigned int ms)
 }
 
 void processInput() {
-	if(wait <= 0) {
-		processJoystickEvent(fd, js, &joystick);
-		wait = 10000;
-	}
-	wait--;
+	processJoystickEvent(fd, js, &joystick);
 	processKeyboardEvent(c, &keyboardInput);
 	updateJoystickInputModel(&joystickInput, &joystick);
 	updateInputModel(&inputModel, &keyboardInput, &joystickInput);
