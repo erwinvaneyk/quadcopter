@@ -32,7 +32,9 @@ int rs232_open(int serial_device)
 		fprintf(stderr,"using %s\n", USB_DEVICE); 
 	} 
 
-	assert(fd_RS232>=0);
+	if(fd_RS232< 0) {
+		return -1;
+	}
 
   	result = isatty(fd_RS232);
   	assert(result == 1);
