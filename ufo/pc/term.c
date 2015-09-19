@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <time.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -36,7 +37,7 @@
 
 int serial_device = 0;
 int fd;
-char	c;
+char c;
 
 // Input models
 struct js_event js;
@@ -149,45 +150,12 @@ int main(int argc, char **argv)
 			#endif
 			// Send packet TODO: periodically
 			input_to_pkt(&inputModel, &pkt);
-			printf("SHOW PACKET!\n");
-			show_pkt(&pkt);
 			if(link_status > -1) {
+				show_pkt(&pkt);
 				rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
 			}
 			inputModel.updated = false;
 		}
-/*
-		if ((c = term_getchar_nb()) != -1) 
-		{
-			if (c == 'a') // LIFT UP
-			{	
-				if (level < 15) //highest level
-					{	
-						level++;
-						generate_pkt(&pkt, MANUAL_MODE, LIFT, level_convert(level));
-#ifdef DEBUG
-show_pkt(&pkt);
-#endif					
-					}
-				rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
-			}
-				
-			else if (c == 'z')  // LIFT DOWN
-			{
-				if (level>-15)
-				{
-					level--;
-					generate_pkt(&pkt, MANUAL_MODE, LIFT, level_convert(level));
-#ifdef DEBUG
-show_pkt(&pkt);
-#endif	
-				}
-				rs232_put_pkt(&pkt);
-			}
-			else
-				rs232_putchar(c); //still need to discuss this
-		}
-		*/
 		if (link_status > -1 && (c = rs232_getchar_nb()) != -1) 
 			term_putchar(c);
 	}

@@ -65,11 +65,11 @@
 	//DEBUG purpose
 	void show_pkt(struct PACKET* packet)
 	{
-		printf("HEADER: %x\n", packet->header);
-		printf("MODECOMMAND: %x\n", packet->modecommand);
-		printf("DATA: %x\n", packet->data);
-		printf("CHECKSUM: %x\n", packet->checksum);
-		printf("\n");
+		printf("PACKET: {\n");
+		printf("	HEADER: %x\n", packet->header);
+		printf("	MODECOMMAND: %x\n", packet->modecommand);
+		printf("	DATA: %x\n", packet->data);
+		printf("	CHECKSUM: %x\n}\n", packet->checksum);
 	}
 
 	uint8_t level_convert(int level)
