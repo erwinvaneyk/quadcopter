@@ -16,6 +16,6 @@ struct LOG {
 	}; //__attribute__ ((packed))
 
 
-int allocate_log(struct LOG* log, int log_length); //return -1 if unsuccessful
+//int allocate_log(struct LOG* log, int log_length); //return -1 if unsuccessful
 
 #endif

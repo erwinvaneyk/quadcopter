@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 
-int allocate_log(struct LOG* log, int log_length)
+/*int allocate_log(struct LOG* log, int log_length)
 {
 	if(		(log = malloc(log_length*sizeof(struct LOG)))	==	NULL	)
 		{
@@ -13,3 +13,4 @@ int allocate_log(struct LOG* log, int log_length)
 		}
 	return 1;
 }
+*/

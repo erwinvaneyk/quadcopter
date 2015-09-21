@@ -497,12 +497,12 @@ int main()
 /*************LOGGING************
 **************************/
 
-
+/*
 if(allocate_log(log, LOG_LENGTH) == -1)
 		{
 			printf(stderr, "Error allocating log.\n");
 		}
-
+*/
 
 /*************************
 **************************/
