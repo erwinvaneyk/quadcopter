@@ -67,7 +67,7 @@ void    mon_delay_ms(unsigned int ms)
 }
 
 void processInput() {
-	processJoystickEvent(fd, js, &joystick);
+	//processJoystickEvent(fd, js, &joystick);
 	processKeyboardEvent(c, &keyboardInput);
 	updateJoystickInputModel(&joystickInput, &joystick);
 	updateInputModel(&inputModel, &keyboardInput, &joystickInput);
@@ -145,8 +145,12 @@ int main(int argc, char **argv)
 			#endif
 			// Send packet TODO: periodically
 			input_to_pkt(&inputModel, &pkt);
-			printf("SHOW PACKET!\n");
-			show_pkt(&pkt);
+
+#ifdef DEBUG
+printf("SHOW PACKET!\n");
+show_pkt(&pkt);
+#endif
+
 			rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
 			inputModel.updated = false;
 		}

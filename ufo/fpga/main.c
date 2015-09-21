@@ -1,27 +1,22 @@
 /*------------------------------------------------------------------
- *  qrtest.c -- test QR engines and sensors
+ *  QR
  *
- *  reads ae[0-3] from stdin
- *  (q,w,e,r increment ae[0-3], a,s,d,f decrement)
  *
- *  prints ae[0-3],sax,say,saz,sp,sq,sr,delta_t on stdout
- *  where delta_t is the qr-isr exec time
- *
- *  Arjan J.C. van Gemund
- *  Embedded Software Lab
- *
- *  Version Jan 1, 2010
  *------------------------------------------------------------------
  */
+
 //#define DEBUG
 #define TRUE 1
 #define FALSE 0
+#define LOG_LENGTH 1000
 
 #include <stdio.h>
 #include <x32.h>
 #include "assert.h"
 #include "defines.h"
 #include <stdint.h>
+#include "log.h"
+
 /* define some peripheral short hands
  */
 #define X32_instruction_counter           peripherals[0x03]
@@ -53,8 +48,6 @@
 #define X32_button		peripherals[PERIPHERAL_BUTTONS]
 #define X32_switches		peripherals[PERIPHERAL_SWITCHES]
 
-
-// RX FIFO
 #define FIFOSIZE 16
 uint8_t	fifo[FIFOSIZE]; 
 int	iptr, optr;
@@ -160,9 +153,10 @@ printf(" => %x\n", fifo[iptr-1]);
 
 /*------------------------------------------------------------------
  * getchar -- read char from rx fifo, return -1 if no char available
+ *****   @deprecated
  *------------------------------------------------------------------
  */
-int 	getchar(void)
+int getchar(void)
 {
 	int	c;
 
@@ -193,10 +187,9 @@ uint8_t checker;
 
 void move_optr()
 {	
-
-		if (optr == FIFOSIZE-1)
-			optr = 0;
-		else optr++;
+	if (optr == FIFOSIZE-1)
+		optr = 0;
+	else optr++;
 }
 
 int get_packet(void)
@@ -454,6 +447,8 @@ void print_state(void)
  */
 int main() 
 {
+	struct LOG* log;
+
 	/* prepare QR rx interrupt handler
 	 */
         SET_INTERRUPT_VECTOR(INTERRUPT_XUFO, &isr_qr_link);
@@ -499,9 +494,22 @@ int main()
 	 */
         ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
 
+/*************LOGGING************
+**************************/
+
+
+if(allocate_log(log, LOG_LENGTH) == -1)
+		{
+			printf(stderr, "Error allocating log.\n");
+		}
+
+
+/*************************
+**************************/
 	while (TRUE)
 	{
-
+  
+	printf("sizeof log struct is: %d\n\n", sizeof(*log) );
 		c=get_packet();
 		if (c != -1) {
 			process_packet();
