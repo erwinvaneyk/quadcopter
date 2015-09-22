@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <time.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -36,7 +37,7 @@
 
 int serial_device = 0;
 int fd;
-char	c;
+char c;
 
 // Input models
 struct js_event js;
@@ -81,6 +82,7 @@ int main(int argc, char **argv)
 {
 	struct PACKET pkt;
 	int 	bad_input = 0;
+	int link_status;
 	// fd is for the joystick
 	if ((fd = open(JS_DEV, O_RDONLY)) < 0) {
 		perror("jstest");
@@ -112,13 +114,16 @@ int main(int argc, char **argv)
 	term_puts("\nTerminal program (Embedded Software Lab), ");
 
 	term_initio();
-	rs232_open(serial_device);
+	link_status = rs232_open(serial_device);
+	if(link_status == -1) {
+		term_puts("FPGA not detected! Connect it to communicate.\n");
+	}
 
 	term_puts("Type ^C to exit\n");
 
 	/* discard any incoming text
 	 */
-	while ((c = rs232_getchar_nb()) != -1)
+	while (link_status > -1 && (c = rs232_getchar_nb()) != -1)
 		fputc(c,stderr);
 	
 	/* send & receive
@@ -128,16 +133,6 @@ int main(int argc, char **argv)
 	
 	for (;;) 
 	{
-		// Delay for 100 ms
-		//mon_delay_ms(100);
-		/*if ((c = term_getchar_nb()) != -1) 
-			rs232_putchar(c);
-			*/
-		// Check up on joystick
-		//1show_joystick(&joystick);
-		// Check keyboard
-
-		// process input (new style :D)
 		processInput();
 		if(inputModel.updated) {
 			#ifdef DEBUG
@@ -146,52 +141,20 @@ int main(int argc, char **argv)
 			// Send packet TODO: periodically
 			input_to_pkt(&inputModel, &pkt);
 
-#ifdef DEBUG
-printf("SHOW PACKET!\n");
-show_pkt(&pkt);
-#endif
-
-			rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
-			inputModel.updated = false;
-		}
-/*
-		if ((c = term_getchar_nb()) != -1) 
-		{
-			if (c == 'a') // LIFT UP
-			{	
-				if (level < 15) //highest level
-					{	
-						level++;
-						generate_pkt(&pkt, MANUAL_MODE, LIFT, level_convert(level));
-#ifdef DEBUG
-show_pkt(&pkt);
-#endif					
-					}
+			if(link_status > -1) {
+				show_pkt(&pkt);
 				rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
 			}
-				
-			else if (c == 'z')  // LIFT DOWN
-			{
-				if (level>-15)
-				{
-					level--;
-					generate_pkt(&pkt, MANUAL_MODE, LIFT, level_convert(level));
-#ifdef DEBUG
-show_pkt(&pkt);
-#endif	
-				}
-				rs232_put_pkt(&pkt);
-			}
-			else
-				rs232_putchar(c); //still need to discuss this
+			inputModel.updated = false;
 		}
-		*/
-		if ((c = rs232_getchar_nb()) != -1) 
+		if (link_status > -1 && (c = rs232_getchar_nb()) != -1) 
 			term_putchar(c);
 	}
 
 	term_exitio();
-	rs232_close();
+	if(link_status > -1) {
+		rs232_close();
+	}
 	term_puts("\n<exit>\n");
   	
 	return 0;

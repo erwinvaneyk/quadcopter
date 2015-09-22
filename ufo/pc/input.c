@@ -20,8 +20,10 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 
 	// Update mode (keyboard's mode overrides joystick's mode)
 	if(keyboard->mode > -1) {
+		printf("Keyboard switched mode: %x\n", keyboard->mode);
 		model->mode = keyboard->mode;
 	} else if(joystick->mode > -1) {
+		printf("Joystick switched mode: %x\n", joystick->mode);
 		model->mode = joystick->mode;
 	}
 	keyboard->mode = -1;
@@ -77,10 +79,10 @@ void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK*
 
 //DEBUG purpose
 void show_input(struct INPUT* input) {
-	printf("INPUT (%x) {\n", input->updated);
-	printf("	lift: %x\n", input->lift);
-	printf("	pitch: %x\n", input->pitch);
-	printf("	roll: %x\n", input->roll);
-	printf("	yaw: %x\n", input->yaw);
-	printf("	mode: %x\n}\n", input->mode);
+	printf("INPUT (%i) {\n", input->updated);
+	printf("	lift: %i\n", input->lift);
+	printf("	pitch: %i\n", input->pitch);
+	printf("	roll: %i\n", input->roll);
+	printf("	yaw: %i\n", input->yaw);
+	printf("	mode: %i\n}\n", input->mode);
 }

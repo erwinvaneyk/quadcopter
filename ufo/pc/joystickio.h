@@ -16,10 +16,10 @@ struct JOYSTICK {
 
 // Axis
 // pitch: [-32767 = front, 32767 = back]
-#define JS_AXIS_PITCH 		0
+#define JS_AXIS_PITCH 		1
 
 // roll: [-32767 = left, 32767 = right]
-#define JS_AXIS_ROLL 		1
+#define JS_AXIS_ROLL 		0
 
 // yaw: [-32767 = counter-clockwise, 32767 = clockwise]
 #define JS_AXIS_YAW			2
