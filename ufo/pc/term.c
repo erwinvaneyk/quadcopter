@@ -1,7 +1,6 @@
 /*------------------------------------------------------------
- * Simple terminal in C
+ * QR terminal
  * 
- * Arjan J.C. van Gemund (+ few mods by Mark Dufour)
  *------------------------------------------------------------
  */
 
@@ -46,7 +45,6 @@ struct INPUT joystickInput;
 struct INPUT keyboardInput;
 struct INPUT inputModel;
 
-
 int getSerialDevice(char **argv) {
 	if (strncmp(argv[1],"serial",3) == 0)
 		return 0;
@@ -61,18 +59,18 @@ int getSerialDevice(char **argv) {
 void    mon_delay_ms(unsigned int ms)
 {
         struct timespec req, rem;
-
         req.tv_sec = ms / 1000;
         req.tv_nsec = 1000000 * (ms % 1000);
         assert(nanosleep(&req,&rem) == 0);
 }
 
 void processInput() {
-	processJoystickEvent(fd, js, &joystick);
+	//processJoystickEvent(fd, js, &joystick);
 	processKeyboardEvent(c, &keyboardInput);
 	updateJoystickInputModel(&joystickInput, &joystick);
 	updateInputModel(&inputModel, &keyboardInput, &joystickInput);
 }
+
 
 /*----------------------------------------------------------------
  * main -- execute terminal
@@ -89,7 +87,6 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	
 	/* Check input 
 	 */
 	if (argc == 1) 
@@ -126,36 +123,32 @@ int main(int argc, char **argv)
 	while (link_status > -1 && (c = rs232_getchar_nb()) != -1)
 		fputc(c,stderr);
 	
+	/* Timer init
+	*/
+	struct timeval timer1, timer2;
+
 	/* send & receive
 	 */
-
-	int level = 0;
-	
 	for (;;) 
 	{
-		// Delay for 100 ms
-		//mon_delay_ms(100);
-		/*if ((c = term_getchar_nb()) != -1) 
-			rs232_putchar(c);
-			*/
-		// Check up on joystick
-		//1show_joystick(&joystick);
-		// Check keyboard
-
-		// process input (new style :D)
 		processInput();
 		if(inputModel.updated) {
 			#ifdef DEBUG
 				show_input(&inputModel);
+				if(link_status > -1) {
+					show_pkt(&pkt);
+				}
 			#endif
-			// Send packet TODO: periodically
 			input_to_pkt(&inputModel, &pkt);
-			if(link_status > -1) {
-				show_pkt(&pkt);
-				rs232_put_pkt(&pkt); //if we are sending out things periodically, we might want to do this sometime later
-			}
 			inputModel.updated = false;
 		}
+		
+		/*
+		* Send the packet periodically
+		*/
+		gettimeofday(&timer1, NULL);
+		periodic_send (&timer1, &timer2, &pkt, link_status);
+
 		if (link_status > -1 && (c = rs232_getchar_nb()) != -1) 
 			term_putchar(c);
 	}
