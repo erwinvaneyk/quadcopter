@@ -11,6 +11,7 @@
 /*--------------------------
  define protocol specifics
  */
+#define COMM_T 50000 //value in us
 
 #define PACKET_SIZE 7
 //HEADER
@@ -38,13 +39,13 @@
 #define LEVEL6 	0x06
 #define LEVEL7 	0x07
 #define LEVEL8 	0x08
- #define LEVEL9 	0x09
- #define LEVEL10 	0x0A
- #define LEVEL11 	0x0B
- #define LEVEL12 	0x0C
- #define LEVEL13 	0x0D
- #define LEVEL14 	0x0E
- #define LEVEL15 	0x0F
+#define LEVEL9 	0x09
+#define LEVEL10 	0x0A
+#define LEVEL11 	0x0B
+#define LEVEL12 	0x0C
+#define LEVEL13 	0x0D
+#define LEVEL14 	0x0E
+#define LEVEL15 	0x0F
 
 //1 bit to indicate negative value
 #define LEVEL_N1 	0x11
@@ -55,13 +56,13 @@
 #define LEVEL_N6 	0x16
 #define LEVEL_N7 	0x17
 #define LEVEL_N8 	0x18
- #define LEVEL_N9 	0x19
- #define LEVEL_N10 	0x1A
- #define LEVEL_N11 	0x1B
- #define LEVEL_N12 	0x1C
- #define LEVEL_N13 	0x1D
- #define LEVEL_N14 	0x1E
- #define LEVEL_N15 	0x1F
+#define LEVEL_N9 	0x19
+#define LEVEL_N10 	0x1A
+#define LEVEL_N11 	0x1B
+#define LEVEL_N12 	0x1C
+#define LEVEL_N13 	0x1D
+#define LEVEL_N14 	0x1E
+#define LEVEL_N15 	0x1F
 
 #define NUM_LEVELS 	31
 
@@ -80,5 +81,5 @@ void generate_pkt(struct PACKET* packet, uint8_t mode, uint8_t command, uint16_t
 void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet);
 void show_pkt(struct PACKET* packet);
 uint8_t level_convert(int level);
-
+void periodic_send (struct timeval* timer_main, struct timeval* timer_r, struct PACKET* pkt, int link_status);
 #endif
