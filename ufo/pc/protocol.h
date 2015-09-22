@@ -12,7 +12,6 @@
  define protocol specifics
  */
 #define COMM_T 50000 //value in us
-
 #define PACKET_SIZE 7
 //HEADER
 #define HEADER 0xAA //1010 1010
@@ -27,7 +26,6 @@
 #define PANIC_MODE		0x0F
 
 #define SEND_TELEMETRY	0x07
-
 
 //DATA
 #define HOVER 	0x00 //level zero
@@ -63,6 +61,7 @@
 #define LEVEL_N13 	0x1D
 #define LEVEL_N14 	0x1E
 #define LEVEL_N15 	0x1F
+
 
 #define NUM_LEVELS 	31
 
