@@ -34,7 +34,7 @@
 #include "input.h"
 #include "keyboardio.h"
 
-int serial_device = 0;
+int serial_device = 1;
 int fd;
 char c;
 bool DEBUG;
@@ -63,6 +63,7 @@ void printHelp() {
 	printf("Usage: ./term [args]\n");
 	printf("-d, --debug \t Set to debug mode\n");
 	printf("-s, --serial \t Set manual serial device (options: serial, usb, wifi)\n");
+	printf("-j, --joystick \t Enable the joystick for input\n");
 	printf("-h, --help \t this.\n");
 }
 
@@ -88,7 +89,7 @@ int parseArgs(int argc, char **argv) {
 		} else if(checkArg(arg,"-d", "--debug") > 0) {
 			DEBUG = true;
 			printf("Debug mode enabled!\n");
-		} else if(checkArg(arg, "-js", "--joystick")) {
+		} else if(checkArg(arg, "-j", "--joystick")) {
 			ENABLE_JOYSTICK = true;
 			printf("Joystick enabled, note that joystick provides shitty values if not connected!\n");
 		} else if(checkArg(arg, "-h", "--help")) {
