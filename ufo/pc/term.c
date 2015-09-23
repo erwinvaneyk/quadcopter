@@ -37,6 +37,8 @@
 int serial_device = 0;
 int fd;
 char c;
+bool DEBUG;
+bool ENABLE_JOYSTICK;
 
 // Input models
 struct js_event js;
@@ -45,18 +47,59 @@ struct INPUT joystickInput;
 struct INPUT keyboardInput;
 struct INPUT inputModel;
 
-int getSerialDevice(char **argv) {
-	if (strncmp(argv[1],"serial",3) == 0)
+
+int getSerialDevice(char *argv) {
+	if (strncmp(argv,"serial",3) == 0)
 		return 0;
-	else if (strncmp(argv[1],"usb",3) == 0)
+	else if (strncmp(argv,"usb",3) == 0)
 		return 1;
-	else if (strncmp(argv[1],"wifi",3) == 0)
+	else if (strncmp(argv,"wifi",3) == 0)
 		return 2;
 	else
 		return -1;
 }
 
-void    mon_delay_ms(unsigned int ms)
+void printHelp() {
+	printf("Usage: ./term [args]\n");
+	printf("-d, --debug \t Set to debug mode\n");
+	printf("-s, --serial \t Set manual serial device (options: serial, usb, wifi)\n");
+	printf("-h, --help \t this.\n");
+}
+
+int checkArg(char *arg, char *shortname, char *longname) {
+	if(strcmp(arg, shortname) == 0 || strcmp(arg, longname) == 0) {
+		return 1;  
+	}
+	return 0;
+}
+
+int parseArgs(int argc, char **argv) {
+	int c = 1;
+	char *arg;
+	while(c < argc) {
+		arg = argv[c];
+		if(checkArg(arg,"-s", "--serial") > 0) {
+			c += 1;
+			if(c < argc) {
+				serial_device = getSerialDevice(argv[c]);
+			} else {
+				printf("No param found for --serial; ignoring it \n");
+			}
+		} else if(checkArg(arg,"-d", "--debug") > 0) {
+			DEBUG = true;
+			printf("Debug mode enabled!\n");
+		} else if(checkArg(arg, "-js", "--joystick")) {
+			ENABLE_JOYSTICK = true;
+			printf("Joystick enabled, note that joystick provides shitty values if not connected!\n");
+		} else if(checkArg(arg, "-h", "--help")) {
+			printHelp();
+		}
+		c += 1; 
+	}
+	return 0;
+}
+
+void mon_delay_ms(unsigned int ms)
 {
         struct timespec req, rem;
         req.tv_sec = ms / 1000;
@@ -65,7 +108,9 @@ void    mon_delay_ms(unsigned int ms)
 }
 
 void processInput() {
-	//processJoystickEvent(fd, js, &joystick);
+	if(ENABLE_JOYSTICK) {
+		processJoystickEvent(fd, js, &joystick);
+	}
 	processKeyboardEvent(c, &keyboardInput);
 	updateJoystickInputModel(&joystickInput, &joystick);
 	updateInputModel(&inputModel, &keyboardInput, &joystickInput);
@@ -79,36 +124,32 @@ void processInput() {
 int main(int argc, char **argv)
 {
 	struct PACKET pkt;
-	int 	bad_input = 0;
+	int bad_input = 0;
 	int link_status;
+
+	term_puts("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
+	
 	// fd is for the joystick
 	if ((fd = open(JS_DEV, O_RDONLY)) < 0) {
 		perror("jstest");
 		exit(1);
 	}
 
-	/* Check input 
+	/* 
+	 * Check input 
 	 */
-	if (argc == 1) 
-    		serial_device = 1; 
-	
-	else if (argc == 2) 
-	{
-		serial_device = getSerialDevice(argv);
-		if(serial_device == -1) {
-			bad_input = 1;
-		}
-	} 
-	else 
-		bad_input = 1;
+	bad_input = parseArgs(argc, argv);
 
-	if (bad_input == 1) 
+	if (bad_input == -1) 
 	{
-		fprintf(stderr,"Usage: ./term [serial|usb|wifi]\n"); 
+		printHelp();
 		return -1;
 	}
 
-	term_puts("\nTerminal program (Embedded Software Lab), ");
+
+	/*
+	 * init
+	 */
 
 	term_initio();
 	link_status = rs232_open(serial_device);
@@ -133,12 +174,12 @@ int main(int argc, char **argv)
 	{
 		processInput();
 		if(inputModel.updated) {
-			#ifdef DEBUG
+			if(DEBUG) {
 				show_input(&inputModel);
 				if(link_status > -1) {
 					show_pkt(&pkt);
 				}
-			#endif
+			}
 			input_to_pkt(&inputModel, &pkt);
 			inputModel.updated = false;
 	//show_input(&inputModel);
