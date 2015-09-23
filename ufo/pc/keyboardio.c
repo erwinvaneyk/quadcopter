@@ -6,7 +6,9 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput) {
 	bool updated;
 	if ((c = term_getchar_nb()) != -1) {
 		updated = true;
+		bool unknownKey = true;
 		if(keyboardInput->mode != SAFE_MODE_INT && keyboardInput->mode != PANIC_MODE_INT) {
+			unknownKey = false;
 			switch(c) {
 				// Controls
 				case 'a':
@@ -49,6 +51,9 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput) {
 					if (keyboardInput->roll < MAX_LEVEL) {
 						keyboardInput->roll++;
 					}
+					break;
+				default:
+					unknownKey = true;
 					break;
 			}
 		}	
@@ -117,9 +122,11 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput) {
 				break;
 
 			default:
-				printf("Unknown key: %i\n", c);
-				updated = false;
-			// TODO: add other keys for P
+				if(unknownKey) {
+					printf("Unknown key: %i\n", c);
+					updated = false;
+				}
+				// TODO: add other keys for P
 		}
 		keyboardInput->updated = updated;
 	}
