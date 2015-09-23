@@ -8,7 +8,7 @@
 //#define DEBUG
 #define TRUE 1
 #define FALSE 0
-#define LOG_LENGTH 1000
+#define LOG_LENGTH 5000
 
 #include <stdio.h>
 #include <x32.h>
@@ -55,7 +55,7 @@ int	iptr, optr;
 
 // Globals
 char	c;
-int	demo_done;
+int	ALIVE;
 int	ae[4];
 int	s0, s1, s2, s3, s4, s5, timestamp;
 int	isr_qr_counter;
@@ -409,8 +409,8 @@ void process_key(char c)
 			ae[3] -= 10;
 			if (ae[3] < 0) ae[3] = 0;
 			break;
-		default:
-			demo_done = 1;
+		//default:
+		//	demo_done = 1;
 	}
 }
 
@@ -447,6 +447,7 @@ int main()
 {
 	struct LOG log[LOG_LENGTH];
 	int log_counter = 0;
+	ALIVE = 1;
 
 	/* prepare QR rx interrupt handler
 	 */
@@ -500,26 +501,28 @@ int main()
 
 /*************************
 **************************/
-       
-	while (TRUE)
+    log_counter = 0;
+	while (ALIVE)
 	{
-	printf("sizeof log struct is: %d\n\n", sizeof(*log) );
+	//printf("sizeof log struct is: %d\n\n", sizeof(*log) );
 		c=get_packet();  //<- possibly add no change packet
 		if (c != -1) {
 			process_packet();
-			//print_state(); // <-- make nicer output
+			print_state(); //<-this is a burden
 		}
-			
-    	if (log_counter < LOG_LENGTH)
+	
+
+    	/*if (log_counter < LOG_LENGTH)
     	{
-    		log[log_counter].timestamp = timestamp;
-    		log[log_counter].ae[0] = ae[0];
-    		log[log_counter].ae[1] = ae[1];
-    		log[log_counter].ae[2] = ae[2];
-    		log[log_counter].ae[3] = ae[3];
-    		log[log_counter].s0 = s0;
-    		log[log_counter].s1 = s1;
-    		log[log_counter].s2 = s2;
+    		log[log_counter].timestamp = 0xFF00FF00; //timestamp;
+    		log[log_counter].ae[0] = 0xFFAA;
+    		log[log_counter].ae[1] = 0xFFAA;
+    		log[log_counter].ae[2] = 0xFFAA;
+    		log[log_counter].ae[3] = 0xFFAA;
+    		log[log_counter].s0 = 0;
+    		log[log_counter].s1 = 0;
+    		log[log_counter].s2 = 0;
+    		*/
     		/*log[log_counter].timestamp = timestamp;
     		log[log_counter].ae[0] = ae[0];
     		log[log_counter].ae[1] = ae[1];
@@ -528,11 +531,17 @@ int main()
     		log[log_counter].s0 = s0;
     		log[log_counter].s1 = s1;
     		log[log_counter].s2 = s2;*/
+    		/*
     		log_counter++;
+    		printf("*");
     	}
-    	else printf("DONE!!!\n");
-    	printf("%p\n", &log );
-
+    	else 
+    	{
+    		printf("\nDONE!!!\n");
+    		printf("%p\n", &log );
+ 			break;
+ 		}
+ 		*/
 	     //leave this here for now
         /*X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
 		*/

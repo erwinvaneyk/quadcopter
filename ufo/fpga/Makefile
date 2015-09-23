@@ -18,6 +18,9 @@ clean:
 uploadrun: main.ce
 	x32-upload main.ce -c $(X32_PACKAGE_SERIAL) -e
 
+uploadrun2: main.ce
+	x32-upload main.ce -c $(X32_PACKAGE_SERIAL)
+
 test: main.ce
 	x32-upload main.ce -c $(X32_PACKAGE_SERIAL)
 

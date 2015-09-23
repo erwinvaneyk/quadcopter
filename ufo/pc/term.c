@@ -141,11 +141,13 @@ int main(int argc, char **argv)
 			#endif
 			input_to_pkt(&inputModel, &pkt);
 			inputModel.updated = false;
+			show_input(&inputModel);
 		}
 		
 		/*
 		* Send the packet periodically
 		*/
+
 		gettimeofday(&timer1, NULL);
 		periodic_send (&timer1, &timer2, &pkt, link_status);
 

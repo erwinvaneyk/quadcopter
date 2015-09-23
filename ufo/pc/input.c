@@ -31,6 +31,7 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 
 	// Update controls
 
+printf("%d\n", model->mode );
 	if (model->mode == MANUAL_MODE_INT)
 	{
 		model->lift = within_bounds(keyboard->lift + joystick->lift, MAX_LEVEL);
@@ -40,6 +41,7 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 	}
 	else if (model->mode == SAFE_MODE_INT)
 	{
+		printf("SHUT DOWN!!! \n");
 		model->lift 	= 0;
 		model->yaw 		= 0;
 		model->roll 	= 0;
