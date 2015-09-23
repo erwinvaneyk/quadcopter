@@ -14,15 +14,15 @@ int within_bounds(int x, int y) {
 
 // All rules regarding state/mode switches
 void updateModeIfValid(struct INPUT* model, int newMode) {
-	// Safe mode: All switches, except panic mode, should start at safe mode 
-	if(model->mode != SAFE_MODE_INT && newMode != PANIC_MODE_INT) {
-		return;
-	} 
-
+	
 	// Panic mode: Only a switch to safe mode is allowed
 	if(model->mode == PANIC_MODE_INT && newMode != SAFE_MODE_INT) {
 		return;
 	}
+	// Safe mode: All switches, except panic mode, should start at safe mode
+	else if(model->mode != SAFE_MODE_INT model->mode = && newMode != PANIC_MODE_INT) {
+		return;
+	} 
 
 	// Mode change is valid!
 	model->mode = newMode;
