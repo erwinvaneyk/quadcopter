@@ -35,7 +35,7 @@
 #define X32_QR_s3 		peripherals[PERIPHERAL_XUFO_S3]
 #define X32_QR_s4 		peripherals[PERIPHERAL_XUFO_S4]
 #define X32_QR_s5 		peripherals[PERIPHERAL_XUFO_S5]
-#define X32_display	peripherals[PERIPHERAL_DISPLAY]
+#define X32_display		peripherals[PERIPHERAL_DISPLAY]
 #define X32_QR_timestamp 	peripherals[PERIPHERAL_XUFO_TIMESTAMP]
 
 #define X32_rs232_data		peripherals[PERIPHERAL_PRIMARY_DATA]
@@ -279,10 +279,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
 		{
 			mode = PANIC_MODE_INT;
-			ae[0] = 200;
-			ae[1] = 200;
-			ae[2] = 200;
-			ae[3] = 200;
+			ae[0] = ae[1] = ae[2] = ae[3] = 200;
 			delay_ms(1000000);
 			ae[0]=ae[1]=ae[2]=ae[3] = 0;
 			mode = SAFE_MODE_INT;
