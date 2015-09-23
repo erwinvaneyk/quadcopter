@@ -8,6 +8,8 @@
 #define PROTOCOL_H_
 
 #include "input.h"
+#include <sys/time.h>
+
 /*--------------------------
  define protocol specifics
  */

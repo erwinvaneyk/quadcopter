@@ -7,7 +7,7 @@
 
  #include "protocol.h"
  #include <stdio.h>
- #include <time.h>
+ //#include <time.h>
  #include "rs232.h"
  #include <stdlib.h>
 
