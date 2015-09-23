@@ -59,6 +59,13 @@ int getSerialDevice(char *argv) {
 		return -1;
 }
 
+void printHelp() {
+	printf("Usage: ./term [args]\n");
+	printf("-d, --debug \t Set to debug mode\n");
+	printf("-s, --serial \t Set manual serial device (options: serial, usb, wifi)\n");
+	printf("-h, --help \t this.\n");
+}
+
 int checkArg(char *arg, char *shortname, char *longname) {
 	if(strcmp(arg, shortname) == 0 || strcmp(arg, longname) == 0) {
 		return 1;  
@@ -84,13 +91,15 @@ int parseArgs(int argc, char **argv) {
 		} else if(checkArg(arg, "-js", "--joystick")) {
 			ENABLE_JOYSTICK = true;
 			printf("Joystick enabled, note that joystick provides shitty values if not connected!\n");
+		} else if(checkArg(arg, "-h", "--help")) {
+			printHelp();
 		}
 		c += 1; 
 	}
 	return 0;
 }
 
-void    mon_delay_ms(unsigned int ms)
+void mon_delay_ms(unsigned int ms)
 {
         struct timespec req, rem;
         req.tv_sec = ms / 1000;
@@ -118,7 +127,7 @@ int main(int argc, char **argv)
 	int bad_input = 0;
 	int link_status;
 
-	term_puts("\nTerminal program for greatest quadcopter, \n");
+	term_puts("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
 	
 	// fd is for the joystick
 	if ((fd = open(JS_DEV, O_RDONLY)) < 0) {
@@ -126,26 +135,14 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	/* Check input 
-	 *
-	if (argc == 1) 
-    		serial_device = 1; 
-	
-	else if (argc == 2) 
-	{
-		serial_device = getSerialDevice(argv[1]);
-		if(serial_device == -1) {
-			bad_input = 1;
-		}
-	} 
-	else 
-		bad_input = 1;
-*/
-	parseArgs(argc, argv);
+	/* 
+	 * Check input 
+	 */
+	bad_input = parseArgs(argc, argv);
 
-	if (bad_input == 1) 
+	if (bad_input == -1) 
 	{
-		fprintf(stderr,"Usage: ./term [serial|usb|wifi]\n"); 
+		printHelp();
 		return -1;
 	}
 
