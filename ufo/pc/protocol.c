@@ -154,7 +154,7 @@ void periodic_send (struct timeval* timer_main, struct timeval* timer_r, struct 
 			printf("Sending packet->\n");
 		#endif
 		if(link_status > -1) {
-show_pkt(&pkt);
+//show_pkt(pkt);
 			rs232_put_pkt(pkt);
 		}
 		gettimeofday(timer_r, NULL);//reset timer	
