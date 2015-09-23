@@ -48,6 +48,35 @@ void processJoystickEvent(int fd, struct js_event js, struct JOYSTICK* joystick)
 	}
 }
 
+
+void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK* joystick) {
+	if(!joystick->updated)
+		return;
+
+	// Update mode
+	int i;
+	for(i = 0; i < MODES; i++) {
+		if(joystick->button[i]) {
+			joystickInputModel->mode = i;
+			break;
+		}
+	}
+
+	// Ignore any updates when safe mode is
+	if(joystickInputModel->mode != SAFE_MODE_INT && joystickInputModel->mode != PANIC_MODE_INT) {
+		// update controls
+		joystickInputModel->pitch = normalizeAxis(joystick->axis[JS_AXIS_PITCH], NUMB_LEVELS) - MAX_LEVEL;
+		joystickInputModel->yaw = normalizeAxis(joystick->axis[JS_AXIS_YAW], NUMB_LEVELS) - MAX_LEVEL;
+		joystickInputModel->roll = normalizeAxis(joystick->axis[JS_AXIS_ROLL], NUMB_LEVELS) - MAX_LEVEL;
+		joystickInputModel->lift = normalizeAxis(joystick->axis[JS_AXIS_LIFT], NUMB_LEVELS) - MAX_LEVEL;
+	}
+
+
+	// Update flags
+	joystick->updated = false;
+	joystickInputModel->updated = true;
+}
+
 //DEBUG purpose
 void show_joystick(struct JOYSTICK* joystick){
 	printf("JOYSTICK: {\n");

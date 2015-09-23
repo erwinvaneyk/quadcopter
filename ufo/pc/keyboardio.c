@@ -6,49 +6,54 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput) {
 	bool updated;
 	if ((c = term_getchar_nb()) != -1) {
 		updated = true;
-		switch(c) {
-			// Controls
-			case 'a':
-				if (keyboardInput->lift < MAX_LEVEL) {	
-					keyboardInput->lift++;
-				}
-				break;
-			case 'z':
-				if (keyboardInput->lift > -MAX_LEVEL) {
-					keyboardInput->lift--;
-				}
-				break;
+		if(keyboardInput->mode != SAFE_MODE_INT && keyboardInput->mode != PANIC_MODE_INT) {
+			switch(c) {
+				// Controls
+				case 'a':
+					if (keyboardInput->lift < MAX_LEVEL) {	
+						keyboardInput->lift++;
+					}
+					break;
+				case 'z':
+					if (keyboardInput->lift > -MAX_LEVEL) {
+						keyboardInput->lift--;
+					}
+					break;
 
-			case 'q': // yaw left
-				if (keyboardInput->yaw > -MAX_LEVEL) {
-					keyboardInput->yaw--;
-				}
-				break;
-			case 'w': // yaw right
-				if (keyboardInput->yaw < MAX_LEVEL) {
-					keyboardInput->yaw++;
-				}
-				break;
-			case 65: // pitch up
-				if (keyboardInput->pitch < MAX_LEVEL) {
-					keyboardInput->pitch++;
-				}
-				break;
-			case 66: // pitch down
-				if (keyboardInput->pitch > -MAX_LEVEL) {
-					keyboardInput->pitch--;
-				}
-				break;
-			case 68: // roll right
-				if (keyboardInput->roll > -MAX_LEVEL) {
-					keyboardInput->roll--;
-				}
-				break;
-			case 67: // roll right
-				if (keyboardInput->roll < MAX_LEVEL) {
-					keyboardInput->roll++;
-				}
-				break;
+				case 'q': // yaw left
+					if (keyboardInput->yaw > -MAX_LEVEL) {
+						keyboardInput->yaw--;
+					}
+					break;
+				case 'w': // yaw right
+					if (keyboardInput->yaw < MAX_LEVEL) {
+						keyboardInput->yaw++;
+					}
+					break;
+				case 65: // pitch up
+					if (keyboardInput->pitch < MAX_LEVEL) {
+						keyboardInput->pitch++;
+					}
+					break;
+				case 66: // pitch down
+					if (keyboardInput->pitch > -MAX_LEVEL) {
+						keyboardInput->pitch--;
+					}
+					break;
+				case 68: // roll right
+					if (keyboardInput->roll > -MAX_LEVEL) {
+						keyboardInput->roll--;
+					}
+					break;
+				case 67: // roll right
+					if (keyboardInput->roll < MAX_LEVEL) {
+						keyboardInput->roll++;
+					}
+					break;
+			}
+		}	
+
+		switch(c) {
 
 			// Modes 
 			case '0': // Safe mode

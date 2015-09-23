@@ -18,7 +18,6 @@ struct INPUT {
 };
 
 #include "protocol.h"
-#include "joystickio.h"
 
 #define SAFE_MODE_INT		0
 #define PANIC_MODE_INT		1
@@ -32,8 +31,6 @@ struct INPUT {
 #define MODES 6 // counting from 0
 
 void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT* joystick);
-
-void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK* joystick);
 
 void show_input(struct INPUT* input);
 
