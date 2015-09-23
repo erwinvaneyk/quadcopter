@@ -253,7 +253,12 @@ ae3---ae1
 
 void process_packet(void)  //we need to process packet and decide what should be done
 {
-	if (modecommand == MANUAL_MODE)
+	
+	if (modecommand == SAFE_MODE)
+		{
+			ae[0]=ae[1]=ae[2]=ae[3] = 0;
+		{
+	else if (modecommand == MANUAL_MODE)
 		{
 				//LIFT
 				if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
@@ -313,10 +318,8 @@ void process_packet(void)  //we need to process packet and decide what should be
 							ae[2] = ae[2] - 15 * (data2&0x0F);
 						}
 		 		}
-
-		 		
-			//}
 		}
+
 }
 
 /*------------------------------------------------------------------
