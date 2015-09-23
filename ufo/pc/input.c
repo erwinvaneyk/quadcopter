@@ -16,16 +16,15 @@ int within_bounds(int x, int y) {
 void updateModeIfValid(struct INPUT* model, int newMode) {
 	
 	// Panic mode: Only a switch to safe mode is allowed
-	if(model->mode == PANIC_MODE_INT && newMode != SAFE_MODE_INT) {
+	if(model->mode == PANIC_MODE_INT && newMode == SAFE_MODE_INT) {
+		model->mode = newMode;
 		return;
 	}
 	// Safe mode: All switches, except panic mode, should start at safe mode
-	else if(model->mode != SAFE_MODE_INT model->mode = && newMode != PANIC_MODE_INT) {
+	if(model->mode == SAFE_MODE_INT && newMode != PANIC_MODE_INT) {
+		model->mode = newMode;
 		return;
 	} 
-
-	// Mode change is valid!
-	model->mode = newMode;
 }
 
 void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT* joystick) {
