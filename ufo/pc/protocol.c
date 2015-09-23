@@ -150,9 +150,6 @@ void periodic_send (struct timeval* timer_main, struct timeval* timer_r, struct 
 {
 	if ((labs(((timer_main->tv_usec + timer_main->tv_sec*1000000) - (timer_r->tv_usec + timer_r->tv_sec*1000000))) > COMM_T))
 	{	
-		#ifdef DEBUG
-			printf("Sending packet->\n");
-		#endif
 		if(link_status > -1) {
 //show_pkt(pkt);
 			rs232_put_pkt(pkt);
