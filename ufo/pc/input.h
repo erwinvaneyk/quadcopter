@@ -1,8 +1,6 @@
 #ifndef _INPUTH_
 #define _INPUTH_
 
-#include "protocol.h"
-#include "joystickio.h"
 #include <stdbool.h>
 
 /*
@@ -18,6 +16,9 @@ struct INPUT {
 	bool updated; // a simple flag to indicate whether the input has been updated
 	// TODO: add control params and others when we have those implemented..
 };
+
+#include "protocol.h"
+#include "joystickio.h"
 
 #define SAFE_MODE_INT		0
 #define PANIC_MODE_INT		1
