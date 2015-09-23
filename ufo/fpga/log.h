@@ -6,16 +6,18 @@
 #define NULL 0
 
 struct LOG {
-		uint8_t ae0;
-		uint8_t ae1;
+		int timestamp;
+		uint8_t ae[4];
+		/*uint8_t ae1;
 		uint8_t ae2;
 		uint8_t ae3;
+		*/
 		int s0;
 		int s1;
 		int s2;
 	}; //__attribute__ ((packed))
 
 
-//int allocate_log(struct LOG* log, int log_length); //return -1 if unsuccessful
+//void log_now(struct LOG logp[], int ae0, int ae1, int ae2, int ae3); 
 
 #endif

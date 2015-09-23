@@ -169,7 +169,6 @@ int getchar(void)
 }
 
 
-//#define HEADER 0xAA //1010 1010
 uint8_t modecommand;
 
 uint8_t data1;
@@ -224,7 +223,7 @@ int get_packet(void)
 			printf("PITCH is: %x \n", data3);
 			printf("ROLL is: %x \n", data4);
 			printf("Checksum is: %x \n", checksum);
-			printf("MAGIC  : %x \n", checker);
+			printf("%s\n", checker==0 ? "PASS" : "FAIL");
 			#endif
 			//check checksum
 			if ( (int)checker != 0)
@@ -259,60 +258,59 @@ void process_packet(void)  //we need to process packet and decide what should be
 				//LIFT
 				if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
 					{
-						ae[0]=ae[1]=ae[2]=ae[3]= 15 * (data1&0x0F);
+						ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
 		 			}
 
 		 		//ROLL
 		 		if ( (data4&0x10) == 0x00) 
 					{
-						
-						ae[1]=ae[1] + 5 * (data4&0x0F); //lean left
+						ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
 
 					if (ae[3] > 30)
-						ae[3]=ae[3] - 5 * (data4&0x0F);
+						ae[3]=ae[3] - 15 * (data4&0x0F);
 		 			}
 		 		else
 		 			{
 		 			if (ae[1] > 30)
-						ae[1]=ae[1] - 5 * (data4&0x0F); //lean right
-						ae[3]=ae[3] + 5 * (data4&0x0F);
+						ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
+						ae[3]=ae[3] + 15 * (data4&0x0F);
 		 			}
 
 				//PITCH
 		 		if ( (data3&0x10) == 0x00) 
 					{
 					if (ae[0] > 30)
-						ae[0] = ae[0] - 5 * (data3&0x0F); //lean forward
-						ae[2] = ae[2] + 5 * (data3&0x0F); 
+						ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
+						ae[2] = ae[2] + 15 * (data3&0x0F); 
 		 			}
 		 		else
 		 			{
-						ae[0] = ae[0] + 5 * (data3&0x0F); //lean backward
+						ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
 					if (ae[2] > 30)
-						ae[2] = ae[2] - 5 * (data3&0x0F); 
+						ae[2] = ae[2] - 15 * (data3&0x0F); 
 		 			}
 
 		 		//YAW
 		 		if ( (data2&0x10) == 0x00) 
 					{
-						ae[0] = ae[0] + 5 * (data2&0x0F);
-						ae[2] = ae[2] + 5 * (data2&0x0F);
+						ae[0] = ae[0] + 15 * (data2&0x0F);
+						ae[2] = ae[2] + 15 * (data2&0x0F);
 						
 						if ((ae[1] > 30) && (ae[3] > 30))
 						{
-							ae[1] = ae[1] - 5 * (data2&0x0F);
-							ae[3] = ae[3] - 5 * (data2&0x0F);
+							ae[1] = ae[1] - 15 * (data2&0x0F);
+							ae[3] = ae[3] - 15 * (data2&0x0F);
 						}
 
 		 			}
 		 		else
 		 		{
-						ae[1] = ae[1] + 5 * (data2&0x0F);
-						ae[3] = ae[3] + 5 * (data2&0x0F);
+						ae[1] = ae[1] + 15 * (data2&0x0F);
+						ae[3] = ae[3] + 15 * (data2&0x0F);
 			 			if ((ae[0] > 30) && (ae[2] > 30))
 						{
-			 				ae[0] = ae[0] - 5 * (data2&0x0F);
-							ae[2] = ae[2] - 5 * (data2&0x0F);
+			 				ae[0] = ae[0] - 15 * (data2&0x0F);
+							ae[2] = ae[2] - 15 * (data2&0x0F);
 						}
 		 		}
 
@@ -447,7 +445,8 @@ void print_state(void)
  */
 int main() 
 {
-	struct LOG* log;
+	struct LOG log[LOG_LENGTH];
+	int log_counter = 0;
 
 	/* prepare QR rx interrupt handler
 	 */
@@ -497,32 +496,51 @@ int main()
 /*************LOGGING************
 **************************/
 
-/*
-if(allocate_log(log, LOG_LENGTH) == -1)
-		{
-			printf(stderr, "Error allocating log.\n");
-		}
-*/
+
 
 /*************************
 **************************/
+       
 	while (TRUE)
 	{
-  
 	printf("sizeof log struct is: %d\n\n", sizeof(*log) );
-		c=get_packet();
+		c=get_packet();  //<- possibly add no change packet
 		if (c != -1) {
 			process_packet();
+			//print_state(); // <-- make nicer output
 		}
-			print_state();
-        
+			
+    	if (log_counter < LOG_LENGTH)
+    	{
+    		log[log_counter].timestamp = timestamp;
+    		log[log_counter].ae[0] = ae[0];
+    		log[log_counter].ae[1] = ae[1];
+    		log[log_counter].ae[2] = ae[2];
+    		log[log_counter].ae[3] = ae[3];
+    		log[log_counter].s0 = s0;
+    		log[log_counter].s1 = s1;
+    		log[log_counter].s2 = s2;
+    		/*log[log_counter].timestamp = timestamp;
+    		log[log_counter].ae[0] = ae[0];
+    		log[log_counter].ae[1] = ae[1];
+    		log[log_counter].ae[2] = ae[2];
+    		log[log_counter].ae[3] = ae[3];
+    		log[log_counter].s0 = s0;
+    		log[log_counter].s1 = s1;
+    		log[log_counter].s2 = s2;*/
+    		log_counter++;
+    	}
+    	else printf("DONE!!!\n");
+    	printf("%p\n", &log );
 
-        X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
-		if (button == 1){
+	     //leave this here for now
+        /*X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
+		*/
+		/*if (button == 1){
 			printf("You have pushed the button!!!\r\n");
 			button = 0;
-		}
-		//delay_ms(20);
+		}*/
+
 	}
 
 
