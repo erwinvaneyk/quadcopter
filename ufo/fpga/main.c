@@ -48,6 +48,14 @@
 #define X32_button		peripherals[PERIPHERAL_BUTTONS]
 #define X32_switches		peripherals[PERIPHERAL_SWITCHES]
 
+
+#define SAFE_MODE_INT		0
+#define PANIC_MODE_INT		1
+#define MANUAL_MODE_INT		2
+#define CALIBRATE_MODE_INT	3
+#define YAW_CONTROL_INT		4
+#define FULL_CONTROL_INT	5
+
 #define FIFOSIZE 16
 uint8_t	fifo[FIFOSIZE]; 
 int	iptr, optr;
@@ -56,6 +64,7 @@ int	iptr, optr;
 // Globals
 char	c;
 int	ALIVE;
+int mode;
 int	ae[4];
 int	s0, s1, s2, s3, s4, s5, timestamp;
 int	isr_qr_counter;
@@ -253,13 +262,29 @@ ae3---ae1
 
 void process_packet(void)  //we need to process packet and decide what should be done
 {
+	if (mode == PANIC_MODE_INT){
+		return;	
+	}
 	
-	if (modecommand == SAFE_MODE)
+	if ((modecommand == SAFE_MODE) )
 		{
 			ae[0]=ae[1]=ae[2]=ae[3] = 0;
+			mode = SAFE_MODE_INT;
+		}
+	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
+		{
+			mode = PANIC_MODE_INT;
+			ae[0] = 200;
+			ae[1] = 200;
+			ae[2] = 200;
+			ae[3] = 200;
+			delay_ms(1000000);
+			ae[0]=ae[1]=ae[2]=ae[3] = 0;
+			mode = SAFE_MODE_INT;
 		}
 	else if (modecommand == MANUAL_MODE)
 		{
+			mode = MANUAL_MODE_INT;
 				//LIFT
 				if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
 					{
@@ -298,24 +323,24 @@ void process_packet(void)  //we need to process packet and decide what should be
 		 		//YAW
 		 		if ( (data2&0x10) == 0x00) 
 					{
-						ae[0] = ae[0] + 15 * (data2&0x0F);
-						ae[2] = ae[2] + 15 * (data2&0x0F);
+						ae[0] = ae[0] + 20 * (data2&0x0F);
+						ae[2] = ae[2] + 20 * (data2&0x0F);
 						
 						if ((ae[1] > 30) && (ae[3] > 30))
 						{
-							ae[1] = ae[1] - 15 * (data2&0x0F);
-							ae[3] = ae[3] - 15 * (data2&0x0F);
+							ae[1] = ae[1] - 20 * (data2&0x0F);
+							ae[3] = ae[3] - 20 * (data2&0x0F);
 						}
 
 		 			}
 		 		else
 		 		{
-						ae[1] = ae[1] + 15 * (data2&0x0F);
-						ae[3] = ae[3] + 15 * (data2&0x0F);
+						ae[1] = ae[1] + 20 * (data2&0x0F);
+						ae[3] = ae[3] + 20 * (data2&0x0F);
 			 			if ((ae[0] > 30) && (ae[2] > 30))
 						{
-			 				ae[0] = ae[0] - 15 * (data2&0x0F);
-							ae[2] = ae[2] - 15 * (data2&0x0F);
+			 				ae[0] = ae[0] - 20 * (data2&0x0F);
+							ae[2] = ae[2] - 20 * (data2&0x0F);
 						}
 		 		}
 		}
@@ -451,6 +476,7 @@ int main()
 	struct LOG log[LOG_LENGTH];
 	int log_counter = 0;
 	ALIVE = 1;
+	mode = SAFE_MODE_INT;
 
 	/* prepare QR rx interrupt handler
 	 */
@@ -511,10 +537,18 @@ int main()
 		c=get_packet();  //<- possibly add no change packet
 		if (c != -1) {
 			process_packet();
-			print_state(); //<-this is a burden
+			 //<-this is a burden
 		}
-	
-
+		printf("%d\nMODE:  ", mode);
+		print_state();
+/*
+	if (mode == SAFE_MODE_INT)
+		X32_leds = (X32_leds & 0xFC) | 0x01 );
+	else if (mode == PANIC_MODE_INT)
+		X32_leds = (X32_leds & 0xFC) | 0x02 );
+	else if (mode == MANUAL_MODE_INT)
+		X32_leds = (X32_leds & 0xFC) | 0x04 );
+*/
     	/*if (log_counter < LOG_LENGTH)
     	{
     		log[log_counter].timestamp = 0xFF00FF00; //timestamp;
