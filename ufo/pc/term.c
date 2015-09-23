@@ -141,11 +141,14 @@ int main(int argc, char **argv)
 			#endif
 			input_to_pkt(&inputModel, &pkt);
 			inputModel.updated = false;
+	//show_input(&inputModel);
+	//show_pkt(&pkt);
 		}
 		
 		/*
 		* Send the packet periodically
 		*/
+
 		gettimeofday(&timer1, NULL);
 		periodic_send (&timer1, &timer2, &pkt, link_status);
 
@@ -153,11 +156,10 @@ int main(int argc, char **argv)
 			term_putchar(c);
 	}
 
-	term_exitio();
-	if(link_status > -1) {
-		rs232_close();
-	}
-	term_puts("\n<exit>\n");
-  	
-	return 0;
+		term_exitio();
+		if(link_status > -1) {
+			rs232_close();
+		}
+		term_puts("\n<exit>\n");
+		return 0;
 }

@@ -1,27 +1,22 @@
 /*------------------------------------------------------------------
- *  qrtest.c -- test QR engines and sensors
+ *  QR
  *
- *  reads ae[0-3] from stdin
- *  (q,w,e,r increment ae[0-3], a,s,d,f decrement)
  *
- *  prints ae[0-3],sax,say,saz,sp,sq,sr,delta_t on stdout
- *  where delta_t is the qr-isr exec time
- *
- *  Arjan J.C. van Gemund
- *  Embedded Software Lab
- *
- *  Version Jan 1, 2010
  *------------------------------------------------------------------
  */
+
 //#define DEBUG
 #define TRUE 1
 #define FALSE 0
+#define LOG_LENGTH 5000
 
 #include <stdio.h>
 #include <x32.h>
 #include "assert.h"
 #include "defines.h"
 #include <stdint.h>
+#include "log.h"
+
 /* define some peripheral short hands
  */
 #define X32_instruction_counter           peripherals[0x03]
@@ -53,8 +48,6 @@
 #define X32_button		peripherals[PERIPHERAL_BUTTONS]
 #define X32_switches		peripherals[PERIPHERAL_SWITCHES]
 
-
-// RX FIFO
 #define FIFOSIZE 16
 uint8_t	fifo[FIFOSIZE]; 
 int	iptr, optr;
@@ -62,7 +55,7 @@ int	iptr, optr;
 
 // Globals
 char	c;
-int	demo_done;
+int	ALIVE;
 int	ae[4];
 int	s0, s1, s2, s3, s4, s5, timestamp;
 int	isr_qr_counter;
@@ -160,9 +153,10 @@ printf(" => %x\n", fifo[iptr-1]);
 
 /*------------------------------------------------------------------
  * getchar -- read char from rx fifo, return -1 if no char available
+ *****   @deprecated
  *------------------------------------------------------------------
  */
-int 	getchar(void)
+int getchar(void)
 {
 	int	c;
 
@@ -175,7 +169,6 @@ int 	getchar(void)
 }
 
 
-//#define HEADER 0xAA //1010 1010
 uint8_t modecommand;
 
 uint8_t data1;
@@ -193,10 +186,9 @@ uint8_t checker;
 
 void move_optr()
 {	
-
-		if (optr == FIFOSIZE-1)
-			optr = 0;
-		else optr++;
+	if (optr == FIFOSIZE-1)
+		optr = 0;
+	else optr++;
 }
 
 int get_packet(void)
@@ -231,7 +223,7 @@ int get_packet(void)
 			printf("PITCH is: %x \n", data3);
 			printf("ROLL is: %x \n", data4);
 			printf("Checksum is: %x \n", checksum);
-			printf("MAGIC  : %x \n", checker);
+			printf("%s\n", checker==0 ? "PASS" : "FAIL");
 			#endif
 			//check checksum
 			if ( (int)checker != 0)
@@ -261,71 +253,73 @@ ae3---ae1
 
 void process_packet(void)  //we need to process packet and decide what should be done
 {
-	if (modecommand == MANUAL_MODE)
+	
+	if (modecommand == SAFE_MODE)
+		{
+			ae[0]=ae[1]=ae[2]=ae[3] = 0;
+		}
+	else if (modecommand == MANUAL_MODE)
 		{
 				//LIFT
 				if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
 					{
-						ae[0]=ae[1]=ae[2]=ae[3]= 15 * (data1&0x0F);
+						ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
 		 			}
 
 		 		//ROLL
 		 		if ( (data4&0x10) == 0x00) 
 					{
-						
-						ae[1]=ae[1] + 5 * (data4&0x0F); //lean left
+						ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
 
 					if (ae[3] > 30)
-						ae[3]=ae[3] - 5 * (data4&0x0F);
+						ae[3]=ae[3] - 15 * (data4&0x0F);
 		 			}
 		 		else
 		 			{
 		 			if (ae[1] > 30)
-						ae[1]=ae[1] - 5 * (data4&0x0F); //lean right
-						ae[3]=ae[3] + 5 * (data4&0x0F);
+						ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
+						ae[3]=ae[3] + 15 * (data4&0x0F);
 		 			}
 
 				//PITCH
 		 		if ( (data3&0x10) == 0x00) 
 					{
 					if (ae[0] > 30)
-						ae[0] = ae[0] - 5 * (data3&0x0F); //lean forward
-						ae[2] = ae[2] + 5 * (data3&0x0F); 
+						ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
+						ae[2] = ae[2] + 15 * (data3&0x0F); 
 		 			}
 		 		else
 		 			{
-						ae[0] = ae[0] + 5 * (data3&0x0F); //lean backward
+						ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
 					if (ae[2] > 30)
-						ae[2] = ae[2] - 5 * (data3&0x0F); 
+						ae[2] = ae[2] - 15 * (data3&0x0F); 
 		 			}
 
 		 		//YAW
 		 		if ( (data2&0x10) == 0x00) 
 					{
-						ae[0] = ae[0] + 5 * (data2&0x0F);
-						ae[2] = ae[2] + 5 * (data2&0x0F);
+						ae[0] = ae[0] + 15 * (data2&0x0F);
+						ae[2] = ae[2] + 15 * (data2&0x0F);
 						
 						if ((ae[1] > 30) && (ae[3] > 30))
 						{
-							ae[1] = ae[1] - 5 * (data2&0x0F);
-							ae[3] = ae[3] - 5 * (data2&0x0F);
+							ae[1] = ae[1] - 15 * (data2&0x0F);
+							ae[3] = ae[3] - 15 * (data2&0x0F);
 						}
 
 		 			}
 		 		else
 		 		{
-						ae[1] = ae[1] + 5 * (data2&0x0F);
-						ae[3] = ae[3] + 5 * (data2&0x0F);
+						ae[1] = ae[1] + 15 * (data2&0x0F);
+						ae[3] = ae[3] + 15 * (data2&0x0F);
 			 			if ((ae[0] > 30) && (ae[2] > 30))
 						{
-			 				ae[0] = ae[0] - 5 * (data2&0x0F);
-							ae[2] = ae[2] - 5 * (data2&0x0F);
+			 				ae[0] = ae[0] - 15 * (data2&0x0F);
+							ae[2] = ae[2] - 15 * (data2&0x0F);
 						}
 		 		}
-
-		 		
-			//}
 		}
+
 }
 
 /*------------------------------------------------------------------
@@ -418,8 +412,8 @@ void process_key(char c)
 			ae[3] -= 10;
 			if (ae[3] < 0) ae[3] = 0;
 			break;
-		default:
-			demo_done = 1;
+		//default:
+		//	demo_done = 1;
 	}
 }
 
@@ -454,6 +448,10 @@ void print_state(void)
  */
 int main() 
 {
+	struct LOG log[LOG_LENGTH];
+	int log_counter = 0;
+	ALIVE = 1;
+
 	/* prepare QR rx interrupt handler
 	 */
         SET_INTERRUPT_VECTOR(INTERRUPT_XUFO, &isr_qr_link);
@@ -499,22 +497,62 @@ int main()
 	 */
         ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
 
-	while (TRUE)
-	{
+/*************LOGGING************
+**************************/
 
-		c=get_packet();
+
+
+/*************************
+**************************/
+    log_counter = 0;
+	while (ALIVE)
+	{
+	//printf("sizeof log struct is: %d\n\n", sizeof(*log) );
+		c=get_packet();  //<- possibly add no change packet
 		if (c != -1) {
 			process_packet();
+			print_state(); //<-this is a burden
 		}
-			print_state();
-        
+	
 
-        X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
-		if (button == 1){
+    	/*if (log_counter < LOG_LENGTH)
+    	{
+    		log[log_counter].timestamp = 0xFF00FF00; //timestamp;
+    		log[log_counter].ae[0] = 0xFFAA;
+    		log[log_counter].ae[1] = 0xFFAA;
+    		log[log_counter].ae[2] = 0xFFAA;
+    		log[log_counter].ae[3] = 0xFFAA;
+    		log[log_counter].s0 = 0;
+    		log[log_counter].s1 = 0;
+    		log[log_counter].s2 = 0;
+    		*/
+    		/*log[log_counter].timestamp = timestamp;
+    		log[log_counter].ae[0] = ae[0];
+    		log[log_counter].ae[1] = ae[1];
+    		log[log_counter].ae[2] = ae[2];
+    		log[log_counter].ae[3] = ae[3];
+    		log[log_counter].s0 = s0;
+    		log[log_counter].s1 = s1;
+    		log[log_counter].s2 = s2;*/
+    		/*
+    		log_counter++;
+    		printf("*");
+    	}
+    	else 
+    	{
+    		printf("\nDONE!!!\n");
+    		printf("%p\n", &log );
+ 			break;
+ 		}
+ 		*/
+	     //leave this here for now
+        /*X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
+		*/
+		/*if (button == 1){
 			printf("You have pushed the button!!!\r\n");
 			button = 0;
-		}
-		//delay_ms(20);
+		}*/
+
 	}
 
 
