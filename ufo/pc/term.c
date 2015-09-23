@@ -141,8 +141,8 @@ int main(int argc, char **argv)
 			#endif
 			input_to_pkt(&inputModel, &pkt);
 			inputModel.updated = false;
-	show_input(&inputModel);
-	show_pkt(&pkt);
+	//show_input(&inputModel);
+	//show_pkt(&pkt);
 		}
 		
 		/*

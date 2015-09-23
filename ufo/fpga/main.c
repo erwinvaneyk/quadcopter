@@ -257,7 +257,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 	if (modecommand == SAFE_MODE)
 		{
 			ae[0]=ae[1]=ae[2]=ae[3] = 0;
-		{
+		}
 	else if (modecommand == MANUAL_MODE)
 		{
 				//LIFT
