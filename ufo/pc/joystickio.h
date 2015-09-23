@@ -2,6 +2,7 @@
 #define _JOYSTICKIOH_
 
 #include "driver_joystick.h"
+#include "input.h"
 #include <stdbool.h>
 
 /*
@@ -31,6 +32,7 @@ struct JOYSTICK {
 
 short normalizeAxis(short axis_value, short buckets);
 void processJoystickEvent(int fd, struct js_event js, struct JOYSTICK* joystick);
+void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK* joystick);
 void show_joystick(struct JOYSTICK* joystick);
 
 #endif
