@@ -28,6 +28,10 @@ struct JOYSTICK {
 // throttle: [-32767 = down, 32767 = up]
 #define JS_AXIS_LIFT	 	3
 
+#define JS_BUTTON_SAFE_MODE	 2
+
+#define JS_BUTTON_PANIC_MODE 1
+
  // Buttons are numbered 0 - 11
 
 short normalizeAxis(short axis_value, short buckets);
