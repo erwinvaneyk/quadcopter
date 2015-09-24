@@ -48,16 +48,28 @@ void processJoystickEvent(int fd, struct js_event js, struct JOYSTICK* joystick)
 	}
 }
 
-
 void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK* joystick) {
 	if(!joystick->updated)
 		return;
 
 	// Update mode
 	int i;
-	for(i = 0; i < MODES; i++) {
+	for(i = 0; i < BUTTONS_COUNT; i++) {
 		if(joystick->button[i]) {
-			joystickInputModel->mode = i;
+			switch(i) {
+				case JS_BUTTON_SAFE_MODE:
+					joystickInputModel->mode = SAFE_MODE_INT;
+					break;
+				case JS_BUTTON_PANIC_MODE:
+					joystickInputModel->mode = PANIC_MODE_INT;
+					break;
+				case JS_BUTTON_MANUAL_MODE:
+					joystickInputModel->mode = MANUAL_MODE_INT;
+					break;
+				default:
+					printf("Unknown joystick mode: %d\n", i);
+					break;
+			}
 			break;
 		}
 	}
