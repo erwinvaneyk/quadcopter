@@ -54,7 +54,7 @@ void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK*
 
 	// Update mode
 	int i;
-	for(i = 0; i < MODES; i++) {
+	for(i = 0; i < BUTTONS_COUNT; i++) {
 		if(joystick->button[i]) {
 			switch(i) {
 				case JS_BUTTON_SAFE_MODE:
@@ -67,10 +67,9 @@ void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK*
 					joystickInputModel->mode = MANUAL_MODE_INT;
 					break;
 				default:
-					joystickInputModel->mode = i;
 					printf("Unknown joystick mode: %d\n", i);
 					break;
-			} 
+			}
 			break;
 		}
 	}
