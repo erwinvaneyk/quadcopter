@@ -273,15 +273,29 @@ void process_packet(void)  //we need to process packet and decide what should be
 	
 	if ((modecommand == SAFE_MODE) )
 		{
+//#ifdef DEBUG
+		//	printf("********Going to SAFE_MODE!**********\n");
+//#endif
 			ae[0]=ae[1]=ae[2]=ae[3] = 0;
 			mode = SAFE_MODE_INT;
 		}
 	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
 		{
+
+//#ifdef DEBUG
+			printf("********Going to PANIC_MODE!**********\n");
+//#endif
 			mode = PANIC_MODE_INT;
 			ae[0] = ae[1] = ae[2] = ae[3] = 200;
-			delay_ms(1000000);
+//#ifdef DEBUG
+			printf("********Engines decreased!**********\n");
+//#endif
+		
+			delay_ms(1000);
 			ae[0]=ae[1]=ae[2]=ae[3] = 0;
+//#ifdef DEBUG
+			printf("********Going to SAFE_MODE!**********\n");
+//#endif
 			mode = SAFE_MODE_INT;
 		}
 	else if (modecommand == MANUAL_MODE)

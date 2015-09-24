@@ -13,7 +13,7 @@
 /*--------------------------
  define protocol specifics
  */
-#define COMM_T 50000 //value in us
+#define COMM_T 40000 //value in us
 #define PACKET_SIZE 7
 //HEADER
 #define HEADER 0xAA //1010 1010
