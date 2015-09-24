@@ -500,7 +500,7 @@ int main()
 			process_packet();
 			 //<-this is a burden
 		}
-		printf("%d\nMODE:  ", mode);
+		printf("MODE: %d\n", mode);
 		print_state();
 /*
 	if (mode == SAFE_MODE_INT)
