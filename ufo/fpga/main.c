@@ -35,6 +35,7 @@
 #define X32_QR_s3 		peripherals[PERIPHERAL_XUFO_S3]
 #define X32_QR_s4 		peripherals[PERIPHERAL_XUFO_S4]
 #define X32_QR_s5 		peripherals[PERIPHERAL_XUFO_S5]
+#define X32_display		peripherals[PERIPHERAL_DISPLAY]
 #define X32_QR_timestamp 	peripherals[PERIPHERAL_XUFO_TIMESTAMP]
 
 #define X32_rs232_data		peripherals[PERIPHERAL_PRIMARY_DATA]
@@ -83,6 +84,10 @@ void	delay_us(int);
 void isr_button(void)
 {
 	button = 1;
+}
+
+void isr_led_timer(void) {
+	toggle_led(0);
 }
 
 /*------------------------------------------------------------------
@@ -274,10 +279,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
 		{
 			mode = PANIC_MODE_INT;
-			ae[0] = 200;
-			ae[1] = 200;
-			ae[2] = 200;
-			ae[3] = 200;
+			ae[0] = ae[1] = ae[2] = ae[3] = 200;
 			delay_ms(1000000);
 			ae[0]=ae[1]=ae[2]=ae[3] = 0;
 			mode = SAFE_MODE_INT;
@@ -402,47 +404,6 @@ void toggle_led(int i)
 }
 
 /*------------------------------------------------------------------
- * process_key -- process command keys
- * @deprecated
- *------------------------------------------------------------------
- */
-void process_key(char c) 
-{
-	switch (c) {
-		case 'q':
-			ae[0] += 10;
-			break;
-		case 'a':
-			ae[0] -= 10;
-			if (ae[0] < 0) ae[0] = 0;
-			break;
-		case 'w':
-			ae[1] += 10;
-			break;
-		case 's':
-			ae[1] -= 10;
-			if (ae[1] < 0) ae[1] = 0;
-			break;
-		case 'e':
-			ae[2] += 10;
-			break;
-		case 'd':
-			ae[2] -= 10;
-			if (ae[2] < 0) ae[2] = 0;
-			break;
-		case 'r':
-			ae[3] += 10;
-			break;
-		case 'f':
-			ae[3] -= 10;
-			if (ae[3] < 0) ae[3] = 0;
-			break;
-		//default:
-		//	demo_done = 1;
-	}
-}
-
-/*------------------------------------------------------------------
  * print_state -- print all sensors and actuators
  *------------------------------------------------------------------
  */
@@ -488,10 +449,10 @@ int main()
  	
 	/* prepare timer interrupt
 	 */
-        //X32_timer_per = 200 * CLOCKS_PER_MS;
-        //SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &isr_qr_link);
-        //SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 21);
-        //ENABLE_INTERRUPT(INTERRUPT_TIMER1);
+        X32_timer_per = 1000 * CLOCKS_PER_MS;
+        SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &isr_led_timer);
+        SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 21);
+        ENABLE_INTERRUPT(INTERRUPT_TIMER1);
 
 	/* prepare button interrupt handler
 	 */
