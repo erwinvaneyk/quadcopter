@@ -63,8 +63,12 @@ void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK*
 				case JS_BUTTON_PANIC_MODE:
 					joystickInputModel->mode = PANIC_MODE_INT;
 					break;
+				case JS_BUTTON_MANUAL_MODE:
+					joystickInputModel->mode = MANUAL_MODE_INT;
+					break;
 				default:
 					joystickInputModel->mode = i;
+					printf("Unknown joystick mode: %d\n", i);
 					break;
 			} 
 			break;
