@@ -94,20 +94,12 @@ int parseArgs(int argc, char **argv) {
 			printf("Joystick enabled, note that joystick provides shitty values if not connected!\n");
 		} else if(checkArg(arg, "-h", "--help")) {
 			printHelp();
+			return -1;
 		}
 		c += 1; 
 	}
 	return 0;
 }
-
-void mon_delay_ms(unsigned int ms)
-{
-        struct timespec req, rem;
-        req.tv_sec = ms / 1000;
-        req.tv_nsec = 1000000 * (ms % 1000);
-        assert(nanosleep(&req,&rem) == 0);
-}
-
 void processInput() {
 	if(ENABLE_JOYSTICK) {
 		processJoystickEvent(fd, js, &joystick);
@@ -147,11 +139,9 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-
 	/*
 	 * init
 	 */
-
 	term_initio();
 	link_status = rs232_open(serial_device);
 	if(link_status == -1) {
