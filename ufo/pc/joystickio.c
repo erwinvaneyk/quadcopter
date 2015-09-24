@@ -68,9 +68,8 @@ void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK*
 		joystickInputModel->pitch = normalizeAxis(joystick->axis[JS_AXIS_PITCH], NUMB_LEVELS) - MAX_LEVEL;
 		joystickInputModel->yaw = normalizeAxis(joystick->axis[JS_AXIS_YAW], NUMB_LEVELS) - MAX_LEVEL;
 		joystickInputModel->roll = normalizeAxis(joystick->axis[JS_AXIS_ROLL], NUMB_LEVELS) - MAX_LEVEL;
-		joystickInputModel->lift = normalizeAxis(joystick->axis[JS_AXIS_LIFT], NUMB_LEVELS) - MAX_LEVEL;
+		joystickInputModel->lift = (normalizeAxis(joystick->axis[JS_AXIS_LIFT], NUMB_LEVELS) + 1) / 2 ;
 	}
-
 
 	// Update flags
 	joystick->updated = false;
