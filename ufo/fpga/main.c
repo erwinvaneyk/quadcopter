@@ -366,24 +366,24 @@ void process_packet(void)  //we need to process packet and decide what should be
 		 		//YAW
 		 		if ( (data2&0x10) == 0x00) 
 					{
-						ae[0] = ae[0] + 20 * (data2&0x0F);
-						ae[2] = ae[2] + 20 * (data2&0x0F);
+						ae[0] = ae[0] + 25 * (data2&0x0F);
+						ae[2] = ae[2] + 25 * (data2&0x0F);
 						
 						if ((ae[1] > 30) && (ae[3] > 30))
 						{
-							ae[1] = ae[1] - 20 * (data2&0x0F);
-							ae[3] = ae[3] - 20 * (data2&0x0F);
+							ae[1] = ae[1] - 25 * (data2&0x0F);
+							ae[3] = ae[3] - 25 * (data2&0x0F);
 						}
 
 		 			}
 		 		else
 		 		{
-						ae[1] = ae[1] + 20 * (data2&0x0F);
-						ae[3] = ae[3] + 20 * (data2&0x0F);
+						ae[1] = ae[1] + 25 * (data2&0x0F);
+						ae[3] = ae[3] + 25 * (data2&0x0F);
 			 			if ((ae[0] > 30) && (ae[2] > 30))
 						{
-			 				ae[0] = ae[0] - 20 * (data2&0x0F);
-							ae[2] = ae[2] - 20 * (data2&0x0F);
+			 				ae[0] = ae[0] - 25 * (data2&0x0F);
+							ae[2] = ae[2] - 25 * (data2&0x0F);
 						}
 		 		}
 		}
