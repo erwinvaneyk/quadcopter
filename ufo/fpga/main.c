@@ -9,6 +9,7 @@
 #define TRUE 1
 #define FALSE 0
 #define LOG_LENGTH 5000
+#define THRESHOLD 800 //ms
 
 #include <stdio.h>
 #include <x32.h>
@@ -16,6 +17,7 @@
 #include "defines.h"
 #include <stdint.h>
 #include "log.h"
+#include <stdlib.h>
 
 /* define some peripheral short hands
  */
@@ -60,7 +62,7 @@
 #define FIFOSIZE 16
 uint8_t	fifo[FIFOSIZE]; 
 int	iptr, optr;
-
+int TERM_CONNECTED = 0; //communication safety mechanism
 
 // Globals
 char	c;
@@ -87,7 +89,9 @@ void isr_button(void)
 }
 
 void isr_led_timer(void) {
-	toggle_led(0);
+	if (ALIVE) {
+		toggle_led(0);
+	}	
 }
 
 /*------------------------------------------------------------------
@@ -247,6 +251,9 @@ int get_packet(void)
 				#endif
 			 return -1; //ERROR, invalid packet
 			}
+			else if (TERM_CONNECTED == 0); {  //a check for communication safety mechanism
+				TERM_CONNECTED = 1;  //maybe we can move this somewhere else
+			}						//such that we do this check only once
 		}
 	else
 	{
@@ -290,9 +297,9 @@ void process_packet(void)  //we need to process packet and decide what should be
 		if (ae[0] > 400)
 		{
 			ae[0] = ae[1] = ae[2] = ae[3] = 300;
-			delay_ms(1000);
+			delay_ms(500);
 			ae[0] = ae[1] = ae[2] = ae[3] = 250;
-			delay_ms(1000);
+			delay_ms(500);
 		}
 //#ifdef DEBUG
 			printf("********Engines decreased!**********\n");
@@ -300,17 +307,17 @@ void process_packet(void)  //we need to process packet and decide what should be
 		if (ae[0] >= 250)
 		{
 			ae[0] = ae[1] = ae[2] = ae[3] = 200;
-			delay_ms(1000);
+			delay_ms(500);
 			ae[0] = ae[1] = ae[2] = ae[3] = 150;
-			delay_ms(1000);
+			delay_ms(500);
 		}
 
 		if (ae[0] >= 150)
 		{
 			ae[0] = ae[1] = ae[2] = ae[3] = 100;
-			delay_ms(1000);
+			delay_ms(500);
 			ae[0] = ae[1] = ae[2] = ae[3] = 50;
-			delay_ms(1000);
+			delay_ms(500);
 		}
 			ae[0]=ae[1]=ae[2]=ae[3] = 0;
 //#ifdef DEBUG
@@ -470,6 +477,9 @@ int main()
 {
 	struct LOG log[LOG_LENGTH];
 	int log_counter = 0;
+	int timer1;
+	int timer2;
+
 	ALIVE = 1;
 	mode = SAFE_MODE_INT;
 
@@ -528,12 +538,30 @@ int main()
     log_counter = 0;
 	while (ALIVE)
 	{
-	//printf("sizeof log struct is: %d\n\n", sizeof(*log) );
+		//printf("sizeof log struct is: %d\n\n", sizeof(*log) );
 		c=get_packet();  //<- possibly add no change packet
 		if (c != -1) {
 			process_packet();
-			 //<-this is a burden
+			timer1 = X32_ms_clock;
 		}
+
+		/*
+		* COMMUNICATION LOST SAFETY MECHANISM
+		* Possible enchancements:
+		* 1. maybe we can check at the interrupt level only
+		* 2. TERM_CONNECTED is an unncessary added cycle in get_packet()
+		*     get rid off it.
+		* 3. This is generally a hack. We are "injecting PANIC_MODE packet"
+		*/
+		timer2 = X32_ms_clock;
+		if (((timer2-timer1) > THRESHOLD) && TERM_CONNECTED)
+			{	
+				modecommand = PANIC_MODE;
+				process_packet();
+				ALIVE = 0;
+			}
+
+
 		printf("MODE: %d\n", mode);
 		print_state();
 /*
@@ -589,8 +617,6 @@ int main()
 	//if we break from main loop we start with these modes straight away
 
 	printf("Exit\r\n");
-
-        DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
-
+    DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	return 0;
 }
