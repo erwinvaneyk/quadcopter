@@ -9,7 +9,7 @@
 #define TRUE 1
 #define FALSE 0
 #define LOG_LENGTH 5000
-#define THRESHOLD 800
+#define THRESHOLD 800 //ms
 
 #include <stdio.h>
 #include <x32.h>
