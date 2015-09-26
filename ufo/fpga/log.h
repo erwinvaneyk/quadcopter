@@ -7,7 +7,7 @@
 
 struct LOG {
 		int timestamp;
-		uint8_t ae[4];
+		uint16_t ae[4];
 		/*uint8_t ae1;
 		uint8_t ae2;
 		uint8_t ae3;
