@@ -392,6 +392,8 @@ void process_packet(void)  //we need to process packet and decide what should be
 		 		}
 		}
 
+		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT)  ) 
+
 }
 
 /*------------------------------------------------------------------
@@ -570,7 +572,7 @@ int main()
 
 //#define LOGGING
 #ifdef LOGGING
-    	if (log_counter < LOG_LENGTH) {
+    	if (log_counter < LOG_LENGTH) { // and mode = MANUAL MODE?
     		log[log_counter].timestamp = timestamp;
     		log[log_counter].ae[0] =(uint16_t)100;
     		log[log_counter].ae[1] =(uint16_t) 200;
@@ -581,31 +583,12 @@ int main()
     		log[log_counter].s2 = 0;
     		log_counter++;
     	}
-    	else {  //this is a quick fix for logging. we can do better.
+    	//else {  //this is a quick fix for logging. we can do better.
     		///printf("DONE LOGGING! \n");
-    		PANIC_AND_EXIT; 
- 		}
+    	//	PANIC_AND_EXIT; 
+ 		//}
 #endif
 	}
-
-
-
-#ifdef LOGGING
-	/* print the log */
-///	printf("printing the log! \n");
-	for (log_counter=0; log_counter < LOG_LENGTH; log_counter++)
-	{
-		printf("%d ", log[log_counter].timestamp );
-		printf("%d ", log[log_counter].ae[0] );
-		printf("%d ", log[log_counter].ae[1] );
-		printf("%d ", log[log_counter].ae[2] );
-		printf("%d ", log[log_counter].ae[3] );
-		printf("%d ", log[log_counter].s0 );
-		printf("%d ", log[log_counter].s1 );
-		printf("%d ", log[log_counter].s2 );
-		printf("\n");
-	}
-#endif
 
 	printf("Exit\r\n");
     DISABLE_INTERRUPT(INTERRUPT_GLOBAL);

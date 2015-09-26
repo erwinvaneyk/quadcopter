@@ -7,7 +7,6 @@
 
  #include "protocol.h"
  #include <stdio.h>
- //#include <time.h>
  #include "rs232.h"
  #include <stdlib.h>
 
@@ -18,8 +17,7 @@ void add_checksum(struct PACKET* packet) {
 	// @deprecated
 void generate_pkt(struct PACKET* packet, uint8_t mode, uint8_t command, uint16_t data) {
 	packet->header 	= HEADER;
-	packet->modecommand = mode; //  <!--- fix this
-	// packet->command = command;
+	packet->modecommand = mode;
 	packet->data 	= data;
 	add_checksum(packet);
 };
@@ -39,7 +37,7 @@ uint8_t convert_modecommand(int mode) {
 			return YAW_CONTROL;
 		case FULL_CONTROL_INT:
 			return FULL_CONTROL;
-		case 7:
+		case SEND_TELEMETRY_INT:
 			return SEND_TELEMETRY;
 		default:
 			return SAFE_MODE;
@@ -53,7 +51,6 @@ uint32_t convert_data(struct INPUT* inputModel) {
 	data = (data | level_convert(inputModel->pitch)) << 8;
 	data = (data | level_convert(inputModel->yaw)) << 8;
 	data = data | level_convert(inputModel->lift);
-
 
 	return data;
 }

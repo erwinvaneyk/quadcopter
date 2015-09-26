@@ -15,6 +15,12 @@ int within_bounds(int x, int y) {
 // All rules regarding state/mode switches
 void updateModeIfValid(struct INPUT* model, int newMode) {
 	
+	//Logging mode: allow only if in safe mode
+	if(model->mode == SAFE_MODE_INT) {
+		model->mode = newMode;
+		return;
+	}
+
 	// Safe mode: should be able to go to any mode
 	if(model->mode == SAFE_MODE_INT) {
 		model->mode = newMode;

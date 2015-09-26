@@ -171,16 +171,17 @@ int main(int argc, char **argv)
 					show_pkt(&pkt);
 				}
 			}
+
+			//if we are logging save to a file
+
+			
 			input_to_pkt(&inputModel, &pkt);
 			inputModel.updated = false;
-	//show_input(&inputModel);
-	//show_pkt(&pkt);
+			//show_input(&inputModel);
+			//show_pkt(&pkt);
 		}
 		
-		/*
-		* Send the packet periodically
-		*/
-
+		// Send the packet periodically
 		gettimeofday(&timer1, NULL);
 		periodic_send (&timer1, &timer2, &pkt, link_status);
 
