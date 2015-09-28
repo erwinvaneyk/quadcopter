@@ -5,11 +5,13 @@
  *------------------------------------------------------------------
  */
 
+#define LOGGING
 //#define DEBUG
 #define TRUE 1
 #define FALSE 0
-#define LOG_LENGTH 5000
-#define THRESHOLD 800 //ms
+#define LOG_LENGTH 10000	//=10 seconds of logging in Manual Mode at 1000Hz
+#define THRESHOLD 800		//(ms) Communicaton safety mechanism threshold value
+
 
 #include <stdio.h>
 #include <x32.h>
@@ -23,7 +25,9 @@
  */
 #define X32_instruction_counter           peripherals[0x03]
 
-#define X32_timer_per           peripherals[PERIPHERAL_TIMER1_PERIOD]
+#define X32_timer_per		peripherals[PERIPHERAL_TIMER1_PERIOD]
+#define X32_timer_per2		peripherals[PERIPHERAL_TIMER2_PERIOD]
+
 #define X32_leds		peripherals[PERIPHERAL_LEDS]
 #define X32_ms_clock		peripherals[PERIPHERAL_MS_CLOCK]
 #define X32_us_clock		peripherals[PERIPHERAL_US_CLOCK]
@@ -59,12 +63,17 @@
 #define YAW_CONTROL_INT		4
 #define FULL_CONTROL_INT	5
 
+#define PANIC_AND_EXIT 	modecommand = PANIC_MODE;\
+						process_packet();\
+						ALIVE = 0;
+
 #define FIFOSIZE 16
 uint8_t	fifo[FIFOSIZE]; 
 int	iptr, optr;
 int TERM_CONNECTED = 0; //communication safety mechanism
 
-// Globals
+// 
+struct LOG log[LOG_LENGTH];
 char	c;
 int	ALIVE;
 int mode;
@@ -74,6 +83,8 @@ int	isr_qr_counter;
 int	isr_qr_time;
 int	button;
 int	inst;
+int log_sent = 0;
+int log_counter;
 
 void	toggle_led(int);
 void	delay_ms(int);
@@ -91,7 +102,32 @@ void isr_button(void)
 void isr_led_timer(void) {
 	if (ALIVE) {
 		toggle_led(0);
+		//print_state(); //<-why doesn't this work?
 	}	
+}
+
+
+//TODO:
+// Must replace with real values
+void logging(void) {
+//#ifdef LOGGING
+    	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) {
+    		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
+    		log[log_counter].ae[0] =(uint16_t) ae[0];
+    		log[log_counter].ae[1] =(uint16_t) ae[1];
+    		log[log_counter].ae[2] =(uint16_t) ae[2];
+    		log[log_counter].ae[3] =(uint16_t) ae[3];
+    		log[log_counter].s0 = 0;
+    		log[log_counter].s1 = 1;
+    		log[log_counter].s2 = 2;
+    		log_counter++;
+    	}
+    	//exceeding the allocated memory, disable the interrupt
+    	if (log_counter>=LOG_LENGTH) {
+    		DISABLE_INTERRUPT(INTERRUPT_TIMER2);
+    	}
+
+//#endif	
 }
 
 /*------------------------------------------------------------------
@@ -139,9 +175,9 @@ void isr_qr_link(void)
 
 	/* record isr execution time (ignore overflow)
 	 */
-        inst = X32_instruction_counter - inst;
+	inst = X32_instruction_counter - inst;
 	isr_qr_time = X32_us_clock - isr_qr_time;
-}
+	}
 
 /*------------------------------------------------------------------
  * isr_rs232_rx -- rs232 rx interrupt handler
@@ -274,6 +310,8 @@ ae3---ae1
 
 void process_packet(void)  //we need to process packet and decide what should be done
 {
+	int log_counter; //is this efficient?
+
 	if (mode == PANIC_MODE_INT){
 		return;	
 	}
@@ -328,6 +366,10 @@ void process_packet(void)  //we need to process packet and decide what should be
 	else if (modecommand == MANUAL_MODE)
 		{
 			mode = MANUAL_MODE_INT;
+			//enable logging
+			/*#ifdef LOGGING
+				ENABLE_INTERRUPT(INTERRUPT_TIMER2);
+			#endif*/
 				//LIFT
 				if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
 					{
@@ -386,6 +428,32 @@ void process_packet(void)  //we need to process packet and decide what should be
 							ae[2] = ae[2] - 25 * (data2&0x0F);
 						}
 		 		}
+		}
+
+		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT) && !log_sent ) 
+		{
+
+			printf("********SENDING LOG DATA!**********\n");
+			delay_ms(1000);
+
+			#ifdef LOGGING
+			/* send the log */
+			//printf("printing the log! \n");
+			for (log_counter=0; log_counter < LOG_LENGTH; log_counter++)
+			{
+				printf("%d ", log[log_counter].timestamp );
+				printf("%d ", log[log_counter].ae[0] );
+				printf("%d ", log[log_counter].ae[1] );
+				printf("%d ", log[log_counter].ae[2] );
+				printf("%d ", log[log_counter].ae[3] );
+				printf("%d ", log[log_counter].s0 );
+				printf("%d ", log[log_counter].s1 );
+				printf("%d ", log[log_counter].s2 );
+				printf("\n");
+			}
+			printf("$"); //signal end of transmission
+			#endif
+			log_sent = 1;
 		}
 
 }
@@ -452,21 +520,23 @@ void toggle_led(int i)
 void print_state(void) 
 {
 	int i;
-	char text[100] , a;
+	//char text[100] , a;
 	printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
 	printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
 		s0,s1,s2,s3,s4,s5,isr_qr_time, inst);
-        
+	
+    //wireless transmission
+    /*  
 	sprintf(text, "%d %d %d %d \r\n",ae[0],ae[1],ae[2],ae[3]);
-    	i = 0;
-    	while( text[i] != 0) {
-       		delay_ms(1);
+	i = 0;
+	while( text[i] != 0) {
+		delay_ms(1);
 		// if (X32_switches == 0x03)
 		if (X32_wireless_stat & 0x01 == 0x01)
 			X32_wireless_data = text[i];
-
 		i++;
-    	}
+	}
+    */
 }
 
 /*------------------------------------------------------------------
@@ -475,10 +545,9 @@ void print_state(void)
  */
 int main() 
 {
-	struct LOG log[LOG_LENGTH];
-	int log_counter = 0;
 	int timer1;
 	int timer2;
+	int debug_i;
 
 	ALIVE = 1;
 	mode = SAFE_MODE_INT;
@@ -487,16 +556,36 @@ int main()
 	 */
         SET_INTERRUPT_VECTOR(INTERRUPT_XUFO, &isr_qr_link);
         SET_INTERRUPT_PRIORITY(INTERRUPT_XUFO, 21);
-	isr_qr_counter = isr_qr_time = 0;
-	ae[0] = ae[1] = ae[2] = ae[3] = 0;
+		isr_qr_counter = isr_qr_time = 0;
+		ae[0] = ae[1] = ae[2] = ae[3] = 0;
         ENABLE_INTERRUPT(INTERRUPT_XUFO);
  	
-	/* prepare timer interrupt
+
+ 	//IN the original code we had this, should we get rid off it???
+     //Because right now i dont understand how it is being done
+
+ 	/* prepare timer interrupt
+	 */
+        //X32_timer_per = 200 * CLOCKS_PER_MS;
+        //SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &isr_qr_link);
+        //SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 21);
+        //ENABLE_INTERRUPT(INTERRUPT_TIMER1);
+
+
+	/* prepare timer interrupt #1
 	 */
         X32_timer_per = 1000 * CLOCKS_PER_MS;
         SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &isr_led_timer);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 21);
+        SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
         ENABLE_INTERRUPT(INTERRUPT_TIMER1);
+
+
+     /* prepare timer interrupt #2 // LOGGING ISR
+	 */
+        X32_timer_per2 = 1 * CLOCKS_PER_MS;
+        SET_INTERRUPT_VECTOR(INTERRUPT_TIMER2, &logging);
+        SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER2, 4);
+        ENABLE_INTERRUPT(INTERRUPT_TIMER2);
 
 	/* prepare button interrupt handler
 	 */
@@ -512,37 +601,33 @@ int main()
 	while (X32_rs232_char) c = X32_rs232_data; // empty buffer
         ENABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
 
-        /* prepare wireless rx interrupt and getchar handler
+    /* prepare wireless rx interrupt and getchar handler
 	 */
+        //not used at the moment
+       /*
         SET_INTERRUPT_VECTOR(INTERRUPT_WIRELESS_RX, &isr_wireless_rx);
         SET_INTERRUPT_PRIORITY(INTERRUPT_WIRELESS_RX, 19);
         while (X32_wireless_char) c = X32_wireless_data; // empty buffer
         ENABLE_INTERRUPT(INTERRUPT_WIRELESS_RX);
+		*/
 
 	/* initialize some other stuff
 	 */
         iptr = optr = 0;
 		X32_leds = 0;
+		log_counter = 0;
 
 	/* start the test loop
 	 */
-        ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
+	ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
 
-/*************LOGGING************
-**************************/
-
-
-
-/*************************
-**************************/
-    log_counter = 0;
 	while (ALIVE)
 	{
-		//printf("sizeof log struct is: %d\n\n", sizeof(*log) );
 		c=get_packet();  //<- possibly add no change packet
 		if (c != -1) {
 			process_packet();
-			timer1 = X32_ms_clock;
+			//print_state();
+			timer1 = X32_ms_clock; //<- maybe its better to move this into the get_packet()
 		}
 
 		/*
@@ -554,54 +639,20 @@ int main()
 		* 3. This is generally a hack. We are "injecting PANIC_MODE packet"
 		*/
 		timer2 = X32_ms_clock;
+		//printf("%d\n", timer2-timer1 );
 		if (((timer2-timer1) > THRESHOLD) && TERM_CONNECTED)
 			{	
-				modecommand = PANIC_MODE;
-				process_packet();
-				ALIVE = 0;
+				printf("WTF?!\n");
+				PANIC_AND_EXIT;
 			}
-
-
-		printf("MODE: %d\n", mode);
 		print_state();
-/*
-	if (mode == SAFE_MODE_INT)
-		X32_leds = (X32_leds & 0xFC) | 0x01 );
-	else if (mode == PANIC_MODE_INT)
-		X32_leds = (X32_leds & 0xFC) | 0x02 );
-	else if (mode == MANUAL_MODE_INT)
-		X32_leds = (X32_leds & 0xFC) | 0x04 );
-*/
-    	/*if (log_counter < LOG_LENGTH)
-    	{
-    		log[log_counter].timestamp = 0xFF00FF00; //timestamp;
-    		log[log_counter].ae[0] = 0xFFAA;
-    		log[log_counter].ae[1] = 0xFFAA;
-    		log[log_counter].ae[2] = 0xFFAA;
-    		log[log_counter].ae[3] = 0xFFAA;
-    		log[log_counter].s0 = 0;
-    		log[log_counter].s1 = 0;
-    		log[log_counter].s2 = 0;
-    		*/
-    		/*log[log_counter].timestamp = timestamp;
-    		log[log_counter].ae[0] = ae[0];
-    		log[log_counter].ae[1] = ae[1];
-    		log[log_counter].ae[2] = ae[2];
-    		log[log_counter].ae[3] = ae[3];
-    		log[log_counter].s0 = s0;
-    		log[log_counter].s1 = s1;
-    		log[log_counter].s2 = s2;*/
-    		/*
-    		log_counter++;
-    		printf("*");
-    	}
-    	else 
-    	{
-    		printf("\nDONE!!!\n");
-    		printf("%p\n", &log );
- 			break;
- 		}
- 		*/
+
+	}//end of main loop
+
+	printf("Exit\r\n");
+    DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+	return 0;
+}
 	     //leave this here for now
         /*X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
 		*/
@@ -610,13 +661,12 @@ int main()
 			button = 0;
 		}*/
 
-	}
 
-
-	//Possible put the critical mode and safe mode here, such that
-	//if we break from main loop we start with these modes straight away
-
-	printf("Exit\r\n");
-    DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
-	return 0;
-}
+/* //MODE LEDs
+	if (mode == SAFE_MODE_INT)
+		X32_leds = (X32_leds & 0xFC) | 0x01 );
+	else if (mode == PANIC_MODE_INT)
+		X32_leds = (X32_leds & 0xFC) | 0x02 );
+	else if (mode == MANUAL_MODE_INT)
+		X32_leds = (X32_leds & 0xFC) | 0x04 );
+*/

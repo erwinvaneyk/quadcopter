@@ -26,6 +26,8 @@ struct INPUT {
 #define YAW_CONTROL_INT		4
 #define FULL_CONTROL_INT	5
 
+#define SEND_TELEMETRY_INT 7
+
 #define NUMB_LEVELS 31
 #define MAX_LEVEL 15
 #define MODES 6 // counting from 0

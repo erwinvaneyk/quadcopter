@@ -118,7 +118,8 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput) {
 
 			// Additional controls
 			case '+': // Upload metrics
-				keyboardInput->mode = 7;
+				printf("Set to 'LOGGING' mode (%x)\n", SEND_TELEMETRY_INT);
+				keyboardInput->mode = SEND_TELEMETRY_INT;
 				break;
 
 			default:

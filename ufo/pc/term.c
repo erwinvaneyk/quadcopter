@@ -40,6 +40,8 @@ char c;
 bool DEBUG;
 bool ENABLE_JOYSTICK;
 
+FILE *f;
+
 // Input models
 struct js_event js;
 struct JOYSTICK joystick;
@@ -171,21 +173,51 @@ int main(int argc, char **argv)
 					show_pkt(&pkt);
 				}
 			}
+
+			//if we are logging save to a file
+			if (inputModel.mode == SEND_TELEMETRY_INT)
+			{
+				if (link_status > -1)
+					{
+						c=' ';
+						f = fopen("log", "w");
+						if (f == NULL)
+						{
+						    printf("Error opening file!\n");
+						    exit(1); //change this
+						}
+						//artificailly sent a packet
+						input_to_pkt(&inputModel, &pkt);
+						inputModel.updated = false;
+						rs232_put_pkt(&pkt);
+						while(c!='$')
+						{
+							if ((c = rs232_getchar_nb()) != -1)
+							{
+								fprintf(f, "%c", c);
+							}
+						}
+						fclose(f);
+					}
+				printf("LOG saved to file.\n");
+				inputModel.mode = SAFE_MODE_INT;
+			}
+			/////
+
+
 			input_to_pkt(&inputModel, &pkt);
 			inputModel.updated = false;
-	//show_input(&inputModel);
-	//show_pkt(&pkt);
+			//show_input(&inputModel);
+			//show_pkt(&pkt);
 		}
 		
-		/*
-		* Send the packet periodically
-		*/
-
+		// Send the packet periodically
 		gettimeofday(&timer1, NULL);
 		periodic_send (&timer1, &timer2, &pkt, link_status);
 
 		if (link_status > -1 && (c = rs232_getchar_nb()) != -1) 
 			term_putchar(c);
+		//else {printf("error\n");}
 	}
 
 		term_exitio();
