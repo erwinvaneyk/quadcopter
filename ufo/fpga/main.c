@@ -79,13 +79,8 @@ int	ALIVE;
 int mode;
 int	ae[4];
 
-/*
-*/
 int	sax, say, saz, sp, sq, sr, timestamp;
-
-/*
-Callibration offsets
-*/
+//Callibration offsets
 int	sax0, say0, saz0, sp0, sq0, sr0;
 
 int	isr_qr_counter;
@@ -104,22 +99,24 @@ void	delay_us(int);
 /*------------------------------------------------------------------
  * Calibrate
  *------------------------------------------------------------------
- */
- void calibrate(void)
- {
- 	sax0 = sax;
- 	say0 = say;
- 	saz0 = saz;
+*/
+void calibrate(void)
+{
+	sax0 = sax;
+	say0 = say;
+	saz0 = saz;
+	sp0 = sp;
+	sq0 = sq; 
+	sr0 = sr;
+}
 
- 	sp0 = sp;
- 	sq0 = sq; 
- 	sr0 = sr;
- }
-
- int zp(int sp)
- {
- 	return sp - sp0; //not sure about the sign and order here
- }
+//not sure about the sign and order here, should it be abs||?
+int zax(void)	{return sax - sax0;}
+int zay(void)	{return say - say0;}
+int zaz(void)	{return saz - saz0;}
+int zp(void)	{return sp - sp0;}
+int zq(void)	{return sq - sq0;}
+int zr(void)	{return sr - sr0;}
 
 
 
@@ -138,7 +135,6 @@ void isr_led_timer(void) {
 		//print_state(); //<-why doesn't this work?
 	}	
 }
-
 
 void logging(void) {
 //#ifdef LOGGING
@@ -245,7 +241,6 @@ printf(" => %x\n", fifo[iptr-1]);
 int getchar(void)
 {
 	int	c;
-
 	if (optr == iptr)
 		return -1;
 	c = fifo[optr++];
@@ -256,12 +251,10 @@ int getchar(void)
 
 
 uint8_t modecommand;
-
 uint8_t data1;
 uint8_t data2;
 uint8_t data3;
 uint8_t data4;
-
 uint8_t checksum;
 uint8_t checker;
 
@@ -350,9 +343,6 @@ void process_packet(void)  //we need to process packet and decide what should be
 	
 	if ((modecommand == SAFE_MODE) )
 		{
-//#ifdef DEBUG
-		//	printf("********Going to SAFE_MODE!**********\n");
-//#endif
 			ae[0]=ae[1]=ae[2]=ae[3] = 0;
 			mode = SAFE_MODE_INT;
 		}
@@ -383,7 +373,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 				delay_ms(500);
 			}
 			ae[0]=ae[1]=ae[2]=ae[3] = 0;
-			printf("********Going to SAFE_MODE!**********\n");
+			printf("********Going to SAFE MODE!**********\n");
 			mode = SAFE_MODE_INT;
 		}
 	else if (modecommand == MANUAL_MODE)
@@ -453,10 +443,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		{
 			printf("********SENDING LOG DATA!**********\n");
 			//delay_ms(1000);
-
 			#ifdef LOGGING
-			/* send the log */
-			//printf("printing the log! \n");
 			for (log_counter=0; log_counter < LOG_LENGTH; log_counter++)
 			{
 				printf("%d ", log[log_counter].timestamp );
@@ -479,8 +466,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		else if ( (modecommand == CALIBRATE_MODE) && (mode == SAFE_MODE_INT) )
 		{
 			delay_ms(1000);
-			//calibrate();
-			void calibrate(sax, say, saz, sp, sq, sr, sax0, say0, saz0, sp0, sq0, sr0);
+			calibrate();
 			toggle_led(3);
 			delay_ms(500);
 			toggle_led(3);
@@ -520,8 +506,7 @@ void isr_wireless_rx(void)
 void delay_ms(int ms) 
 {
 	int time = X32_ms_clock;
-	while(X32_ms_clock - time < ms)
-		;
+	while(X32_ms_clock - time < ms);
 }
 
 /*------------------------------------------------------------------
@@ -531,8 +516,7 @@ void delay_ms(int ms)
 void delay_us(int us) 
 {
 	int time = X32_us_clock;
-	while(X32_us_clock - time < us)
-		;
+	while(X32_us_clock - time < us);
 }
 
 /*------------------------------------------------------------------
@@ -584,6 +568,7 @@ int main()
 
 	ALIVE = 1;
 	mode = SAFE_MODE_INT;
+	sax = say = saz = sp = sq = sr = 0;
 
 	/* prepare QR rx interrupt handler
 	 */
@@ -675,10 +660,8 @@ int main()
 		* 3. This is generally a hack. We are "injecting PANIC_MODE packet"
 		*/
 		timer2 = X32_ms_clock;
-		//printf("%d\n", timer2-timer1 );
 		if (((timer2-timer1) > THRESHOLD) && TERM_CONNECTED)
 			{	
-				printf("WTF?!\n");
 				PANIC_AND_EXIT;
 			}
 		print_state();

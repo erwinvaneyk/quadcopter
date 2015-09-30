@@ -1,3 +1,7 @@
+/*
+*		NOT USED NOW
+*/
+
 #include "calibrate.h"
 
 void calibrate(int& sax, int& say, int& saz, int& sp, int& sq, int& sr, int& sax0, int& say0, int& saz0, int& sp0, int& sq0, int& sr0)
@@ -8,4 +12,10 @@ void calibrate(int& sax, int& say, int& saz, int& sp, int& sq, int& sr, int& sax
  	sp0 = sp;
  	sq0 = sq; 
  	sr0 = sr;
-}
+};
+
+
+ int zp(int sp)
+ {
+ 	return sp - sp0; //not sure about the sign and order here
+ }
