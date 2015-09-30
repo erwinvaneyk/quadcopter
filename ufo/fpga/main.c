@@ -117,9 +117,12 @@ void logging(void) {
     		log[log_counter].ae[1] =(uint16_t) ae[1];
     		log[log_counter].ae[2] =(uint16_t) ae[2];
     		log[log_counter].ae[3] =(uint16_t) ae[3];
-    		log[log_counter].s0 = 0;
-    		log[log_counter].s1 = 1;
-    		log[log_counter].s2 = 2;
+    		log[log_counter].s[0] = s0;
+    		log[log_counter].s[1] = s1;
+    		log[log_counter].s[2] = s2;
+    		log[log_counter].s[3] = s3;
+    		log[log_counter].s[4] = s4;
+    		log[log_counter].s[5] = s5;
     		log_counter++;
     	}
     	//exceeding the allocated memory, disable the interrupt
@@ -434,7 +437,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		{
 
 			printf("********SENDING LOG DATA!**********\n");
-			delay_ms(1000);
+			//delay_ms(1000);
 
 			#ifdef LOGGING
 			/* send the log */
@@ -446,9 +449,12 @@ void process_packet(void)  //we need to process packet and decide what should be
 				printf("%d ", log[log_counter].ae[1] );
 				printf("%d ", log[log_counter].ae[2] );
 				printf("%d ", log[log_counter].ae[3] );
-				printf("%d ", log[log_counter].s0 );
-				printf("%d ", log[log_counter].s1 );
-				printf("%d ", log[log_counter].s2 );
+				printf("%d ", log[log_counter].s[0] );
+				printf("%d ", log[log_counter].s[1] );
+				printf("%d ", log[log_counter].s[2] );
+				printf("%d ", log[log_counter].s[3] );
+				printf("%d ", log[log_counter].s[4] );
+				printf("%d ", log[log_counter].s[5] );
 				printf("\n");
 			}
 			printf("$"); //signal end of transmission
