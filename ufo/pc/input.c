@@ -16,7 +16,7 @@ int within_bounds(int x, int y) {
 void updateModeIfValid(struct INPUT* model, int newMode) {
 	
 	// Safe mode: should be able to go to any mode
-	if(model->mode == SAFE_MODE_INT && isSafeInputModel()) {
+	if(model->mode == SAFE_MODE_INT) {
 		model->mode = newMode;
 		return;
 	}
@@ -40,7 +40,7 @@ bool isSafeInputModel(struct INPUT* model) {
 	return model->lift 	== 0 
 		&& model->roll 	== 0
 		&& model->pitch == 0
-		&& model->yaw 	== 0
+		&& model->yaw 	== 0;
 }
 
 void resetInputModel(struct INPUT* model) {
@@ -56,7 +56,7 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 	}
 
 	// Do not allow control updates in safe mode
-	if(model->mode == SAFE_MODE_INT && !(isSafeInputModel(joystick) && isSafeInputModel())) {
+	if(model->mode == SAFE_MODE_INT && !(isSafeInputModel(joystick) && isSafeInputModel(model) && isSafeInputModel(keyboard))) {
 		if(DEBUG) {
 			printf("Input not safe!\n");
 		}
@@ -64,6 +64,7 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 		resetInputModel(model);
 		resetInputModel(keyboard);
 		resetInputModel(joystick);
+		keyboard->mode = joystick->mode = model->mode = SAFE_MODE_INT;
 		return;
 	}
 
