@@ -55,6 +55,7 @@
 #define X32_button		peripherals[PERIPHERAL_BUTTONS]
 #define X32_switches		peripherals[PERIPHERAL_SWITCHES]
 
+#define MINIMUM_ENGINE_SPEED 50
 
 #define SAFE_MODE_INT		0
 #define PANIC_MODE_INT		1
@@ -328,154 +329,156 @@ return 0;
 }
 
 /*
-	ae0
-	$
-ae3---ae1
-	|
+    ae0
+	 |
+ ae3---ae1
+	 |
 	ae2
 */
 
-void process_packet(void)  //we need to process packet and decide what should be done
+void process_packet(void)
 {
-	int log_counter; //is this efficient?
+	int log_counter;
 
 	if (mode == PANIC_MODE_INT){
 		return;	
 	}
 	
+	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	if ((modecommand == SAFE_MODE) )
+	{
+		ae[0]=ae[1]=ae[2]=ae[3] = 0;
+		mode = SAFE_MODE_INT;
+	}
+	else if (modecommand == PANIC_MODE && mode != SAFE_MODE_INT)
+	{
+		printf("********Going to PANIC_MODE!**********\n");
+		mode = PANIC_MODE_INT;
+
+		if (ae[0] > 400)
 		{
-			ae[0]=ae[1]=ae[2]=ae[3] = 0;
-			mode = SAFE_MODE_INT;
+			ae[0] = ae[1] = ae[2] = ae[3] = 300;
+			delay_ms(500);
+			ae[0] = ae[1] = ae[2] = ae[3] = 250;
+			delay_ms(500);
 		}
-	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
+		printf("********Engines decreased!**********\n");
+		if (ae[0] >= 250)
 		{
-			printf("********Going to PANIC_MODE!**********\n");
-			mode = PANIC_MODE_INT;
-			if (ae[0] > 400)
-			{
-				ae[0] = ae[1] = ae[2] = ae[3] = 300;
-				delay_ms(500);
-				ae[0] = ae[1] = ae[2] = ae[3] = 250;
-				delay_ms(500);
-			}
-			printf("********Engines decreased!**********\n");
-			if (ae[0] >= 250)
-			{
-				ae[0] = ae[1] = ae[2] = ae[3] = 200;
-				delay_ms(500);
-				ae[0] = ae[1] = ae[2] = ae[3] = 150;
-				delay_ms(500);
-			}
-			if (ae[0] >= 150)
-			{
-				ae[0] = ae[1] = ae[2] = ae[3] = 100;
-				delay_ms(500);
-				ae[0] = ae[1] = ae[2] = ae[3] = 50;
-				delay_ms(500);
-			}
-			ae[0]=ae[1]=ae[2]=ae[3] = 0;
-			printf("********Going to SAFE MODE!**********\n");
-			mode = SAFE_MODE_INT;
+			ae[0] = ae[1] = ae[2] = ae[3] = 200;
+			delay_ms(500);
+			ae[0] = ae[1] = ae[2] = ae[3] = 150;
+			delay_ms(500);
 		}
+
+		if (ae[0] >= 150)
+		{
+			ae[0] = ae[1] = ae[2] = ae[3] = 100;
+			delay_ms(500);
+			ae[0] = ae[1] = ae[2] = ae[3] = 50;
+			delay_ms(500);
+		}
+		ae[0]=ae[1]=ae[2]=ae[3] = 0;
+
+		printf("********Going to SAFE_MODE!**********\n");
+		mode = SAFE_MODE_INT;
+	}
 	else if (modecommand == MANUAL_MODE)
+	{
+		mode = MANUAL_MODE_INT;
+		//LIFT
+		if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
 		{
-			mode = MANUAL_MODE_INT;
-			//LIFT
-			if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
-				{
-					ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
-				}
+			ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
+		}
 
-			//ROLL
-			if ( (data4&0x10) == 0x00) 
-				{
-					ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
+ 		//ROLL
+ 		if ( (data4&0x10) == 0x00) 
+		{
+			//lean left
+			ae[1]=ae[1] + 15 * (data4&0x0F);
+			if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED) {
+				ae[3]=ae[3] - 15 * (data4&0x0F);
+			}
+ 		}
+ 		else
+ 		{
+ 			//lean right
+ 			if (ae[1] > MINIMUM_ENGINE_SPEED) {
+				ae[1]=ae[1] - 15 * (data4&0x0F); 
+			}
+				ae[3]=ae[3] + 15 * (data4&0x0F);
+		}
+		//PITCH
+ 		if ( (data3&0x10) == 0x00) 
+		{
+			//lean forward
+			ae[2] = ae[2] + 15 * (data3&0x0F); 
+			if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED) {
+				ae[0] = ae[0] - 15 * (data3&0x0F); 
+			}
+ 		}
+ 		else
+ 		{
+ 			//lean backward
+			ae[0] = ae[0] + 15 * (data3&0x0F); 
+			if (ae[2] > 30) {
+				ae[2] = ae[2] - 15 * (data3&0x0F); 
+ 			}
 
-				if (ae[3] > 30)
-					ae[3]=ae[3] - 15 * (data4&0x0F);
-				}
-			else
-				{
-				if (ae[1] > 30)
-					ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
-					ae[3]=ae[3] + 15 * (data4&0x0F);
-				}
-
-			//PITCH
-			if ( (data3&0x10) == 0x00) 
-				{
-				if (ae[0] > 30)
-					ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
-					ae[2] = ae[2] + 15 * (data3&0x0F); 
-				}
-			else
-				{
-					ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
-				if (ae[2] > 30)
-					ae[2] = ae[2] - 15 * (data3&0x0F); 
-				}
-
-			//YAW
-			if ( (data2&0x10) == 0x00) 
-				{
-					ae[0] = ae[0] + 25 * (data2&0x0F);
-					ae[2] = ae[2] + 25 * (data2&0x0F);
-					
-					if ((ae[1] > 30) && (ae[3] > 30))
-					{
-						ae[1] = ae[1] - 25 * (data2&0x0F);
-						ae[3] = ae[3] - 25 * (data2&0x0F);
-					}
-
-				}
-			else
+	 		//YAW
+	 		if ( (data2&0x10) == 0x00) 
 			{
+				ae[0] = ae[0] + 25 * (data2&0x0F);
+				ae[2] = ae[2] + 25 * (data2&0x0F);
+				
+				if ((ae[1] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED) && (ae[3] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED))
+				{
+					ae[1] = ae[1] - 25 * (data2&0x0F);
+					ae[3] = ae[3] - 25 * (data2&0x0F);
+				}
+ 			}
+	 		else
+	 		{
 				ae[1] = ae[1] + 25 * (data2&0x0F);
 				ae[3] = ae[3] + 25 * (data2&0x0F);
-				if ((ae[0] > 30) && (ae[2] > 30))
+	 			if ((ae[0] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED) && (ae[2] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED))
 				{
-					ae[0] = ae[0] - 25 * (data2&0x0F);
+	 				ae[0] = ae[0] - 25 * (data2&0x0F);
 					ae[2] = ae[2] - 25 * (data2&0x0F);
 				}
 	 		}
 		}
+	}
+	else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT) && !log_sent ) 
+	{
 
-		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT) && !log_sent ) 
-		{
-			printf("********SENDING LOG DATA!**********\n");
-			//delay_ms(1000);
-			#ifdef LOGGING
-			for (log_counter=0; log_counter < LOG_LENGTH; log_counter++)
-			{
-				printf("%d ", log[log_counter].timestamp );
-				printf("%d ", log[log_counter].ae[0] );
-				printf("%d ", log[log_counter].ae[1] );
-				printf("%d ", log[log_counter].ae[2] );
-				printf("%d ", log[log_counter].ae[3] );
-				printf("%d ", log[log_counter].s[0] );
-				printf("%d ", log[log_counter].s[1] );
-				printf("%d ", log[log_counter].s[2] );
-				printf("%d ", log[log_counter].s[3] );
-				printf("%d ", log[log_counter].s[4] );
-				printf("%d ", log[log_counter].s[5] );
-				printf("\n");
-			}
-			printf("$"); //signal end of transmission
-			#endif
-			log_sent = 1;
-		}
-		else if ( (modecommand == CALIBRATE_MODE) && (mode == SAFE_MODE_INT) )
-		{
-			delay_ms(1000);
-			calibrate();
-			toggle_led(3);
-			delay_ms(500);
-			toggle_led(3);
-			delay_ms(500);
-			toggle_led(3);
-		}
+		printf("********SENDING LOG DATA!**********\n");
+		//delay_ms(1000);
 
+		#ifdef LOGGING
+		/* send the log */
+		//printf("printing the log! \n");
+		for (log_counter=0; log_counter < LOG_LENGTH; log_counter++)
+		{
+			printf("%d ", log[log_counter].timestamp );
+			printf("%d ", log[log_counter].ae[0] );
+			printf("%d ", log[log_counter].ae[1] );
+			printf("%d ", log[log_counter].ae[2] );
+			printf("%d ", log[log_counter].ae[3] );
+			printf("%d ", log[log_counter].s[0] );
+			printf("%d ", log[log_counter].s[1] );
+			printf("%d ", log[log_counter].s[2] );
+			printf("%d ", log[log_counter].s[3] );
+			printf("%d ", log[log_counter].s[4] );
+			printf("%d ", log[log_counter].s[5] );
+			printf("\n");
+		}
+		printf("$"); //signal end of transmission
+		#endif
+		log_sent = 1;
+	}
+    DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
 
 /*------------------------------------------------------------------
