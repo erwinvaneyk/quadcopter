@@ -10,8 +10,4 @@ struct LOG {
 		uint16_t ae[4];
 		int s[6]; //sensor readings
 	}; //__attribute__ ((packed))
-
-
-//void log_now(struct LOG logp[], int ae0, int ae1, int ae2, int ae3); 
-
 #endif

@@ -78,7 +78,16 @@ char	c;
 int	ALIVE;
 int mode;
 int	ae[4];
-int	s0, s1, s2, s3, s4, s5, timestamp;
+
+/*
+*/
+int	sax, say, saz, sp, sq, sr, timestamp;
+
+/*
+Callibration offsets
+*/
+int	sax0, say0, saz0, sp0, sq0, sr0;
+
 int	isr_qr_counter;
 int	isr_qr_time;
 int	button;
@@ -89,6 +98,30 @@ int log_counter;
 void	toggle_led(int);
 void	delay_ms(int);
 void	delay_us(int);
+
+
+
+/*------------------------------------------------------------------
+ * Calibrate
+ *------------------------------------------------------------------
+ */
+ void calibrate(void)
+ {
+ 	sax0 = sax;
+ 	say0 = say;
+ 	saz0 = saz;
+
+ 	sp0 = sp;
+ 	sq0 = sq; 
+ 	sr0 = sr;
+ }
+
+ int zp(int sp)
+ {
+ 	return sp - sp0; //not sure about the sign and order here
+ }
+
+
 
 /*------------------------------------------------------------------
  * isr_qr_link -- QR link rx interrupt handler
@@ -107,8 +140,6 @@ void isr_led_timer(void) {
 }
 
 
-//TODO:
-// Must replace with real values
 void logging(void) {
 //#ifdef LOGGING
     	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) {
@@ -117,20 +148,18 @@ void logging(void) {
     		log[log_counter].ae[1] =(uint16_t) ae[1];
     		log[log_counter].ae[2] =(uint16_t) ae[2];
     		log[log_counter].ae[3] =(uint16_t) ae[3];
-    		log[log_counter].s[0] = s0;
-    		log[log_counter].s[1] = s1;
-    		log[log_counter].s[2] = s2;
-    		log[log_counter].s[3] = s3;
-    		log[log_counter].s[4] = s4;
-    		log[log_counter].s[5] = s5;
+    		log[log_counter].s[0] = sax;  //should we log these RAW or callibrated values?
+    		log[log_counter].s[1] = say;
+    		log[log_counter].s[2] = saz;
+    		log[log_counter].s[3] = sp;
+    		log[log_counter].s[4] = sq;
+    		log[log_counter].s[5] = sr;
     		log_counter++;
     	}
     	//exceeding the allocated memory, disable the interrupt
     	if (log_counter>=LOG_LENGTH) {
     		DISABLE_INTERRUPT(INTERRUPT_TIMER2);
     	}
-
-//#endif	
 }
 
 /*------------------------------------------------------------------
@@ -146,8 +175,8 @@ void isr_qr_link(void)
         inst = X32_instruction_counter;
 	/* get sensor and timestamp values
 	 */
-	s0 = X32_QR_s0; s1 = X32_QR_s1; s2 = X32_QR_s2; 
-	s3 = X32_QR_s3; s4 = X32_QR_s4; s5 = X32_QR_s5;
+	sax = X32_QR_s0; say = X32_QR_s1; saz = X32_QR_s2; 
+	sp = X32_QR_s3; sq = X32_QR_s4; sr = X32_QR_s5;
 	timestamp = X32_QR_timestamp;
 
 	/* monitor presence of interrupts 
@@ -192,7 +221,7 @@ void isr_rs232_rx(void)
 
 	/* signal interrupt
 	 */
-	toggle_led(3);
+	toggle_led(1);
 
 	/* may have received > 1 char before IRQ is serviced so loop
 	 */
@@ -329,113 +358,99 @@ void process_packet(void)  //we need to process packet and decide what should be
 		}
 	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
 		{
-
-//#ifdef DEBUG
 			printf("********Going to PANIC_MODE!**********\n");
-//#endif
 			mode = PANIC_MODE_INT;
-
-		if (ae[0] > 400)
-		{
-			ae[0] = ae[1] = ae[2] = ae[3] = 300;
-			delay_ms(500);
-			ae[0] = ae[1] = ae[2] = ae[3] = 250;
-			delay_ms(500);
-		}
-//#ifdef DEBUG
+			if (ae[0] > 400)
+			{
+				ae[0] = ae[1] = ae[2] = ae[3] = 300;
+				delay_ms(500);
+				ae[0] = ae[1] = ae[2] = ae[3] = 250;
+				delay_ms(500);
+			}
 			printf("********Engines decreased!**********\n");
-//#endif
-		if (ae[0] >= 250)
-		{
-			ae[0] = ae[1] = ae[2] = ae[3] = 200;
-			delay_ms(500);
-			ae[0] = ae[1] = ae[2] = ae[3] = 150;
-			delay_ms(500);
-		}
-
-		if (ae[0] >= 150)
-		{
-			ae[0] = ae[1] = ae[2] = ae[3] = 100;
-			delay_ms(500);
-			ae[0] = ae[1] = ae[2] = ae[3] = 50;
-			delay_ms(500);
-		}
+			if (ae[0] >= 250)
+			{
+				ae[0] = ae[1] = ae[2] = ae[3] = 200;
+				delay_ms(500);
+				ae[0] = ae[1] = ae[2] = ae[3] = 150;
+				delay_ms(500);
+			}
+			if (ae[0] >= 150)
+			{
+				ae[0] = ae[1] = ae[2] = ae[3] = 100;
+				delay_ms(500);
+				ae[0] = ae[1] = ae[2] = ae[3] = 50;
+				delay_ms(500);
+			}
 			ae[0]=ae[1]=ae[2]=ae[3] = 0;
-//#ifdef DEBUG
 			printf("********Going to SAFE_MODE!**********\n");
-//#endif
 			mode = SAFE_MODE_INT;
 		}
 	else if (modecommand == MANUAL_MODE)
 		{
 			mode = MANUAL_MODE_INT;
-			//enable logging
-			/*#ifdef LOGGING
-				ENABLE_INTERRUPT(INTERRUPT_TIMER2);
-			#endif*/
-				//LIFT
-				if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
+			//LIFT
+			if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
+				{
+					ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
+				}
+
+			//ROLL
+			if ( (data4&0x10) == 0x00) 
+				{
+					ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
+
+				if (ae[3] > 30)
+					ae[3]=ae[3] - 15 * (data4&0x0F);
+				}
+			else
+				{
+				if (ae[1] > 30)
+					ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
+					ae[3]=ae[3] + 15 * (data4&0x0F);
+				}
+
+			//PITCH
+			if ( (data3&0x10) == 0x00) 
+				{
+				if (ae[0] > 30)
+					ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
+					ae[2] = ae[2] + 15 * (data3&0x0F); 
+				}
+			else
+				{
+					ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
+				if (ae[2] > 30)
+					ae[2] = ae[2] - 15 * (data3&0x0F); 
+				}
+
+			//YAW
+			if ( (data2&0x10) == 0x00) 
+				{
+					ae[0] = ae[0] + 25 * (data2&0x0F);
+					ae[2] = ae[2] + 25 * (data2&0x0F);
+					
+					if ((ae[1] > 30) && (ae[3] > 30))
 					{
-						ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
-		 			}
+						ae[1] = ae[1] - 25 * (data2&0x0F);
+						ae[3] = ae[3] - 25 * (data2&0x0F);
+					}
 
-		 		//ROLL
-		 		if ( (data4&0x10) == 0x00) 
-					{
-						ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
-
-					if (ae[3] > 30)
-						ae[3]=ae[3] - 15 * (data4&0x0F);
-		 			}
-		 		else
-		 			{
-		 			if (ae[1] > 30)
-						ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
-						ae[3]=ae[3] + 15 * (data4&0x0F);
-		 			}
-
-				//PITCH
-		 		if ( (data3&0x10) == 0x00) 
-					{
-					if (ae[0] > 30)
-						ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
-						ae[2] = ae[2] + 15 * (data3&0x0F); 
-		 			}
-		 		else
-		 			{
-						ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
-					if (ae[2] > 30)
-						ae[2] = ae[2] - 15 * (data3&0x0F); 
-		 			}
-
-		 		//YAW
-		 		if ( (data2&0x10) == 0x00) 
-					{
-						ae[0] = ae[0] + 25 * (data2&0x0F);
-						ae[2] = ae[2] + 25 * (data2&0x0F);
-						
-						if ((ae[1] > 30) && (ae[3] > 30))
-						{
-							ae[1] = ae[1] - 25 * (data2&0x0F);
-							ae[3] = ae[3] - 25 * (data2&0x0F);
-						}
-
-		 			}
-		 		else
-		 		{
-						ae[1] = ae[1] + 25 * (data2&0x0F);
-						ae[3] = ae[3] + 25 * (data2&0x0F);
-			 			if ((ae[0] > 30) && (ae[2] > 30))
-						{
-			 				ae[0] = ae[0] - 25 * (data2&0x0F);
-							ae[2] = ae[2] - 25 * (data2&0x0F);
-						}
-		 		}
+				}
+			else
+			{
+				ae[1] = ae[1] + 25 * (data2&0x0F);
+				ae[3] = ae[3] + 25 * (data2&0x0F);
+				if ((ae[0] > 30) && (ae[2] > 30))
+				{
+					ae[0] = ae[0] - 25 * (data2&0x0F);
+					ae[2] = ae[2] - 25 * (data2&0x0F);
+				}
+	 		}
 		}
 
 		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT) && !log_sent ) 
 		{
-
 			printf("********SENDING LOG DATA!**********\n");
 			//delay_ms(1000);
 
@@ -460,6 +475,17 @@ void process_packet(void)  //we need to process packet and decide what should be
 			printf("$"); //signal end of transmission
 			#endif
 			log_sent = 1;
+		}
+		else if ( (modecommand == CALIBRATE_MODE) && (mode == SAFE_MODE_INT) )
+		{
+			delay_ms(1000);
+			//calibrate();
+			void calibrate(sax, say, saz, sp, sq, sr, sax0, say0, saz0, sp0, sq0, sr0);
+			toggle_led(3);
+			delay_ms(500);
+			toggle_led(3);
+			delay_ms(500);
+			toggle_led(3);
 		}
 
 }
@@ -523,13 +549,14 @@ void toggle_led(int i)
  *------------------------------------------------------------------
  */
 
+
 void print_state(void) 
 {
 	int i;
 	//char text[100] , a;
 	printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
 	printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
-		s0,s1,s2,s3,s4,s5,isr_qr_time, inst);
+		sax,say,say,sp,sq,sr,isr_qr_time, inst);
 	
     //wireless transmission
     /*  
@@ -585,6 +612,9 @@ int main()
         SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
         ENABLE_INTERRUPT(INTERRUPT_TIMER1);
 
+//In case timer2 doesnt not exist on the current softcore:
+// 1. use timer1
+// 2. modify the softcore
 
      /* prepare timer interrupt #2 // LOGGING ISR
 	 */
