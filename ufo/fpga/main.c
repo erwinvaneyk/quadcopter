@@ -140,10 +140,10 @@ void logging(void) {
 //#ifdef LOGGING
     	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) {
     		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
-    		log[log_counter].ae[0] =(uint16_t) ae[0];
-    		log[log_counter].ae[1] =(uint16_t) ae[1];
-    		log[log_counter].ae[2] =(uint16_t) ae[2];
-    		log[log_counter].ae[3] =(uint16_t) ae[3];
+    		log[log_counter].ae[0] = (uint16_t) ae[0];
+    		log[log_counter].ae[1] = (uint16_t) ae[1];
+    		log[log_counter].ae[2] = (uint16_t) ae[2];
+    		log[log_counter].ae[3] = (uint16_t) ae[3];
     		log[log_counter].s[0] = sax;  //should we log these RAW or callibrated values?
     		log[log_counter].s[1] = say;
     		log[log_counter].s[2] = saz;
@@ -592,8 +592,8 @@ int main()
 
 	/* prepare timer interrupt #1
 	 */
-        X32_timer_per = 1000 * CLOCKS_PER_MS;
-        SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &isr_led_timer);
+        X32_timer_per = 1 * CLOCKS_PER_MS;
+        SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &logging);
         SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
         ENABLE_INTERRUPT(INTERRUPT_TIMER1);
 
@@ -603,11 +603,11 @@ int main()
 
      /* prepare timer interrupt #2 // LOGGING ISR
 	 */
-        X32_timer_per2 = 1 * CLOCKS_PER_MS;
+     /*   X32_timer_per2 = 1 * CLOCKS_PER_MS;
         SET_INTERRUPT_VECTOR(INTERRUPT_TIMER2, &logging);
         SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER2, 4);
         ENABLE_INTERRUPT(INTERRUPT_TIMER2);
-
+*/
 	/* prepare button interrupt handler
 	 */
         SET_INTERRUPT_VECTOR(INTERRUPT_BUTTONS, &isr_button);

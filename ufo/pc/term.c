@@ -177,6 +177,7 @@ int main(int argc, char **argv)
 			//if we are logging save to a file
 			if (inputModel.mode == SEND_TELEMETRY_INT)
 			{
+				printf("Saving to a file...\n");
 				if (link_status > -1)
 					{
 						c=' ';
@@ -200,6 +201,7 @@ int main(int argc, char **argv)
 						fclose(f);
 					}
 				printf("LOG saved to file.\n");
+				
 				inputModel.mode = SAFE_MODE_INT;
 			}
 			/////
