@@ -36,10 +36,32 @@ void updateModeIfValid(struct INPUT* model, int newMode) {
 	printf("Invalid mode transition %d -> %d\n", model->mode, newMode); 
 }
 
-void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT* joystick) {
-	if (!keyboard->updated && !joystick->updated) 
-		return;
+bool isSafeInputModel(struct INPUT* model) {
+	return model->lift 	== 0 
+		&& model->roll 	== 0
+		&& model->pitch == 0
+		&& model->yaw 	== 0;
+}
 
+void resetInputModel(struct INPUT* model) {
+	model->lift		= 0;
+	model->yaw		= 0;
+	model->roll 	= 0;
+	model->pitch 	= 0;
+}
+
+void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT* joystick) {
+	if (!keyboard->updated && !joystick->updated) {
+		return;
+	}
+
+	// Do not allow control updates in safe mode
+	if(model->mode == SAFE_MODE_INT && !(isSafeInputModel(joystick) && isSafeInputModel(model) && isSafeInputModel(keyboard))) {
+		// Just to be sure, reset all models again
+		resetInputModel(model);
+		keyboard->mode = joystick->mode = model->mode = SAFE_MODE_INT;
+		return;
+	}
 
 	// Update mode (keyboard's mode overrides joystick's mode)
 	if(keyboard->mode != model->mode) {
@@ -55,10 +77,9 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 	// Update controls
 	if (model->mode == SAFE_MODE_INT)
 	{
-		model->lift = keyboard->lift = joystick->lift 		= 0;
-		model->yaw = keyboard->yaw = joystick->yaw 			= 0;
-		model->roll = keyboard->roll = joystick->roll 		= 0;
-		model->pitch = keyboard->pitch = joystick->pitch 	= 0;
+		resetInputModel(model);
+		resetInputModel(keyboard);
+		resetInputModel(joystick);
 	} 
 	else if (model->mode == MANUAL_MODE_INT)
 	{
