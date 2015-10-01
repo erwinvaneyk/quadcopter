@@ -10,7 +10,7 @@
 #define TRUE 1
 #define FALSE 0
 #define LOG_LENGTH 10000	//=10 seconds of logging in Manual Mode at 1000Hz
-#define THRESHOLD 800		//(ms) Communicaton safety mechanism threshold value
+#define THRESHOLD 2000		//(ms) Communicaton safety mechanism threshold value
 
 
 #include <stdio.h>
@@ -26,7 +26,7 @@
 #define X32_instruction_counter           peripherals[0x03]
 
 #define X32_timer_per		peripherals[PERIPHERAL_TIMER1_PERIOD]
-#define X32_timer_per2		peripherals[PERIPHERAL_TIMER2_PERIOD]
+//#define X32_timer_per2		peripherals[PERIPHERAL_TIMER2_PERIOD]
 
 #define X32_leds		peripherals[PERIPHERAL_LEDS]
 #define X32_ms_clock		peripherals[PERIPHERAL_MS_CLOCK]
@@ -55,6 +55,7 @@
 #define X32_button		peripherals[PERIPHERAL_BUTTONS]
 #define X32_switches		peripherals[PERIPHERAL_SWITCHES]
 
+#define MINIMUM_ENGINE_SPEED 65
 
 #define SAFE_MODE_INT		0
 #define PANIC_MODE_INT		1
@@ -154,7 +155,7 @@ void logging(void) {
     	}
     	//exceeding the allocated memory, disable the interrupt
     	if (log_counter>=LOG_LENGTH) {
-    		DISABLE_INTERRUPT(INTERRUPT_TIMER2);
+    		DISABLE_INTERRUPT(INTERRUPT_TIMER1);
     	}
 }
 
@@ -342,7 +343,9 @@ void process_packet(void)  //we need to process packet and decide what should be
 	if (mode == PANIC_MODE_INT){
 		return;	
 	}
-	
+
+
+	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	if ((modecommand == SAFE_MODE) )
 		{
 			ae[0]=ae[1]=ae[2]=ae[3] = 0;
@@ -392,27 +395,27 @@ void process_packet(void)  //we need to process packet and decide what should be
 				{
 					ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
 
-				if (ae[3] > 30)
+				if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
 					ae[3]=ae[3] - 15 * (data4&0x0F);
 				}
 			else
 				{
-				if (ae[1] > 30)
+				ae[3]=ae[3] + 15 * (data4&0x0F);
+				if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
 					ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
-					ae[3]=ae[3] + 15 * (data4&0x0F);
 				}
 
 			//PITCH
 			if ( (data3&0x10) == 0x00) 
 				{
-				if (ae[0] > 30)
+				ae[2] = ae[2] + 15 * (data3&0x0F); 
+				if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
 					ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
-					ae[2] = ae[2] + 15 * (data3&0x0F); 
 				}
 			else
 				{
-					ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
-				if (ae[2] > 30)
+				ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
+				if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
 					ae[2] = ae[2] - 15 * (data3&0x0F); 
 				}
 
@@ -422,7 +425,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 					ae[0] = ae[0] + 25 * (data2&0x0F);
 					ae[2] = ae[2] + 25 * (data2&0x0F);
 					
-					if ((ae[1] > 30) && (ae[3] > 30))
+					if ((ae[1] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED) && (ae[3] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED))
 					{
 						ae[1] = ae[1] - 25 * (data2&0x0F);
 						ae[3] = ae[3] - 25 * (data2&0x0F);
@@ -433,7 +436,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 			{
 				ae[1] = ae[1] + 25 * (data2&0x0F);
 				ae[3] = ae[3] + 25 * (data2&0x0F);
-				if ((ae[0] > 30) && (ae[2] > 30))
+				if ((ae[0] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED) && (ae[2] - 25 * (data2&0x0F)  > MINIMUM_ENGINE_SPEED))
 				{
 					ae[0] = ae[0] - 25 * (data2&0x0F);
 					ae[2] = ae[2] - 25 * (data2&0x0F);
@@ -475,7 +478,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 			delay_ms(500);
 			toggle_led(3);
 		}
-
+	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
 
 /*------------------------------------------------------------------
