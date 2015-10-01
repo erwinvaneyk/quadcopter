@@ -344,7 +344,7 @@ void process_packet(void)
 		return;	
 	}
 	
-	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	if ((modecommand == SAFE_MODE) )
 	{
 		ae[0]=ae[1]=ae[2]=ae[3] = 0;
@@ -478,7 +478,7 @@ void process_packet(void)
 		#endif
 		log_sent = 1;
 	}
-    DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+    ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
 
 /*------------------------------------------------------------------
