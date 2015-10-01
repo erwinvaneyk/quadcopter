@@ -231,7 +231,7 @@ if (f == NULL)
 	} //end of inf. loop
 
 
-fclose(f);
+// fclose(f);
 
 		term_exitio();
 		if(link_status > -1) {
