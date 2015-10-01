@@ -294,6 +294,8 @@ int get_packet(void)
 			checksum =	(uint8_t)fifo[optr];
 			move_optr();
 			checker = modecommand ^ data1 ^ data2 ^ data3 ^ data4 ^ checksum;
+			//hack, because we shouldn't be getting this error. it somehow gets out of sync
+			if (iptr != optr) return -1;
 			#ifdef DEBUG
 			printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
 			printf("mode is: %x \n", modecommand);
@@ -483,11 +485,9 @@ void process_packet(void)  //we need to process packet and decide what should be
 void isr_wireless_rx(void)
 {
 	int c;
-
 	/* signal interrupt
 	 */
 	toggle_led(4);
-
 
 	/* may have received > 1 char before IRQ is serviced so loop
 	 */
@@ -564,7 +564,7 @@ int main()
 {
 	int timer1;
 	int timer2;
-	int debug_i;
+	int count = 1;
 
 	ALIVE = 1;
 	mode = SAFE_MODE_INT;
@@ -664,7 +664,14 @@ int main()
 			{	
 				PANIC_AND_EXIT;
 			}
-		print_state();
+
+		if (count%50 == 0)
+			{
+				print_state();	
+				count = 1;
+			}
+		else count++;
+
 
 	}//end of main loop
 
