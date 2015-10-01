@@ -57,13 +57,8 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 
 	// Do not allow control updates in safe mode
 	if(model->mode == SAFE_MODE_INT && !(isSafeInputModel(joystick) && isSafeInputModel(model) && isSafeInputModel(keyboard))) {
-		if(DEBUG) {
-			printf("Input not safe!\n");
-		}
 		// Just to be sure, reset all models again
 		resetInputModel(model);
-		resetInputModel(keyboard);
-		resetInputModel(joystick);
 		keyboard->mode = joystick->mode = model->mode = SAFE_MODE_INT;
 		return;
 	}

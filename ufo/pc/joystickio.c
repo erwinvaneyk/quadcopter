@@ -75,7 +75,7 @@ void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK*
 	}
 
 	// Ignore any updates when safe mode is
-	if(joystickInputModel->mode != SAFE_MODE_INT && joystickInputModel->mode != PANIC_MODE_INT) {
+	if(joystickInputModel->mode != PANIC_MODE_INT) {
 		// update controls
 		joystickInputModel->pitch = normalizeAxis(joystick->axis[JS_AXIS_PITCH], NUMB_LEVELS) - MAX_LEVEL;
 		joystickInputModel->yaw = normalizeAxis(joystick->axis[JS_AXIS_YAW], NUMB_LEVELS) - MAX_LEVEL;
