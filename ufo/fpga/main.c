@@ -92,6 +92,8 @@ int	inst;
 int log_sent = 0;
 int log_counter;
 
+int lift_setpoint = 0;
+
 //filter & yaw control
 int zr_old = 0;
 int zr_filtered = 0;
@@ -103,12 +105,9 @@ unsigned int b1 ;  //0.0305;
 int yaw_P = 3;
 int yaw;
 
-
 void	toggle_led(int);
 void	delay_ms(int);
 void	delay_us(int);
-
-
 
 /*------------------------------------------------------------------
  * Calibrate
@@ -139,14 +138,12 @@ void calibrate(void)
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
 
-//not sure about the sign and order here, should it be abs||?
 int zax(void)	{return sax - sax0;}
 int zay(void)	{return say - say0;}
 int zaz(void)	{return saz - saz0;}
 int zp(void)	{return sp - sp0;}
 int zq(void)	{return sq - sq0;}
 int zr(void)	{return sr - sr0;}
-
 
 
 /*------------------------------------------------------------------
@@ -167,7 +164,7 @@ void isr_led_timer(void) {
 
 void logging(void) {
 //#ifdef LOGGING
-    	if ((log_counter < LOG_LENGTH) /*&& (mode == MANUAL_MODE_INT)*/ ) {
+    	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) { //or YAW CONTROL MODE
     		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
     		log[log_counter].ae[0] = (uint16_t) ae[0];
     		log[log_counter].ae[1] = (uint16_t) ae[1];
@@ -325,6 +322,7 @@ int get_packet(void)
 			checker = modecommand ^ data1 ^ data2 ^ data3 ^ data4 ^ checksum;
 			//hack, because we shouldn't be getting this error. it somehow gets out of sync
 			if (iptr != optr) return -1;
+			//#define DEBUG
 			#ifdef DEBUG
 			printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
 			printf("mode is: %x \n", modecommand);
@@ -416,7 +414,13 @@ void process_packet(void)  //we need to process packet and decide what should be
 			//LIFT
 			if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
 				{
-					ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
+					//modify engine values if lift is changed!
+					//DND the yaw control
+					if (lift_setpoint != (int)data1&0x0F)
+					{
+						ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
+						lift_setpoint = (int)(data1&0x0F);
+					}
 				}
 
 			//ROLL
@@ -758,6 +762,12 @@ int main()
 			zr_old = zr;
 			zr_filtered_old = zr_filtered;
 			*/
+			//#define DEBUG
+			#ifdef DEBUG
+			printf("zr is %d   yaw is %d    yap_P is %d \n", zr_v, yaw, yaw_P);
+			#endif
+
+			// I believe we should use the setpoint here
 			ae[0] = ae[0] - (yaw - zr_v) * yaw_P;
 			ae[2] = ae[0];
 			ae[1] = ae[1] + (yaw - zr_v) * yaw_P;
