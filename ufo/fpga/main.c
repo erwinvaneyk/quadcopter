@@ -48,55 +48,8 @@ int zq(void)	{return sq - sq0;}
 int zr(void)	{return sr - sr0;}
 
 void logging(void);
+void isr_qr_link(void);
 
-/*------------------------------------------------------------------
- * isr_qr_link -- QR link rx interrupt handler
- *------------------------------------------------------------------
- */
-void isr_qr_link(void)
-{
-	int	ae_index;
-	/* record time
-	 */
-	isr_qr_time = X32_us_clock;
-        inst = X32_instruction_counter;
-	/* get sensor and timestamp values
-	 */
-	sax = X32_QR_s0; say = X32_QR_s1; saz = X32_QR_s2; 
-	sp = X32_QR_s3; sq = X32_QR_s4; sr = X32_QR_s5;
-	timestamp = X32_QR_timestamp;
-
-	/* monitor presence of interrupts 
-	 */
-	isr_qr_counter++;
-	if (isr_qr_counter % 500 == 0) {
-		toggle_led(2);
-	}	
-
-	/* Clip engine values to be positive and 10 bits.
-	 */
-	for (ae_index = 0; ae_index < 4; ae_index++) 
-	{
-		if (ae[ae_index] < 0) 
-			ae[ae_index] = 0;
-		
-		ae[ae_index] &= 0x3ff;
-	}
-
-	/* Send actuator values
-	 * (Need to supply a continous stream, otherwise
-	 * QR will go to safe mode, so just send every ms)
-	 */
-	X32_QR_a0 = ae[0];
-	X32_QR_a1 = ae[1];
-	X32_QR_a2 = ae[2];
-	X32_QR_a3 = ae[3];
-
-	/* record isr execution time (ignore overflow)
-	 */
-	inst = X32_instruction_counter - inst;
-	isr_qr_time = X32_us_clock - isr_qr_time;
-	}
 
 /*------------------------------------------------------------------
  * isr_rs232_rx -- rs232 rx interrupt handler
@@ -624,6 +577,55 @@ void logging(void) {
     	if (log_counter>=LOG_LENGTH) {
     		DISABLE_INTERRUPT(INTERRUPT_TIMER1);
     	}
+}
+
+/*------------------------------------------------------------------
+ * isr_qr_link -- QR link rx interrupt handler
+ *------------------------------------------------------------------
+ */
+void isr_qr_link(void)
+{
+	int	ae_index;
+	/* record time
+	 */
+	isr_qr_time = X32_us_clock;
+        inst = X32_instruction_counter;
+	/* get sensor and timestamp values
+	 */
+	sax = X32_QR_s0; say = X32_QR_s1; saz = X32_QR_s2; 
+	sp = X32_QR_s3; sq = X32_QR_s4; sr = X32_QR_s5;
+	timestamp = X32_QR_timestamp;
+
+	/* monitor presence of interrupts 
+	 */
+	isr_qr_counter++;
+	if (isr_qr_counter % 500 == 0) {
+		toggle_led(2);
+	}	
+
+	/* Clip engine values to be positive and 10 bits.
+	 */
+	for (ae_index = 0; ae_index < 4; ae_index++) 
+	{
+		if (ae[ae_index] < 0) 
+			ae[ae_index] = 0;
+		
+		ae[ae_index] &= 0x3ff;
+	}
+
+	/* Send actuator values
+	 * (Need to supply a continous stream, otherwise
+	 * QR will go to safe mode, so just send every ms)
+	 */
+	X32_QR_a0 = ae[0];
+	X32_QR_a1 = ae[1];
+	X32_QR_a2 = ae[2];
+	X32_QR_a3 = ae[3];
+
+	/* record isr execution time (ignore overflow)
+	 */
+	inst = X32_instruction_counter - inst;
+	isr_qr_time = X32_us_clock - isr_qr_time;
 }
 
 
