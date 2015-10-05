@@ -43,111 +43,33 @@ uint8_t data4;
 uint8_t checksum;
 uint8_t checker;
 
-void	toggle_led(int);
-void	delay_ms(int);
-void	delay_us(int);
+void 	delay_ms(int ms);
+void 	delay_us(int us);
+void 	toggle_led(int i);
+void 	print_state(void);
 
-void calibrate(void);
+void 	calibrate(void);
+int 	zax(void)	{return sax - sax0;}
+int 	zay(void)	{return say - say0;}
+int 	zaz(void)	{return saz - saz0;}
+int 	zp(void)	{return sp - sp0;}
+int 	zq(void)	{return sq - sq0;}
+int 	zr(void)	{return sr - sr0;}
 
-int zax(void)	{return sax - sax0;}
-int zay(void)	{return say - say0;}
-int zaz(void)	{return saz - saz0;}
-int zp(void)	{return sp - sp0;}
-int zq(void)	{return sq - sq0;}
-int zr(void)	{return sr - sr0;}
+void 	logging(void);
+void 	isr_qr_link(void);
+void 	isr_rs232_rx(void);
 
-void logging(void);
-void isr_qr_link(void);
-void isr_rs232_rx(void);
-
-void move_optr();
-int get_packet(void);
-
-void process_packet(void);
+void	move_optr();
+int 	get_packet(void);
+void	process_packet(void);
 
 
 /*------------------------------------------------------------------
- * isr_wireless_rx -- wireless rx interrupt handler
- *------------------------------------------------------------------
- */
-void isr_wireless_rx(void)
-{
-	int c;
-	/* signal interrupt
-	 */
-	toggle_led(4);
-
-	/* may have received > 1 char before IRQ is serviced so loop
-	 */
-	while (X32_wireless_char) {
-		fifo[iptr++] = X32_wireless_data;
-		if (iptr > FIFOSIZE)
-			iptr = 0;
-	}
-
-}
-
-/*------------------------------------------------------------------
- * delay_ms -- busy-wait for ms milliseconds
- *------------------------------------------------------------------
- */
-void delay_ms(int ms) 
-{
-	int time = X32_ms_clock;
-	while(X32_ms_clock - time < ms);
-}
-
-/*------------------------------------------------------------------
- * delay_us -- busy-wait for us microseconds
- *------------------------------------------------------------------
- */
-void delay_us(int us) 
-{
-	int time = X32_us_clock;
-	while(X32_us_clock - time < us);
-}
-
-/*------------------------------------------------------------------
- * toggle_led -- toggle led # i
- *------------------------------------------------------------------
- */
-void toggle_led(int i) 
-{
-	X32_leds = (X32_leds ^ (1 << i));
-}
-
-/*------------------------------------------------------------------
- * print_state -- print all sensors and actuators
+ * main loop
  *------------------------------------------------------------------
  */
 
-
-void print_state(void) 
-{
-	int i;
-	//char text[100] , a;
-	printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
-	printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
-		sax,say,say,sp,sq,sr,isr_qr_time, inst);
-	
-    //wireless transmission
-    /*  
-	sprintf(text, "%d %d %d %d \r\n",ae[0],ae[1],ae[2],ae[3]);
-	i = 0;
-	while( text[i] != 0) {
-		delay_ms(1);
-		// if (X32_switches == 0x03)
-		if (X32_wireless_stat & 0x01 == 0x01)
-			X32_wireless_data = text[i];
-		i++;
-	}
-    */
-}
-
-/*------------------------------------------------------------------
- * main -- do the test
- *------------------------------------------------------------------
- */
 int main() 
 {
 	int timer1;
@@ -159,70 +81,64 @@ int main()
 	sax = say = saz = sp = sq = sr = 0;
 
 	/* prepare QR rx interrupt handler
-	 */
-        SET_INTERRUPT_VECTOR(INTERRUPT_XUFO, &isr_qr_link);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_XUFO, 21);
-		isr_qr_counter = isr_qr_time = 0;
-		ae[0] = ae[1] = ae[2] = ae[3] = 0;
-        ENABLE_INTERRUPT(INTERRUPT_XUFO);
+	*/
+	SET_INTERRUPT_VECTOR(INTERRUPT_XUFO, &isr_qr_link);
+	SET_INTERRUPT_PRIORITY(INTERRUPT_XUFO, 21);
+	isr_qr_counter = isr_qr_time = 0;
+	ae[0] = ae[1] = ae[2] = ae[3] = 0;
+	ENABLE_INTERRUPT(INTERRUPT_XUFO);
  	
 
- 	//IN the original code we had this, should we get rid off it???
-     //Because right now i dont understand how it is being done
+	//IN the original code we had this, should we get rid off it???
+	//Because right now i dont understand how it is being done
 
- 	/* prepare timer interrupt
-	 */
-        //X32_timer_per = 200 * CLOCKS_PER_MS;
-        //SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &isr_qr_link);
-        //SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 21);
-        //ENABLE_INTERRUPT(INTERRUPT_TIMER1);
-
+	/* prepare timer interrupt
+	*/
+	//X32_timer_per = 200 * CLOCKS_PER_MS;
+	//SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &isr_qr_link);
+	//SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 21);
+	//ENABLE_INTERRUPT(INTERRUPT_TIMER1);
 
 	/* prepare timer interrupt #1
-	 */
-        X32_timer_per = 1 * CLOCKS_PER_MS;
-        SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &logging);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
-        ENABLE_INTERRUPT(INTERRUPT_TIMER1);
+	*/
+	X32_timer_per = 1 * CLOCKS_PER_MS;
+	SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &logging);
+	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
+	ENABLE_INTERRUPT(INTERRUPT_TIMER1);
 
-//In case timer2 doesnt not exist on the current softcore:
-// 1. use timer1
-// 2. modify the softcore
 
-     /* prepare timer interrupt #2 // LOGGING ISR
-	 */
-     /*   X32_timer_per2 = 1 * CLOCKS_PER_MS;
-        SET_INTERRUPT_VECTOR(INTERRUPT_TIMER2, &logging);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER2, 4);
-        ENABLE_INTERRUPT(INTERRUPT_TIMER2);
-*/
+	/* prepare timer interrupt #2 // LOGGING ISR
+	*/
+	/*   X32_timer_per2 = 1 * CLOCKS_PER_MS;
+	SET_INTERRUPT_VECTOR(INTERRUPT_TIMER2, &logging);
+	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER2, 4);
+	ENABLE_INTERRUPT(INTERRUPT_TIMER2);
+	*/
 	
 
 	/* prepare rs232 rx interrupt and getchar handler
-	 */
-        SET_INTERRUPT_VECTOR(INTERRUPT_PRIMARY_RX, &isr_rs232_rx);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_PRIMARY_RX, 20);
+	*/
+	SET_INTERRUPT_VECTOR(INTERRUPT_PRIMARY_RX, &isr_rs232_rx);
+	SET_INTERRUPT_PRIORITY(INTERRUPT_PRIMARY_RX, 20);
 	while (X32_rs232_char) c = X32_rs232_data; // empty buffer
-        ENABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
+	ENABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
 
-    /* prepare wireless rx interrupt and getchar handler
-	 */
-        //not used at the moment
-       /*
-        SET_INTERRUPT_VECTOR(INTERRUPT_WIRELESS_RX, &isr_wireless_rx);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_WIRELESS_RX, 19);
-        while (X32_wireless_char) c = X32_wireless_data; // empty buffer
-        ENABLE_INTERRUPT(INTERRUPT_WIRELESS_RX);
-		*/
+	/* prepare wireless rx interrupt and getchar handler
+	*/
+	//not used at the moment
+	/*
+	SET_INTERRUPT_VECTOR(INTERRUPT_WIRELESS_RX, &isr_wireless_rx);
+	SET_INTERRUPT_PRIORITY(INTERRUPT_WIRELESS_RX, 19);
+	while (X32_wireless_char) c = X32_wireless_data; // empty buffer
+	ENABLE_INTERRUPT(INTERRUPT_WIRELESS_RX);
+	*/
 
 	/* initialize some other stuff
-	 */
-        iptr = optr = 0;
-		X32_leds = 0;
-		log_counter = 0;
+	*/
+	iptr = optr = 0;
+	X32_leds = 0;
+	log_counter = 0;
 
-	/* start the test loop
-	 */
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
 
 	while (ALIVE)
@@ -611,16 +527,62 @@ return 0;
 }
 
 
+/*------------------------------------------------------------------
+ * delay_ms -- busy-wait for ms milliseconds
+ *------------------------------------------------------------------
+ */
+void delay_ms(int ms) 
+{
+	int time = X32_ms_clock;
+	while(X32_ms_clock - time < ms);
+}
+
+/*------------------------------------------------------------------
+ * delay_us -- busy-wait for us microseconds
+ *------------------------------------------------------------------
+ */
+void delay_us(int us) 
+{
+	int time = X32_us_clock;
+	while(X32_us_clock - time < us);
+}
+
+/*------------------------------------------------------------------
+ * toggle_led -- toggle led # i
+ *------------------------------------------------------------------
+ */
+void toggle_led(int i) 
+{
+	X32_leds = (X32_leds ^ (1 << i));
+}
+
+/*------------------------------------------------------------------
+ * print_state -- print all sensors and actuators
+ *------------------------------------------------------------------
+ */
 
 
-
-
-
-
-
-
-
-
+void print_state(void) 
+{
+	int i;
+	//char text[100] , a;
+	printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
+	printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
+		sax,say,say,sp,sq,sr,isr_qr_time, inst);
+	
+    //wireless transmission
+    /*  
+	sprintf(text, "%d %d %d %d \r\n",ae[0],ae[1],ae[2],ae[3]);
+	i = 0;
+	while( text[i] != 0) {
+		delay_ms(1);
+		// if (X32_switches == 0x03)
+		if (X32_wireless_stat & 0x01 == 0x01)
+			X32_wireless_data = text[i];
+		i++;
+	}
+    */
+}
 
 
 
@@ -686,3 +648,32 @@ int getchar(void)
 
 
 */
+
+
+////////////////////////////////Might be used later
+
+/*------------------------------------------------------------------
+ * isr_wireless_rx -- wireless rx interrupt handler
+ *------------------------------------------------------------------
+ */
+
+ /*
+void isr_wireless_rx(void)
+{
+	int c;
+	// signal interrupt
+	 
+	toggle_led(4);
+
+	//may have received > 1 char before IRQ is serviced so loop
+	 
+	while (X32_wireless_char) {
+		fifo[iptr++] = X32_wireless_data;
+		if (iptr > FIFOSIZE)
+			iptr = 0;
+	}
+
+}
+*/
+
+////////////////////////////////////////////////
