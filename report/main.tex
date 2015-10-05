@@ -1,0 +1,105 @@
+\documentclass[10pt,final,journal]{IEEEtran}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage{cite}
+\usepackage{url}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+
+\graphicspath{{./images/}}
+
+\usepackage[margin=1in]{geometry}
+
+\definecolor{mygray}{rgb}{0.4,0.4,0.4}
+\definecolor{mygreen}{rgb}{0,0.8,0.6}
+\definecolor{myorange}{rgb}{1.0,0.4,0}
+
+\definecolor{lightgray}{rgb}{.9,.9,.9}
+\definecolor{darkgray}{rgb}{.4,.4,.4}
+\definecolor{purple}{rgb}{0.65, 0.12, 0.82}
+
+\DeclareMathSizes{10}{10}{10}{10}
+
+\lstset{
+backgroundcolor=\color{lightgray},
+extendedchars=true,
+basicstyle=\footnotesize\ttfamily,
+showstringspaces=false,
+showspaces=false,
+numbers=left,
+numberstyle=\footnotesize,
+numbersep=9pt,
+tabsize=2,
+breaklines=true,
+showtabs=false,
+captionpos=b
+keywordstyle=\color{blue}\bfseries,
+ndkeywordstyle=\color{darkgray}\bfseries,
+identifierstyle=\color{black},
+commentstyle=\color{purple}\ttfamily,
+stringstyle=\color{red}\ttfamily,
+}
+
+\title{Embedded Real-time Systems (in4073)\\\small{Group 4}}
+\author{
+		\IEEEauthorblockN{
+			Haji~Akhundov\IEEEauthorrefmark{1}
+			Erwin~Van~Eyk\IEEEauthorrefmark{2}
+			Mike~Papadimitriou
+\IEEEauthorrefmark{3}
+		}
+
+		\IEEEauthorblockA{
+			\IEEEauthorrefmark{1}h.akhundov@student.tudelft.nl			\small{4390547} \and
+			\IEEEauthorrefmark{2}email@student.tudelft.nl 	\small{00000000} \and 	\\
+			\IEEEauthorrefmark{3}email@student.tudelft.nl 				\small{0000000} \and
+		}
+}
+
+\date{\today}
+
+\begin{document}
+
+\nocite{*}
+
+\maketitle
+
+\begin{abstract}
+This report describes the process of developing and building embedded software for a quad-rotor air vehicle (or however this is called)
+
+1. Introduction (including problem statement)
+
+2. Architecture (all software components + interfaces)
+
+3. Implementation (how you did it, and who did what)
+
+4. Experimental results (list capabilities of your demonstrator)
+
+5. Conclusion (evaluate design, team results, individual performance, learning experience)
+
+Appendices (all component interfaces, component code for those components you wish to feature)
+
+\end{abstract}
+
+\input{introduction}
+
+\input{architecture}
+
+\input{implementation}
+
+\input{experimental}
+
+\input{conclusion}
+
+\input{discussion}
+
+%\bibliography{references}{}
+%\bibliographystyle{unsrt}
+
+\end{document}
