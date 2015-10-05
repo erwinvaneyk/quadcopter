@@ -1,74 +1,16 @@
 /*------------------------------------------------------------------
  *  QR
  *
- *
  *------------------------------------------------------------------
  */
-
-#define LOGGING
-//#define DEBUG
-#define TRUE 1
-#define FALSE 0
-#define LOG_LENGTH 10000	//=10 seconds of logging in Manual Mode at 1000Hz
-#define THRESHOLD 2000		//(ms) Communicaton safety mechanism threshold value
-
 
 #include <stdio.h>
 #include <x32.h>
 #include "assert.h"
-#include "defines.h"
 #include <stdint.h>
-#include "log.h"
 #include <stdlib.h>
-
-/* define some peripheral short hands
- */
-#define X32_instruction_counter           peripherals[0x03]
-
-#define X32_timer_per		peripherals[PERIPHERAL_TIMER1_PERIOD]
-//#define X32_timer_per2		peripherals[PERIPHERAL_TIMER2_PERIOD]
-
-#define X32_leds		peripherals[PERIPHERAL_LEDS]
-#define X32_ms_clock		peripherals[PERIPHERAL_MS_CLOCK]
-#define X32_us_clock		peripherals[PERIPHERAL_US_CLOCK]
-#define X32_QR_a0 		peripherals[PERIPHERAL_XUFO_A0]
-#define X32_QR_a1 		peripherals[PERIPHERAL_XUFO_A1]
-#define X32_QR_a2 		peripherals[PERIPHERAL_XUFO_A2]
-#define X32_QR_a3 		peripherals[PERIPHERAL_XUFO_A3]
-#define X32_QR_s0 		peripherals[PERIPHERAL_XUFO_S0]
-#define X32_QR_s1 		peripherals[PERIPHERAL_XUFO_S1]
-#define X32_QR_s2 		peripherals[PERIPHERAL_XUFO_S2]
-#define X32_QR_s3 		peripherals[PERIPHERAL_XUFO_S3]
-#define X32_QR_s4 		peripherals[PERIPHERAL_XUFO_S4]
-#define X32_QR_s5 		peripherals[PERIPHERAL_XUFO_S5]
-#define X32_display		peripherals[PERIPHERAL_DISPLAY]
-#define X32_QR_timestamp 	peripherals[PERIPHERAL_XUFO_TIMESTAMP]
-
-#define X32_rs232_data		peripherals[PERIPHERAL_PRIMARY_DATA]
-#define X32_rs232_stat		peripherals[PERIPHERAL_PRIMARY_STATUS]
-#define X32_rs232_char		(X32_rs232_stat & 0x02)
-
-#define X32_wireless_data	peripherals[PERIPHERAL_WIRELESS_DATA]
-#define X32_wireless_stat	peripherals[PERIPHERAL_WIRELESS_STATUS]
-#define X32_wireless_char	(X32_wireless_stat & 0x02)
-
-#define X32_button		peripherals[PERIPHERAL_BUTTONS]
-#define X32_switches		peripherals[PERIPHERAL_SWITCHES]
-
-#define MINIMUM_ENGINE_SPEED 65
-
-#define SAFE_MODE_INT		0
-#define PANIC_MODE_INT		1
-#define MANUAL_MODE_INT		2
-#define CALIBRATE_MODE_INT	3
-#define YAW_CONTROL_INT		4
-#define FULL_CONTROL_INT	5
-
-#define PANIC_AND_EXIT 	modecommand = PANIC_MODE;\
-						process_packet();\
-						ALIVE = 0;
-
-#define FIFOSIZE 16
+#include "log.h"
+#include "defines.h"
 
 uint8_t	fifo[FIFOSIZE]; 
 int	iptr, optr;
@@ -105,177 +47,7 @@ unsigned int b1 ;  //0.0305;
 int yaw_P = 3;
 int yaw;
 
-void	toggle_led(int);
-void	delay_ms(int);
-void	delay_us(int);
-
-/*------------------------------------------------------------------
- * Calibrate
- *------------------------------------------------------------------
-*/
-void calibrate(void)
-{
-	int i;
-	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
-	sax0 = say0 = saz0 = sp0 = sq0 = sr0 = 0;
-	for (i=0; i<128; i++)
-	{
-		sax0 += sax;
-		say0 += say;
-		saz0 += saz;
-		sp0 += sp;
-		sq0 += sq;
-		sr0 += sr;
-		delay_ms(2);
-	}
-
-	sax0 = sax0 >> 7;
-	say0 = say0 >> 7;
-	saz0 = saz0 >> 7;
-	sp0 = sp0 >> 7;
-	sq0 = sq0 >> 7;
-	sr0 = sr0 >> 7;
-	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
-}
-
-int zax(void)	{return sax - sax0;}
-int zay(void)	{return say - say0;}
-int zaz(void)	{return saz - saz0;}
-int zp(void)	{return sp - sp0;}
-int zq(void)	{return sq - sq0;}
-int zr(void)	{return sr - sr0;}
-
-
-/*------------------------------------------------------------------
- * isr_qr_link -- QR link rx interrupt handler
- *------------------------------------------------------------------
- */
-void isr_button(void)
-{
-	button = 1;
-}
-
-void isr_led_timer(void) {
-	if (ALIVE) {
-		toggle_led(0);
-		//print_state(); //<-why doesn't this work?
-	}	
-}
-
-void logging(void) {
-//#ifdef LOGGING
-    	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) { //or YAW CONTROL MODE
-    		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
-    		log[log_counter].ae[0] = (uint16_t) ae[0];
-    		log[log_counter].ae[1] = (uint16_t) ae[1];
-    		log[log_counter].ae[2] = (uint16_t) ae[2];
-    		log[log_counter].ae[3] = (uint16_t) ae[3];
-    		log[log_counter].s[0] = sax;  //should we log these RAW or callibrated values?
-    		log[log_counter].s[1] = say;
-    		log[log_counter].s[2] = saz;
-    		log[log_counter].s[3] = sp;
-    		log[log_counter].s[4] = sq;
-    		log[log_counter].s[5] = sr;
-    		log_counter++;
-    	}
-    	//exceeding the allocated memory, disable the interrupt
-    	if (log_counter>=LOG_LENGTH) {
-    		DISABLE_INTERRUPT(INTERRUPT_TIMER1);
-    	}
-}
-
-/*------------------------------------------------------------------
- * isr_qr_link -- QR link rx interrupt handler
- *------------------------------------------------------------------
- */
-void isr_qr_link(void)
-{
-	int	ae_index;
-	/* record time
-	 */
-	isr_qr_time = X32_us_clock;
-        inst = X32_instruction_counter;
-	/* get sensor and timestamp values
-	 */
-	sax = X32_QR_s0; say = X32_QR_s1; saz = X32_QR_s2; 
-	sp = X32_QR_s3; sq = X32_QR_s4; sr = X32_QR_s5;
-	timestamp = X32_QR_timestamp;
-
-	/* monitor presence of interrupts 
-	 */
-	isr_qr_counter++;
-	if (isr_qr_counter % 500 == 0) {
-		toggle_led(2);
-	}	
-
-	/* Clip engine values to be positive and 10 bits.
-	 */
-	for (ae_index = 0; ae_index < 4; ae_index++) 
-	{
-		if (ae[ae_index] < 0) 
-			ae[ae_index] = 0;
-		
-		ae[ae_index] &= 0x3ff;
-	}
-
-	/* Send actuator values
-	 * (Need to supply a continous stream, otherwise
-	 * QR will go to safe mode, so just send every ms)
-	 */
-	X32_QR_a0 = ae[0];
-	X32_QR_a1 = ae[1];
-	X32_QR_a2 = ae[2];
-	X32_QR_a3 = ae[3];
-
-	/* record isr execution time (ignore overflow)
-	 */
-	inst = X32_instruction_counter - inst;
-	isr_qr_time = X32_us_clock - isr_qr_time;
-	}
-
-/*------------------------------------------------------------------
- * isr_rs232_rx -- rs232 rx interrupt handler
- *------------------------------------------------------------------
- */
-void isr_rs232_rx(void)
-{
-	int	c;
-
-	/* signal interrupt
-	 */
-	toggle_led(1);
-
-	/* may have received > 1 char before IRQ is serviced so loop
-	 */
-	while (X32_rs232_char) {
-		fifo[iptr++] = X32_rs232_data;
-#ifdef DEBUG
-printf("ISR uart: iptr: %d", iptr-1);		
-printf(" => %x\n", fifo[iptr-1]);
-#endif
-		if (iptr >= FIFOSIZE)
-			iptr = 0;
-	}
-
-}
-
-/*------------------------------------------------------------------
- * getchar -- read char from rx fifo, return -1 if no char available
- *****   @deprecated
- *------------------------------------------------------------------
- */
-int getchar(void)
-{
-	int	c;
-	if (optr == iptr)
-		return -1;
-	c = fifo[optr++];
-	if (optr > FIFOSIZE)
-		optr = 0;
-	return c;
-}
-
-
+//packet processing global variables
 uint8_t modecommand;
 uint8_t data1;
 uint8_t data2;
@@ -284,83 +56,149 @@ uint8_t data4;
 uint8_t checksum;
 uint8_t checker;
 
+void 	delay_ms(int ms);
+void 	delay_us(int us);
+void 	toggle_led(int i);
+void 	print_state(void);
+
+void 	calibrate(void);
+int 	zax(void)	{return sax - sax0;}
+int 	zay(void)	{return say - say0;}
+int 	zaz(void)	{return saz - saz0;}
+int 	zp(void)	{return sp - sp0;}
+int 	zq(void)	{return sq - sq0;}
+int 	zr(void)	{return sr - sr0;}
+
+void 	logging(void);
+void 	isr_qr_link(void);
+void 	isr_rs232_rx(void);
+
+void	move_optr();
+int 	get_packet(void);
+void	process_packet(void);
+
 /*------------------------------------------------------------------
- * get_packet -- construct packet. return -1 on failure.
+ * main loop
  *------------------------------------------------------------------
  */
 
-void move_optr()
-{	
-	if (optr == FIFOSIZE-1)
-		optr = 0;
-	else optr++;
-}
-
-int get_packet(void)
+int main() 
 {
-	uint8_t	c;
-	if (optr == iptr) //nothing to process
-		return -1;
+	int timer1;
+	int timer2;
+	int count = 1;
+	int zr_v;
 
-	c = (uint8_t)fifo[optr++];
-	if (c == HEADER) //start of the packet
+	ALIVE = 1;
+	mode = SAFE_MODE_INT;
+	sax = say = saz = sp = sq = sr = 0;
+
+	/* prepare QR rx interrupt handler
+	*/
+	SET_INTERRUPT_VECTOR(INTERRUPT_XUFO, &isr_qr_link);
+	SET_INTERRUPT_PRIORITY(INTERRUPT_XUFO, 21);
+	isr_qr_counter = isr_qr_time = 0;
+	ae[0] = ae[1] = ae[2] = ae[3] = 0;
+	ENABLE_INTERRUPT(INTERRUPT_XUFO);
+ 	
+
+	//IN the original code we had this, should we get rid off it???
+	//Because right now i dont understand how it is being done
+
+	/* prepare timer interrupt
+	*/
+	//X32_timer_per = 200 * CLOCKS_PER_MS;
+	//SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &isr_qr_link);
+	//SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 21);
+	//ENABLE_INTERRUPT(INTERRUPT_TIMER1);
+
+	/* prepare timer interrupt #1
+	*/
+	X32_timer_per = 1 * CLOCKS_PER_MS;
+	SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &logging);
+	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
+	ENABLE_INTERRUPT(INTERRUPT_TIMER1);
+
+
+	/* prepare timer interrupt #2 // LOGGING ISR
+	*/
+	/*   X32_timer_per2 = 1 * CLOCKS_PER_MS;
+	SET_INTERRUPT_VECTOR(INTERRUPT_TIMER2, &logging);
+	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER2, 4);
+	ENABLE_INTERRUPT(INTERRUPT_TIMER2);
+	*/
+	
+
+	/* prepare rs232 rx interrupt and getchar handler
+	*/
+	SET_INTERRUPT_VECTOR(INTERRUPT_PRIMARY_RX, &isr_rs232_rx);
+	SET_INTERRUPT_PRIORITY(INTERRUPT_PRIMARY_RX, 20);
+	while (X32_rs232_char) c = X32_rs232_data; // empty buffer
+	ENABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
+
+	/* prepare wireless rx interrupt and getchar handler
+	*/
+	//not used at the moment
+	/*
+	SET_INTERRUPT_VECTOR(INTERRUPT_WIRELESS_RX, &isr_wireless_rx);
+	SET_INTERRUPT_PRIORITY(INTERRUPT_WIRELESS_RX, 19);
+	while (X32_wireless_char) c = X32_wireless_data; // empty buffer
+	ENABLE_INTERRUPT(INTERRUPT_WIRELESS_RX);
+	*/
+
+	/* initialize some other stuff
+	*/
+	iptr = optr = 0;
+	X32_leds = 0;
+	log_counter = 0;
+
+	ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
+
+	while (ALIVE)
+	{
+		c=get_packet();  //<- possibly add no change packet
+		if (c != -1) {
+			process_packet();
+			timer1 = X32_ms_clock; //<- maybe its better to move this into the get_packet()
+		}
+
+		timer2 = X32_ms_clock;
+		if (((timer2-timer1) > THRESHOLD) && TERM_CONNECTED)
+			{	
+				PANIC_AND_EXIT;
+			}
+
+		PRINT_STATE(250);
+
+		if (mode == YAW_CONTROL_INT)
 		{
-			fifo[optr-1] = 0x00; //corrupt the header, otherwise we get into loops later
-			if (optr==FIFOSIZE) optr=0;
-			modecommand	= (uint8_t)fifo[optr];
-			move_optr();
-			data1 	=	(uint8_t)fifo[optr];
-			move_optr();
-			data2 	=	(uint8_t)fifo[optr];
-			move_optr();
-			data3 	=	(uint8_t)fifo[optr];
-			move_optr();
-			data4 	=	(uint8_t)fifo[optr];
-			move_optr();
-			checksum =	(uint8_t)fifo[optr];
-			move_optr();
-			checker = modecommand ^ data1 ^ data2 ^ data3 ^ data4 ^ checksum;
-			//hack, because we shouldn't be getting this error. it somehow gets out of sync
-			if (iptr != optr) return -1;
+			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+			zr_v = zr();
+			/*
+		    zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
+			zr_old = zr;
+			zr_filtered_old = zr_filtered;
+			*/
 			//#define DEBUG
 			#ifdef DEBUG
-			printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
-			printf("mode is: %x \n", modecommand);
-			printf("LIFT is: %x \n", data1);
-			printf("YAW is: %x \n", data2);
-			printf("PITCH is: %x \n", data3);
-			printf("ROLL is: %x \n", data4);
-			printf("Checksum is: %x \n", checksum);
-			printf("%s\n", checker==0 ? "PASS" : "FAIL");
+			printf("zr is %d   yaw is %d    yap_P is %d \n", zr_v, yaw, yaw_P);
 			#endif
-			//check checksum
-			if ( (int)checker != 0)
-			{
-				#ifdef DEBUG
-				printf("Invalid packet recieved! Discarding!\n");
-				#endif
-			 return -1; //ERROR, invalid packet
-			}
-			else if (TERM_CONNECTED == 0); {  //a check for communication safety mechanism
-				TERM_CONNECTED = 1;  //maybe we can move this somewhere else
-			}						//such that we do this check only once
-		}
-	else
-	{
-		//reset buffer pointers if we get out of sync
-		optr = iptr = 0;
-		return -1;
-	}
-return 0;
-}
 
-/*
-	ae0
-	$
-ae3---ae1
-	|
-	ae2
-*/
+			// I believe we should use the setpoint here
+			ae[0] = ae[0] - (yaw - zr_v) * yaw_P;
+			ae[2] = ae[0];
+			ae[1] = ae[1] + (yaw - zr_v) * yaw_P;
+			ae[3] = ae[1];
+			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+		}
+
+
+	}//end of main loop
+
+	printf("Exit\r\n");
+    DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+	return 0;
+}
 
 void process_packet(void)  //we need to process packet and decide what should be done
 {
@@ -374,7 +212,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	if ((modecommand == SAFE_MODE) )
 		{
-			ae[0]=ae[1]=ae[2]=ae[3] = 0;
+			SET_ALL_ENGINE_RPM(0);
 			mode = SAFE_MODE_INT;
 		}
 	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
@@ -383,42 +221,41 @@ void process_packet(void)  //we need to process packet and decide what should be
 			mode = PANIC_MODE_INT;
 			if (ae[0] > 400)
 			{
-				ae[0] = ae[1] = ae[2] = ae[3] = 300;
+				SET_ALL_ENGINE_RPM(300);
 				delay_ms(500);
-				ae[0] = ae[1] = ae[2] = ae[3] = 250;
+				SET_ALL_ENGINE_RPM(250);
 				delay_ms(500);
 			}
 			printf("********Engines decreased!**********\n");
 			if (ae[0] >= 250)
 			{
-				ae[0] = ae[1] = ae[2] = ae[3] = 200;
+				SET_ALL_ENGINE_RPM(200);
 				delay_ms(500);
-				ae[0] = ae[1] = ae[2] = ae[3] = 150;
+				SET_ALL_ENGINE_RPM(150);
 				delay_ms(500);
 			}
 			if (ae[0] >= 150)
 			{
-				ae[0] = ae[1] = ae[2] = ae[3] = 100;
+				SET_ALL_ENGINE_RPM(100);
 				delay_ms(500);
-				ae[0] = ae[1] = ae[2] = ae[3] = 50;
+				SET_ALL_ENGINE_RPM(50);
 				delay_ms(500);
 			}
-			ae[0]=ae[1]=ae[2]=ae[3] = 0;
+			SET_ALL_ENGINE_RPM(0);
 			printf("********Going to SAFE MODE!**********\n");
 			mode = SAFE_MODE_INT;
 		}
-
 	else if (modecommand == YAW_CONTROL)
 		{
 			mode = YAW_CONTROL_INT;
 			//LIFT
-			if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
+			if ( (data1&0x10) == 0x00)
 				{
 					//modify engine values if lift is changed!
 					//DND the yaw control
 					if (lift_setpoint != (int)data1&0x0F)
 					{
-						ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
+						SET_ALL_ENGINE_RPM(65 * (data1&0x0F));
 						lift_setpoint = (int)(data1&0x0F);
 					}
 				}
@@ -469,7 +306,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 			//LIFT
 			if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
 				{
-					ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
+					SET_ALL_ENGINE_RPM(65 * (data1&0x0F));
 				}
 
 			//ROLL
@@ -565,25 +402,207 @@ void process_packet(void)  //we need to process packet and decide what should be
 }
 
 /*------------------------------------------------------------------
- * isr_wireless_rx -- wireless rx interrupt handler
+ * Calibrate the sensors
+ *------------------------------------------------------------------
+*/
+void calibrate(void)
+{
+	int i;
+	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+	sax0 = say0 = saz0 = sp0 = sq0 = sr0 = 0;
+	for (i=0; i<128; i++)
+	{
+		sax0 += sax;
+		say0 += say;
+		saz0 += saz;
+		sp0 += sp;
+		sq0 += sq;
+		sr0 += sr;
+		delay_ms(2);
+	}
+
+	sax0 = sax0 >> 7;
+	say0 = say0 >> 7;
+	saz0 = saz0 >> 7;
+	sp0 = sp0 >> 7;
+	sq0 = sq0 >> 7;
+	sr0 = sr0 >> 7;
+	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+}
+
+/*------------------------------------------------------------------
+ * Logging the QR values
+ *------------------------------------------------------------------
+*/
+
+void logging(void) {
+//#ifdef LOGGING
+    	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) { //or YAW CONTROL MODE
+    		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
+    		log[log_counter].ae[0] = (uint16_t) ae[0];
+    		log[log_counter].ae[1] = (uint16_t) ae[1];
+    		log[log_counter].ae[2] = (uint16_t) ae[2];
+    		log[log_counter].ae[3] = (uint16_t) ae[3];
+    		log[log_counter].s[0] = sax;  //should we log these RAW or callibrated values?
+    		log[log_counter].s[1] = say;
+    		log[log_counter].s[2] = saz;
+    		log[log_counter].s[3] = sp;
+    		log[log_counter].s[4] = sq;
+    		log[log_counter].s[5] = sr;
+    		log_counter++;
+    	}
+    	//exceeding the allocated memory, disable the interrupt
+    	if (log_counter>=LOG_LENGTH) {
+    		DISABLE_INTERRUPT(INTERRUPT_TIMER1);
+    	}
+}
+
+/*------------------------------------------------------------------
+ * isr_qr_link -- QR link rx interrupt handler
  *------------------------------------------------------------------
  */
-void isr_wireless_rx(void)
+void isr_qr_link(void)
 {
-	int c;
+	int	ae_index;
+	/* record time
+	 */
+	isr_qr_time = X32_us_clock;
+        inst = X32_instruction_counter;
+	/* get sensor and timestamp values
+	 */
+	sax = X32_QR_s0; say = X32_QR_s1; saz = X32_QR_s2; 
+	sp = X32_QR_s3; sq = X32_QR_s4; sr = X32_QR_s5;
+	timestamp = X32_QR_timestamp;
+
+	/* monitor presence of interrupts 
+	 */
+	isr_qr_counter++;
+	if (isr_qr_counter % 500 == 0) {
+		toggle_led(2);
+	}	
+
+	/* Clip engine values to be positive and 10 bits.
+	 */
+	for (ae_index = 0; ae_index < 4; ae_index++) 
+	{
+		if (ae[ae_index] < 0) 
+			ae[ae_index] = 0;
+		
+		ae[ae_index] &= 0x3ff;
+	}
+
+	/* Send actuator values
+	 * (Need to supply a continous stream, otherwise
+	 * QR will go to safe mode, so just send every ms)
+	 */
+	X32_QR_a0 = ae[0];
+	X32_QR_a1 = ae[1];
+	X32_QR_a2 = ae[2];
+	X32_QR_a3 = ae[3];
+
+	/* record isr execution time (ignore overflow)
+	 */
+	inst = X32_instruction_counter - inst;
+	isr_qr_time = X32_us_clock - isr_qr_time;
+}
+
+/*------------------------------------------------------------------
+ * isr_rs232_rx -- rs232 rx interrupt handler
+ *------------------------------------------------------------------
+ */
+void isr_rs232_rx(void)
+{
+	int	c;
+
 	/* signal interrupt
 	 */
-	toggle_led(4);
+	toggle_led(1);
 
 	/* may have received > 1 char before IRQ is serviced so loop
 	 */
-	while (X32_wireless_char) {
-		fifo[iptr++] = X32_wireless_data;
-		if (iptr > FIFOSIZE)
+	while (X32_rs232_char) {
+		fifo[iptr++] = X32_rs232_data;
+#ifdef DEBUG
+printf("ISR uart: iptr: %d", iptr-1);		
+printf(" => %x\n", fifo[iptr-1]);
+#endif
+		if (iptr >= FIFOSIZE)
 			iptr = 0;
 	}
 
 }
+
+
+/*------------------------------------------------------------------
+ * get_packet -- construct packet. return -1 on failure.
+ *------------------------------------------------------------------
+ */
+
+void move_optr()
+{	
+	if (optr == FIFOSIZE-1)
+		optr = 0;
+	else optr++;
+}
+
+int get_packet(void)
+{
+	uint8_t	c;
+	if (optr == iptr) //nothing to process
+		return -1;
+
+	c = (uint8_t)fifo[optr++];
+	if (c == HEADER) //start of the packet
+		{
+			fifo[optr-1] = 0x00; //corrupt the header, otherwise we get into loops later
+			if (optr==FIFOSIZE) optr=0;
+			modecommand	= (uint8_t)fifo[optr];
+			move_optr();
+			data1 	=	(uint8_t)fifo[optr];
+			move_optr();
+			data2 	=	(uint8_t)fifo[optr];
+			move_optr();
+			data3 	=	(uint8_t)fifo[optr];
+			move_optr();
+			data4 	=	(uint8_t)fifo[optr];
+			move_optr();
+			checksum =	(uint8_t)fifo[optr];
+			move_optr();
+			checker = modecommand ^ data1 ^ data2 ^ data3 ^ data4 ^ checksum;
+			//hack, because we shouldn't be getting this error. it somehow gets out of sync
+			if (iptr != optr) return -1;
+			//#define DEBUG
+			#ifdef DEBUG
+			printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
+			printf("mode is: %x \n", modecommand);
+			printf("LIFT is: %x \n", data1);
+			printf("YAW is: %x \n", data2);
+			printf("PITCH is: %x \n", data3);
+			printf("ROLL is: %x \n", data4);
+			printf("Checksum is: %x \n", checksum);
+			printf("%s\n", checker==0 ? "PASS" : "FAIL");
+			#endif
+			//check checksum
+			if ( (int)checker != 0)
+			{
+				#ifdef DEBUG
+				printf("Invalid packet recieved! Discarding!\n");
+				#endif
+			 return -1; //ERROR, invalid packet
+			}
+			else if (TERM_CONNECTED == 0); {  //a check for communication safety mechanism
+				TERM_CONNECTED = 1;  //maybe we can move this somewhere else
+			}						//such that we do this check only once
+		}
+	else
+	{
+		//reset buffer pointers if we get out of sync
+		optr = iptr = 0;
+		return -1;
+	}
+return 0;
+}
+
 
 /*------------------------------------------------------------------
  * delay_ms -- busy-wait for ms milliseconds
@@ -644,167 +663,3 @@ void print_state(void)
 	}
     */
 }
-
-/*------------------------------------------------------------------
- * main -- do the test
- *------------------------------------------------------------------
- */
-int main() 
-{
-	int timer1;
-	int timer2;
-	int count = 1;
-	int zr_v;
-
-	ALIVE = 1;
-	mode = SAFE_MODE_INT;
-	sax = say = saz = sp = sq = sr = 0;
-
-	/* prepare QR rx interrupt handler
-	 */
-        SET_INTERRUPT_VECTOR(INTERRUPT_XUFO, &isr_qr_link);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_XUFO, 21);
-		isr_qr_counter = isr_qr_time = 0;
-		ae[0] = ae[1] = ae[2] = ae[3] = 0;
-        ENABLE_INTERRUPT(INTERRUPT_XUFO);
- 	
-
- 	//IN the original code we had this, should we get rid off it???
-     //Because right now i dont understand how it is being done
-
- 	/* prepare timer interrupt
-	 */
-        //X32_timer_per = 200 * CLOCKS_PER_MS;
-        //SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &isr_qr_link);
-        //SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 21);
-        //ENABLE_INTERRUPT(INTERRUPT_TIMER1);
-
-
-	/* prepare timer interrupt #1
-	 */
-        X32_timer_per = 1 * CLOCKS_PER_MS;
-        SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &logging);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
-        ENABLE_INTERRUPT(INTERRUPT_TIMER1);
-
-//In case timer2 doesnt not exist on the current softcore:
-// 1. use timer1
-// 2. modify the softcore
-
-     /* prepare timer interrupt #2 // LOGGING ISR
-	 */
-     /*   X32_timer_per2 = 1 * CLOCKS_PER_MS;
-        SET_INTERRUPT_VECTOR(INTERRUPT_TIMER2, &logging);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER2, 4);
-        ENABLE_INTERRUPT(INTERRUPT_TIMER2);
-*/
-	/* prepare button interrupt handler
-	 */
-        SET_INTERRUPT_VECTOR(INTERRUPT_BUTTONS, &isr_button);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_BUTTONS, 8);
-	button = 0;
-        ENABLE_INTERRUPT(INTERRUPT_BUTTONS);	
-
-	/* prepare rs232 rx interrupt and getchar handler
-	 */
-        SET_INTERRUPT_VECTOR(INTERRUPT_PRIMARY_RX, &isr_rs232_rx);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_PRIMARY_RX, 20);
-	while (X32_rs232_char) c = X32_rs232_data; // empty buffer
-        ENABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
-
-    /* prepare wireless rx interrupt and getchar handler
-	 */
-        //not used at the moment
-       /*
-        SET_INTERRUPT_VECTOR(INTERRUPT_WIRELESS_RX, &isr_wireless_rx);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_WIRELESS_RX, 19);
-        while (X32_wireless_char) c = X32_wireless_data; // empty buffer
-        ENABLE_INTERRUPT(INTERRUPT_WIRELESS_RX);
-		*/
-
-	/* initialize some other stuff
-	 */
-        iptr = optr = 0;
-		X32_leds = 0;
-		log_counter = 0;
-
-	/* start the test loop
-	 */
-	ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
-	while (ALIVE)
-	{
-		c=get_packet();  //<- possibly add no change packet
-		if (c != -1) {
-			process_packet();
-			//print_state();
-			timer1 = X32_ms_clock; //<- maybe its better to move this into the get_packet()
-		}
-		/*
-		* COMMUNICATION LOST SAFETY MECHANISM
-		* Possible enchancements:
-		* 1. maybe we can check at the interrupt level only
-		* 2. TERM_CONNECTED is an unncessary added cycle in get_packet()
-		*     get rid off it.
-		* 3. This is generally a hack. We are "injecting PANIC_MODE packet"
-		*/
-		timer2 = X32_ms_clock;
-		if (((timer2-timer1) > THRESHOLD) && TERM_CONNECTED)
-		{	
-			PANIC_AND_EXIT;
-		}
-
-		if (mode == YAW_CONTROL_INT)
-		{
-			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
-			zr_v = zr();
-			/*
-		    zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
-			zr_old = zr;
-			zr_filtered_old = zr_filtered;
-			*/
-			//#define DEBUG
-			#ifdef DEBUG
-			printf("zr is %d   yaw is %d    yap_P is %d \n", zr_v, yaw, yaw_P);
-			#endif
-
-			// I believe we should use the setpoint here
-			ae[0] = ae[0] - (yaw - zr_v) * yaw_P;
-			ae[2] = ae[0];
-			ae[1] = ae[1] + (yaw - zr_v) * yaw_P;
-			ae[3] = ae[1];
-			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
-		}
-
-
-
-		if (count%50 == 0)
-		{
-			print_state();	
-			count = 1;
-		}
-		else count++;
-
-
-	}//end of main loop
-
-	printf("Exit\r\n");
-    DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
-	return 0;
-}
-	     //leave this here for now
-        /*X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
-		*/
-		/*if (button == 1){
-			printf("You have pushed the button!!!\r\n");
-			button = 0;
-		}*/
-
-
-/* //MODE LEDs
-	if (mode == SAFE_MODE_INT)
-		X32_leds = (X32_leds & 0xFC) | 0x01 );
-	else if (mode == PANIC_MODE_INT)
-		X32_leds = (X32_leds & 0xFC) | 0x02 );
-	else if (mode == MANUAL_MODE_INT)
-		X32_leds = (X32_leds & 0xFC) | 0x04 );
-*/
