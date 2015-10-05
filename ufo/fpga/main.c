@@ -146,31 +146,16 @@ int main()
 		c=get_packet();  //<- possibly add no change packet
 		if (c != -1) {
 			process_packet();
-			//print_state();
 			timer1 = X32_ms_clock; //<- maybe its better to move this into the get_packet()
 		}
 
-		/*
-		* COMMUNICATION LOST SAFETY MECHANISM
-		* Possible enchancements:
-		* 1. maybe we can check at the interrupt level only
-		* 2. TERM_CONNECTED is an unncessary added cycle in get_packet()
-		*     get rid off it.
-		* 3. This is generally a hack. We are "injecting PANIC_MODE packet"
-		*/
 		timer2 = X32_ms_clock;
 		if (((timer2-timer1) > THRESHOLD) && TERM_CONNECTED)
 			{	
 				PANIC_AND_EXIT;
 			}
 
-		if (count%50 == 0)
-			{
-				print_state();	
-				count = 1;
-			}
-		else count++;
-
+		PRINT_STATE(250);
 
 	}//end of main loop
 
