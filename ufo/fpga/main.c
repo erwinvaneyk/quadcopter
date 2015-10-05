@@ -34,6 +34,15 @@ int	inst;
 int log_sent = 0;
 int log_counter;
 
+//packet processing global variables
+uint8_t modecommand;
+uint8_t data1;
+uint8_t data2;
+uint8_t data3;
+uint8_t data4;
+uint8_t checksum;
+uint8_t checker;
+
 void	toggle_led(int);
 void	delay_ms(int);
 void	delay_us(int);
@@ -49,281 +58,13 @@ int zr(void)	{return sr - sr0;}
 
 void logging(void);
 void isr_qr_link(void);
+void isr_rs232_rx(void);
 
+void move_optr();
+int get_packet(void);
 
-/*------------------------------------------------------------------
- * isr_rs232_rx -- rs232 rx interrupt handler
- *------------------------------------------------------------------
- */
-void isr_rs232_rx(void)
-{
-	int	c;
+void process_packet(void);
 
-	/* signal interrupt
-	 */
-	toggle_led(1);
-
-	/* may have received > 1 char before IRQ is serviced so loop
-	 */
-	while (X32_rs232_char) {
-		fifo[iptr++] = X32_rs232_data;
-#ifdef DEBUG
-printf("ISR uart: iptr: %d", iptr-1);		
-printf(" => %x\n", fifo[iptr-1]);
-#endif
-		if (iptr >= FIFOSIZE)
-			iptr = 0;
-	}
-
-}
-
-/*------------------------------------------------------------------
- * getchar -- read char from rx fifo, return -1 if no char available
- *****   @deprecated
- *------------------------------------------------------------------
- */
-int getchar(void)
-{
-	int	c;
-	if (optr == iptr)
-		return -1;
-	c = fifo[optr++];
-	if (optr > FIFOSIZE)
-		optr = 0;
-	return c;
-}
-
-
-uint8_t modecommand;
-uint8_t data1;
-uint8_t data2;
-uint8_t data3;
-uint8_t data4;
-uint8_t checksum;
-uint8_t checker;
-
-/*------------------------------------------------------------------
- * get_packet -- construct packet. return -1 on failure.
- *------------------------------------------------------------------
- */
-
-void move_optr()
-{	
-	if (optr == FIFOSIZE-1)
-		optr = 0;
-	else optr++;
-}
-
-int get_packet(void)
-{
-	uint8_t	c;
-	if (optr == iptr) //nothing to process
-		return -1;
-
-	c = (uint8_t)fifo[optr++];
-	if (c == HEADER) //start of the packet
-		{
-			fifo[optr-1] = 0x00; //corrupt the header, otherwise we get into loops later
-			if (optr==FIFOSIZE) optr=0;
-			modecommand	= (uint8_t)fifo[optr];
-			move_optr();
-			data1 	=	(uint8_t)fifo[optr];
-			move_optr();
-			data2 	=	(uint8_t)fifo[optr];
-			move_optr();
-			data3 	=	(uint8_t)fifo[optr];
-			move_optr();
-			data4 	=	(uint8_t)fifo[optr];
-			move_optr();
-			checksum =	(uint8_t)fifo[optr];
-			move_optr();
-			checker = modecommand ^ data1 ^ data2 ^ data3 ^ data4 ^ checksum;
-			//hack, because we shouldn't be getting this error. it somehow gets out of sync
-			if (iptr != optr) return -1;
-			#ifdef DEBUG
-			printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
-			printf("mode is: %x \n", modecommand);
-			printf("LIFT is: %x \n", data1);
-			printf("YAW is: %x \n", data2);
-			printf("PITCH is: %x \n", data3);
-			printf("ROLL is: %x \n", data4);
-			printf("Checksum is: %x \n", checksum);
-			printf("%s\n", checker==0 ? "PASS" : "FAIL");
-			#endif
-			//check checksum
-			if ( (int)checker != 0)
-			{
-				#ifdef DEBUG
-				printf("Invalid packet recieved! Discarding!\n");
-				#endif
-			 return -1; //ERROR, invalid packet
-			}
-			else if (TERM_CONNECTED == 0); {  //a check for communication safety mechanism
-				TERM_CONNECTED = 1;  //maybe we can move this somewhere else
-			}						//such that we do this check only once
-		}
-	else
-	{
-		//reset buffer pointers if we get out of sync
-		optr = iptr = 0;
-		return -1;
-	}
-return 0;
-}
-
-/*
-	ae0
-	$
-ae3---ae1
-	|
-	ae2
-*/
-
-void process_packet(void)  //we need to process packet and decide what should be done
-{
-	int log_counter; //is this efficient?
-
-	if (mode == PANIC_MODE_INT){
-		return;	
-	}
-
-
-	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
-	if ((modecommand == SAFE_MODE) )
-		{
-			ae[0]=ae[1]=ae[2]=ae[3] = 0;
-			mode = SAFE_MODE_INT;
-		}
-	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
-		{
-			printf("********Going to PANIC_MODE!**********\n");
-			mode = PANIC_MODE_INT;
-			if (ae[0] > 400)
-			{
-				ae[0] = ae[1] = ae[2] = ae[3] = 300;
-				delay_ms(500);
-				ae[0] = ae[1] = ae[2] = ae[3] = 250;
-				delay_ms(500);
-			}
-			printf("********Engines decreased!**********\n");
-			if (ae[0] >= 250)
-			{
-				ae[0] = ae[1] = ae[2] = ae[3] = 200;
-				delay_ms(500);
-				ae[0] = ae[1] = ae[2] = ae[3] = 150;
-				delay_ms(500);
-			}
-			if (ae[0] >= 150)
-			{
-				ae[0] = ae[1] = ae[2] = ae[3] = 100;
-				delay_ms(500);
-				ae[0] = ae[1] = ae[2] = ae[3] = 50;
-				delay_ms(500);
-			}
-			ae[0]=ae[1]=ae[2]=ae[3] = 0;
-			printf("********Going to SAFE MODE!**********\n");
-			mode = SAFE_MODE_INT;
-		}
-	else if (modecommand == MANUAL_MODE)
-		{
-			mode = MANUAL_MODE_INT;
-			//LIFT
-			if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
-				{
-					ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
-				}
-
-			//ROLL
-			if ( (data4&0x10) == 0x00) 
-				{
-					ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
-
-				if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[3]=ae[3] - 15 * (data4&0x0F);
-				}
-			else
-				{
-				ae[3]=ae[3] + 15 * (data4&0x0F);
-				if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
-				}
-
-			//PITCH
-			if ( (data3&0x10) == 0x00) 
-				{
-				ae[2] = ae[2] + 15 * (data3&0x0F); 
-				if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
-				}
-			else
-				{
-				ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
-				if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[2] = ae[2] - 15 * (data3&0x0F); 
-				}
-
-			//YAW
-			if ( (data2&0x10) == 0x00) 
-				{
-					ae[0] = ae[0] + 25 * (data2&0x0F);
-					ae[2] = ae[2] + 25 * (data2&0x0F);
-					
-					if ((ae[1] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED) && (ae[3] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED))
-					{
-						ae[1] = ae[1] - 25 * (data2&0x0F);
-						ae[3] = ae[3] - 25 * (data2&0x0F);
-					}
-
-				}
-			else
-			{
-				ae[1] = ae[1] + 25 * (data2&0x0F);
-				ae[3] = ae[3] + 25 * (data2&0x0F);
-				if ((ae[0] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED) && (ae[2] - 25 * (data2&0x0F)  > MINIMUM_ENGINE_SPEED))
-				{
-					ae[0] = ae[0] - 25 * (data2&0x0F);
-					ae[2] = ae[2] - 25 * (data2&0x0F);
-				}
-	 		}
-		}
-
-		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT) && !log_sent ) 
-		{
-			printf("********SENDING LOG DATA!**********\n");
-			//delay_ms(1000);
-			#ifdef LOGGING
-			for (log_counter=0; log_counter < LOG_LENGTH; log_counter++)
-			{
-				printf("%d ", log[log_counter].timestamp );
-				printf("%d ", log[log_counter].ae[0] );
-				printf("%d ", log[log_counter].ae[1] );
-				printf("%d ", log[log_counter].ae[2] );
-				printf("%d ", log[log_counter].ae[3] );
-				printf("%d ", log[log_counter].s[0] );
-				printf("%d ", log[log_counter].s[1] );
-				printf("%d ", log[log_counter].s[2] );
-				printf("%d ", log[log_counter].s[3] );
-				printf("%d ", log[log_counter].s[4] );
-				printf("%d ", log[log_counter].s[5] );
-				printf("\n");
-			}
-			printf("$"); //signal end of transmission
-			#endif
-			log_sent = 1;
-		}
-		else if ( (modecommand == CALIBRATE_MODE) && (mode == SAFE_MODE_INT) )
-		{
-			delay_ms(1000);
-			calibrate();
-			printf("QR calibrated...\n");
-			toggle_led(3);
-			delay_ms(500);
-			toggle_led(3);
-			delay_ms(500);
-			toggle_led(3);
-		}
-	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
-}
 
 /*------------------------------------------------------------------
  * isr_wireless_rx -- wireless rx interrupt handler
@@ -522,6 +263,151 @@ int main()
 	return 0;
 }
 
+void process_packet(void)  //we need to process packet and decide what should be done
+{
+	int log_counter; //is this efficient?
+
+	if (mode == PANIC_MODE_INT){
+		return;	
+	}
+
+
+	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+	if ((modecommand == SAFE_MODE) )
+		{
+			ae[0]=ae[1]=ae[2]=ae[3] = 0;
+			mode = SAFE_MODE_INT;
+		}
+	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
+		{
+			printf("********Going to PANIC_MODE!**********\n");
+			mode = PANIC_MODE_INT;
+			if (ae[0] > 400)
+			{
+				ae[0] = ae[1] = ae[2] = ae[3] = 300;
+				delay_ms(500);
+				ae[0] = ae[1] = ae[2] = ae[3] = 250;
+				delay_ms(500);
+			}
+			printf("********Engines decreased!**********\n");
+			if (ae[0] >= 250)
+			{
+				ae[0] = ae[1] = ae[2] = ae[3] = 200;
+				delay_ms(500);
+				ae[0] = ae[1] = ae[2] = ae[3] = 150;
+				delay_ms(500);
+			}
+			if (ae[0] >= 150)
+			{
+				ae[0] = ae[1] = ae[2] = ae[3] = 100;
+				delay_ms(500);
+				ae[0] = ae[1] = ae[2] = ae[3] = 50;
+				delay_ms(500);
+			}
+			ae[0]=ae[1]=ae[2]=ae[3] = 0;
+			printf("********Going to SAFE MODE!**********\n");
+			mode = SAFE_MODE_INT;
+		}
+	else if (modecommand == MANUAL_MODE)
+		{
+			mode = MANUAL_MODE_INT;
+			//LIFT
+			if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
+				{
+					ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
+				}
+
+			//ROLL
+			if ( (data4&0x10) == 0x00) 
+				{
+					ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
+
+				if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+					ae[3]=ae[3] - 15 * (data4&0x0F);
+				}
+			else
+				{
+				ae[3]=ae[3] + 15 * (data4&0x0F);
+				if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+					ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
+				}
+
+			//PITCH
+			if ( (data3&0x10) == 0x00) 
+				{
+				ae[2] = ae[2] + 15 * (data3&0x0F); 
+				if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+					ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
+				}
+			else
+				{
+				ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
+				if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+					ae[2] = ae[2] - 15 * (data3&0x0F); 
+				}
+
+			//YAW
+			if ( (data2&0x10) == 0x00) 
+				{
+					ae[0] = ae[0] + 25 * (data2&0x0F);
+					ae[2] = ae[2] + 25 * (data2&0x0F);
+					
+					if ((ae[1] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED) && (ae[3] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED))
+					{
+						ae[1] = ae[1] - 25 * (data2&0x0F);
+						ae[3] = ae[3] - 25 * (data2&0x0F);
+					}
+
+				}
+			else
+			{
+				ae[1] = ae[1] + 25 * (data2&0x0F);
+				ae[3] = ae[3] + 25 * (data2&0x0F);
+				if ((ae[0] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED) && (ae[2] - 25 * (data2&0x0F)  > MINIMUM_ENGINE_SPEED))
+				{
+					ae[0] = ae[0] - 25 * (data2&0x0F);
+					ae[2] = ae[2] - 25 * (data2&0x0F);
+				}
+	 		}
+		}
+
+		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT) && !log_sent ) 
+		{
+			printf("********SENDING LOG DATA!**********\n");
+			//delay_ms(1000);
+			#ifdef LOGGING
+			for (log_counter=0; log_counter < LOG_LENGTH; log_counter++)
+			{
+				printf("%d ", log[log_counter].timestamp );
+				printf("%d ", log[log_counter].ae[0] );
+				printf("%d ", log[log_counter].ae[1] );
+				printf("%d ", log[log_counter].ae[2] );
+				printf("%d ", log[log_counter].ae[3] );
+				printf("%d ", log[log_counter].s[0] );
+				printf("%d ", log[log_counter].s[1] );
+				printf("%d ", log[log_counter].s[2] );
+				printf("%d ", log[log_counter].s[3] );
+				printf("%d ", log[log_counter].s[4] );
+				printf("%d ", log[log_counter].s[5] );
+				printf("\n");
+			}
+			printf("$"); //signal end of transmission
+			#endif
+			log_sent = 1;
+		}
+		else if ( (modecommand == CALIBRATE_MODE) && (mode == SAFE_MODE_INT) )
+		{
+			delay_ms(1000);
+			calibrate();
+			printf("QR calibrated...\n");
+			toggle_led(3);
+			delay_ms(500);
+			toggle_led(3);
+			delay_ms(500);
+			toggle_led(3);
+		}
+	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+}
 
 /*------------------------------------------------------------------
  * Calibrate the sensors
@@ -628,6 +514,114 @@ void isr_qr_link(void)
 	isr_qr_time = X32_us_clock - isr_qr_time;
 }
 
+/*------------------------------------------------------------------
+ * isr_rs232_rx -- rs232 rx interrupt handler
+ *------------------------------------------------------------------
+ */
+void isr_rs232_rx(void)
+{
+	int	c;
+
+	/* signal interrupt
+	 */
+	toggle_led(1);
+
+	/* may have received > 1 char before IRQ is serviced so loop
+	 */
+	while (X32_rs232_char) {
+		fifo[iptr++] = X32_rs232_data;
+#ifdef DEBUG
+printf("ISR uart: iptr: %d", iptr-1);		
+printf(" => %x\n", fifo[iptr-1]);
+#endif
+		if (iptr >= FIFOSIZE)
+			iptr = 0;
+	}
+
+}
+
+
+/*------------------------------------------------------------------
+ * get_packet -- construct packet. return -1 on failure.
+ *------------------------------------------------------------------
+ */
+
+void move_optr()
+{	
+	if (optr == FIFOSIZE-1)
+		optr = 0;
+	else optr++;
+}
+
+int get_packet(void)
+{
+	uint8_t	c;
+	if (optr == iptr) //nothing to process
+		return -1;
+
+	c = (uint8_t)fifo[optr++];
+	if (c == HEADER) //start of the packet
+		{
+			fifo[optr-1] = 0x00; //corrupt the header, otherwise we get into loops later
+			if (optr==FIFOSIZE) optr=0;
+			modecommand	= (uint8_t)fifo[optr];
+			move_optr();
+			data1 	=	(uint8_t)fifo[optr];
+			move_optr();
+			data2 	=	(uint8_t)fifo[optr];
+			move_optr();
+			data3 	=	(uint8_t)fifo[optr];
+			move_optr();
+			data4 	=	(uint8_t)fifo[optr];
+			move_optr();
+			checksum =	(uint8_t)fifo[optr];
+			move_optr();
+			checker = modecommand ^ data1 ^ data2 ^ data3 ^ data4 ^ checksum;
+			//hack, because we shouldn't be getting this error. it somehow gets out of sync
+			if (iptr != optr) return -1;
+			#ifdef DEBUG
+			printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
+			printf("mode is: %x \n", modecommand);
+			printf("LIFT is: %x \n", data1);
+			printf("YAW is: %x \n", data2);
+			printf("PITCH is: %x \n", data3);
+			printf("ROLL is: %x \n", data4);
+			printf("Checksum is: %x \n", checksum);
+			printf("%s\n", checker==0 ? "PASS" : "FAIL");
+			#endif
+			//check checksum
+			if ( (int)checker != 0)
+			{
+				#ifdef DEBUG
+				printf("Invalid packet recieved! Discarding!\n");
+				#endif
+			 return -1; //ERROR, invalid packet
+			}
+			else if (TERM_CONNECTED == 0); {  //a check for communication safety mechanism
+				TERM_CONNECTED = 1;  //maybe we can move this somewhere else
+			}						//such that we do this check only once
+		}
+	else
+	{
+		//reset buffer pointers if we get out of sync
+		optr = iptr = 0;
+		return -1;
+	}
+return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*************************
@@ -676,8 +670,19 @@ if (button == 1){
 
 ///////////////////////////////////////
 
+//getchar -- read char from rx fifo, return -1 if no char available
 
-
+int getchar(void)
+{
+	int	c;
+	if (optr == iptr)
+		return -1;
+	c = fifo[optr++];
+	if (optr > FIFOSIZE)
+		optr = 0;
+	return c;
+}
+/////////////////////////////////////
 
 
 */
