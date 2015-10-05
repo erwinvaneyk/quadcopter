@@ -152,7 +152,7 @@ void isr_led_timer(void) {
 
 void logging(void) {
 //#ifdef LOGGING
-    	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) {
+    	if ((log_counter < LOG_LENGTH) /*&& (mode == MANUAL_MODE_INT)*/ ) {
     		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
     		log[log_counter].ae[0] = (uint16_t) ae[0];
     		log[log_counter].ae[1] = (uint16_t) ae[1];
@@ -605,9 +605,12 @@ void print_state(void)
 	int i;
 	//char text[100] , a;
 	printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
+	//printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
+		//sax,say,say,sp,sq,sr,isr_qr_time, inst);
+
 	printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
-		sax,say,say,sp,sq,sr,isr_qr_time, inst);
-	
+		zax(),zay(),zaz(),zp(),zq(),zr(),isr_qr_time, inst);
+
     //wireless transmission
     /*  
 	sprintf(text, "%d %d %d %d \r\n",ae[0],ae[1],ae[2],ae[3]);
