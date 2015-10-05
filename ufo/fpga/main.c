@@ -69,6 +69,7 @@
 						ALIVE = 0;
 
 #define FIFOSIZE 16
+
 uint8_t	fifo[FIFOSIZE]; 
 int	iptr, optr;
 int TERM_CONNECTED = 0; //communication safety mechanism
@@ -91,11 +92,22 @@ int	inst;
 int log_sent = 0;
 int log_counter;
 
+int lift_setpoint = 0;
+
+//filter & yaw control
+int zr_old = 0;
+int zr_filtered = 0;
+int zr_filtered_old = 0;
+int a0 = 1;
+unsigned int a1 ;  //0.0305;
+unsigned int b1 ;  //0.0305;
+
+int yaw_P = 3;
+int yaw;
+
 void	toggle_led(int);
 void	delay_ms(int);
 void	delay_us(int);
-
-
 
 /*------------------------------------------------------------------
  * Calibrate
@@ -126,14 +138,12 @@ void calibrate(void)
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
 
-//not sure about the sign and order here, should it be abs||?
 int zax(void)	{return sax - sax0;}
 int zay(void)	{return say - say0;}
 int zaz(void)	{return saz - saz0;}
 int zp(void)	{return sp - sp0;}
 int zq(void)	{return sq - sq0;}
 int zr(void)	{return sr - sr0;}
-
 
 
 /*------------------------------------------------------------------
@@ -154,7 +164,7 @@ void isr_led_timer(void) {
 
 void logging(void) {
 //#ifdef LOGGING
-    	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) {
+    	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) { //or YAW CONTROL MODE
     		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
     		log[log_counter].ae[0] = (uint16_t) ae[0];
     		log[log_counter].ae[1] = (uint16_t) ae[1];
@@ -312,6 +322,7 @@ int get_packet(void)
 			checker = modecommand ^ data1 ^ data2 ^ data3 ^ data4 ^ checksum;
 			//hack, because we shouldn't be getting this error. it somehow gets out of sync
 			if (iptr != optr) return -1;
+			//#define DEBUG
 			#ifdef DEBUG
 			printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
 			printf("mode is: %x \n", modecommand);
@@ -395,6 +406,62 @@ void process_packet(void)  //we need to process packet and decide what should be
 			ae[0]=ae[1]=ae[2]=ae[3] = 0;
 			printf("********Going to SAFE MODE!**********\n");
 			mode = SAFE_MODE_INT;
+		}
+
+	else if (modecommand == YAW_CONTROL)
+		{
+			mode = YAW_CONTROL_INT;
+			//LIFT
+			if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
+				{
+					//modify engine values if lift is changed!
+					//DND the yaw control
+					if (lift_setpoint != (int)data1&0x0F)
+					{
+						ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
+						lift_setpoint = (int)(data1&0x0F);
+					}
+				}
+
+			//ROLL
+			if ( (data4&0x10) == 0x00) 
+				{
+					ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
+
+				if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+					ae[3]=ae[3] - 15 * (data4&0x0F);
+				}
+			else
+				{
+				ae[3]=ae[3] + 15 * (data4&0x0F);
+				if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+					ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
+				}
+
+			//PITCH
+			if ( (data3&0x10) == 0x00) 
+				{
+				ae[2] = ae[2] + 15 * (data3&0x0F); 
+				if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+					ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
+				}
+			else
+				{
+				ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
+				if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+					ae[2] = ae[2] - 15 * (data3&0x0F); 
+				}
+
+			//YAW in CONTROL LOOP
+			//set the yaw rate variable that is used in the control loop
+			if ( (data2&0x10) == 0x00) 
+			{
+				yaw  = data2&0x0F;
+			}
+			else
+			{
+				yaw = -1 * data2&0x0F;
+	 		}
 		}
 	else if (modecommand == MANUAL_MODE)
 		{
@@ -558,9 +625,12 @@ void print_state(void)
 	int i;
 	//char text[100] , a;
 	printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
+	//printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
+		//sax,say,say,sp,sq,sr,isr_qr_time, inst);
+
 	printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
-		sax,say,say,sp,sq,sr,isr_qr_time, inst);
-	
+		zax(),zay(),zaz(),zp(),zq(),zr(),isr_qr_time, inst);
+
     //wireless transmission
     /*  
 	sprintf(text, "%d %d %d %d \r\n",ae[0],ae[1],ae[2],ae[3]);
@@ -584,6 +654,7 @@ int main()
 	int timer1;
 	int timer2;
 	int count = 1;
+	int zr_v;
 
 	ALIVE = 1;
 	mode = SAFE_MODE_INT;
@@ -660,7 +731,6 @@ int main()
 	/* start the test loop
 	 */
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
-
 	while (ALIVE)
 	{
 		c=get_packet();  //<- possibly add no change packet
@@ -669,7 +739,6 @@ int main()
 			//print_state();
 			timer1 = X32_ms_clock; //<- maybe its better to move this into the get_packet()
 		}
-
 		/*
 		* COMMUNICATION LOST SAFETY MECHANISM
 		* Possible enchancements:
@@ -680,15 +749,39 @@ int main()
 		*/
 		timer2 = X32_ms_clock;
 		if (((timer2-timer1) > THRESHOLD) && TERM_CONNECTED)
-			{	
-				PANIC_AND_EXIT;
-			}
+		{	
+			PANIC_AND_EXIT;
+		}
+
+		if (mode == YAW_CONTROL_INT)
+		{
+			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+			zr_v = zr();
+			/*
+		    zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
+			zr_old = zr;
+			zr_filtered_old = zr_filtered;
+			*/
+			//#define DEBUG
+			#ifdef DEBUG
+			printf("zr is %d   yaw is %d    yap_P is %d \n", zr_v, yaw, yaw_P);
+			#endif
+
+			// I believe we should use the setpoint here
+			ae[0] = ae[0] - (yaw - zr_v) * yaw_P;
+			ae[2] = ae[0];
+			ae[1] = ae[1] + (yaw - zr_v) * yaw_P;
+			ae[3] = ae[1];
+			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+		}
+
+
 
 		if (count%50 == 0)
-			{
-				print_state();	
-				count = 1;
-			}
+		{
+			print_state();	
+			count = 1;
+		}
 		else count++;
 
 
