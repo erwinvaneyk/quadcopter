@@ -103,12 +103,27 @@ void	delay_us(int);
 */
 void calibrate(void)
 {
-	sax0 = sax;
-	say0 = say;
-	saz0 = saz;
-	sp0 = sp;
-	sq0 = sq; 
-	sr0 = sr;
+	int i;
+	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+	sax0 = say0 = saz0 = sp0 = sq0 = sr0 = 0;
+	for (i=0; i<128; i++)
+	{
+		sax0 += sax;
+		say0 += say;
+		saz0 += saz;
+		sp0 += sp;
+		sq0 += sq;
+		sr0 += sr;
+		delay_ms(2);
+	}
+
+	sax0 = sax0 >> 7;
+	say0 = say0 >> 7;
+	saz0 = saz0 >> 7;
+	sp0 = sp0 >> 7;
+	sq0 = sq0 >> 7;
+	sr0 = sr0 >> 7;
+	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
 
 //not sure about the sign and order here, should it be abs||?
@@ -472,6 +487,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		{
 			delay_ms(1000);
 			calibrate();
+			printf("QR calibrated...\n");
 			toggle_led(3);
 			delay_ms(500);
 			toggle_led(3);
