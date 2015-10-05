@@ -100,17 +100,6 @@ int main()
 	isr_qr_counter = isr_qr_time = 0;
 	ae[0] = ae[1] = ae[2] = ae[3] = 0;
 	ENABLE_INTERRUPT(INTERRUPT_XUFO);
- 	
-
-	//IN the original code we had this, should we get rid off it???
-	//Because right now i dont understand how it is being done
-
-	/* prepare timer interrupt
-	*/
-	//X32_timer_per = 200 * CLOCKS_PER_MS;
-	//SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &isr_qr_link);
-	//SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 21);
-	//ENABLE_INTERRUPT(INTERRUPT_TIMER1);
 
 	/* prepare timer interrupt #1
 	*/
@@ -119,32 +108,12 @@ int main()
 	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
 	ENABLE_INTERRUPT(INTERRUPT_TIMER1);
 
-
-	/* prepare timer interrupt #2 // LOGGING ISR
-	*/
-	/*   X32_timer_per2 = 1 * CLOCKS_PER_MS;
-	SET_INTERRUPT_VECTOR(INTERRUPT_TIMER2, &logging);
-	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER2, 4);
-	ENABLE_INTERRUPT(INTERRUPT_TIMER2);
-	*/
-	
-
 	/* prepare rs232 rx interrupt and getchar handler
 	*/
 	SET_INTERRUPT_VECTOR(INTERRUPT_PRIMARY_RX, &isr_rs232_rx);
 	SET_INTERRUPT_PRIORITY(INTERRUPT_PRIMARY_RX, 20);
 	while (X32_rs232_char) c = X32_rs232_data; // empty buffer
 	ENABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
-
-	/* prepare wireless rx interrupt and getchar handler
-	*/
-	//not used at the moment
-	/*
-	SET_INTERRUPT_VECTOR(INTERRUPT_WIRELESS_RX, &isr_wireless_rx);
-	SET_INTERRUPT_PRIORITY(INTERRUPT_WIRELESS_RX, 19);
-	while (X32_wireless_char) c = X32_wireless_data; // empty buffer
-	ENABLE_INTERRUPT(INTERRUPT_WIRELESS_RX);
-	*/
 
 	/* initialize some other stuff
 	*/
