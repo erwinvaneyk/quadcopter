@@ -200,27 +200,27 @@ void process_packet(void)  //we need to process packet and decide what should be
 			mode = PANIC_MODE_INT;
 			if (ae[0] > 400)
 			{
-				ae[0] = ae[1] = ae[2] = ae[3] = 300;
+				SET_ALL_ENGINE_RPM(300);
 				delay_ms(500);
-				ae[0] = ae[1] = ae[2] = ae[3] = 250;
+				SET_ALL_ENGINE_RPM(250);
 				delay_ms(500);
 			}
 			printf("********Engines decreased!**********\n");
 			if (ae[0] >= 250)
 			{
-				ae[0] = ae[1] = ae[2] = ae[3] = 200;
+				SET_ALL_ENGINE_RPM(200);
 				delay_ms(500);
-				ae[0] = ae[1] = ae[2] = ae[3] = 150;
+				SET_ALL_ENGINE_RPM(150);
 				delay_ms(500);
 			}
 			if (ae[0] >= 150)
 			{
-				ae[0] = ae[1] = ae[2] = ae[3] = 100;
+				SET_ALL_ENGINE_RPM(100);
 				delay_ms(500);
-				ae[0] = ae[1] = ae[2] = ae[3] = 50;
+				SET_ALL_ENGINE_RPM(50);
 				delay_ms(500);
 			}
-			ae[0]=ae[1]=ae[2]=ae[3] = 0;
+			SET_ALL_ENGINE_RPM(0);
 			printf("********Going to SAFE MODE!**********\n");
 			mode = SAFE_MODE_INT;
 		}
@@ -230,7 +230,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 			//LIFT
 			if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
 				{
-					ae[0]=ae[1]=ae[2]=ae[3]= 65 * (data1&0x0F);
+					SET_ALL_ENGINE_RPM(65 * (data1&0x0F));
 				}
 
 			//ROLL
