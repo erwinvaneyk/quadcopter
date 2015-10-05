@@ -38,38 +38,8 @@ void	toggle_led(int);
 void	delay_ms(int);
 void	delay_us(int);
 
+void calibrate(void);
 
-
-/*------------------------------------------------------------------
- * Calibrate
- *------------------------------------------------------------------
-*/
-void calibrate(void)
-{
-	int i;
-	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
-	sax0 = say0 = saz0 = sp0 = sq0 = sr0 = 0;
-	for (i=0; i<128; i++)
-	{
-		sax0 += sax;
-		say0 += say;
-		saz0 += saz;
-		sp0 += sp;
-		sq0 += sq;
-		sr0 += sr;
-		delay_ms(2);
-	}
-
-	sax0 = sax0 >> 7;
-	say0 = say0 >> 7;
-	saz0 = saz0 >> 7;
-	sp0 = sp0 >> 7;
-	sq0 = sq0 >> 7;
-	sr0 = sr0 >> 7;
-	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
-}
-
-//not sure about the sign and order here, should it be abs||?
 int zax(void)	{return sax - sax0;}
 int zay(void)	{return say - say0;}
 int zaz(void)	{return saz - saz0;}
@@ -77,45 +47,7 @@ int zp(void)	{return sp - sp0;}
 int zq(void)	{return sq - sq0;}
 int zr(void)	{return sr - sr0;}
 
-
-
-/*------------------------------------------------------------------
- * isr_qr_link -- QR link rx interrupt handler
- *------------------------------------------------------------------
- */
-void isr_button(void)
-{
-	button = 1;
-}
-
-void isr_led_timer(void) {
-	if (ALIVE) {
-		toggle_led(0);
-		//print_state(); //<-why doesn't this work?
-	}	
-}
-
-void logging(void) {
-//#ifdef LOGGING
-    	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) {
-    		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
-    		log[log_counter].ae[0] = (uint16_t) ae[0];
-    		log[log_counter].ae[1] = (uint16_t) ae[1];
-    		log[log_counter].ae[2] = (uint16_t) ae[2];
-    		log[log_counter].ae[3] = (uint16_t) ae[3];
-    		log[log_counter].s[0] = sax;  //should we log these RAW or callibrated values?
-    		log[log_counter].s[1] = say;
-    		log[log_counter].s[2] = saz;
-    		log[log_counter].s[3] = sp;
-    		log[log_counter].s[4] = sq;
-    		log[log_counter].s[5] = sr;
-    		log_counter++;
-    	}
-    	//exceeding the allocated memory, disable the interrupt
-    	if (log_counter>=LOG_LENGTH) {
-    		DISABLE_INTERRUPT(INTERRUPT_TIMER1);
-    	}
-}
+void logging(void);
 
 /*------------------------------------------------------------------
  * isr_qr_link -- QR link rx interrupt handler
@@ -570,12 +502,7 @@ int main()
         SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER2, 4);
         ENABLE_INTERRUPT(INTERRUPT_TIMER2);
 */
-	/* prepare button interrupt handler
-	 */
-        SET_INTERRUPT_VECTOR(INTERRUPT_BUTTONS, &isr_button);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_BUTTONS, 8);
-	button = 0;
-        ENABLE_INTERRUPT(INTERRUPT_BUTTONS);	
+	
 
 	/* prepare rs232 rx interrupt and getchar handler
 	 */
@@ -641,20 +568,114 @@ int main()
     DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	return 0;
 }
-	     //leave this here for now
-        /*X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
-		*/
-		/*if (button == 1){
-			printf("You have pushed the button!!!\r\n");
-			button = 0;
-		}*/
 
 
-/* //MODE LEDs
-	if (mode == SAFE_MODE_INT)
-		X32_leds = (X32_leds & 0xFC) | 0x01 );
-	else if (mode == PANIC_MODE_INT)
-		X32_leds = (X32_leds & 0xFC) | 0x02 );
-	else if (mode == MANUAL_MODE_INT)
-		X32_leds = (X32_leds & 0xFC) | 0x04 );
+/*------------------------------------------------------------------
+ * Calibrate the sensors
+ *------------------------------------------------------------------
+*/
+void calibrate(void)
+{
+	int i;
+	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+	sax0 = say0 = saz0 = sp0 = sq0 = sr0 = 0;
+	for (i=0; i<128; i++)
+	{
+		sax0 += sax;
+		say0 += say;
+		saz0 += saz;
+		sp0 += sp;
+		sq0 += sq;
+		sr0 += sr;
+		delay_ms(2);
+	}
+
+	sax0 = sax0 >> 7;
+	say0 = say0 >> 7;
+	saz0 = saz0 >> 7;
+	sp0 = sp0 >> 7;
+	sq0 = sq0 >> 7;
+	sr0 = sr0 >> 7;
+	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+}
+
+/*------------------------------------------------------------------
+ * Logging the QR values
+ *------------------------------------------------------------------
+*/
+
+void logging(void) {
+//#ifdef LOGGING
+    	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) {
+    		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
+    		log[log_counter].ae[0] = (uint16_t) ae[0];
+    		log[log_counter].ae[1] = (uint16_t) ae[1];
+    		log[log_counter].ae[2] = (uint16_t) ae[2];
+    		log[log_counter].ae[3] = (uint16_t) ae[3];
+    		log[log_counter].s[0] = sax;  //should we log these RAW or callibrated values?
+    		log[log_counter].s[1] = say;
+    		log[log_counter].s[2] = saz;
+    		log[log_counter].s[3] = sp;
+    		log[log_counter].s[4] = sq;
+    		log[log_counter].s[5] = sr;
+    		log_counter++;
+    	}
+    	//exceeding the allocated memory, disable the interrupt
+    	if (log_counter>=LOG_LENGTH) {
+    		DISABLE_INTERRUPT(INTERRUPT_TIMER1);
+    	}
+}
+
+
+
+/*************************
+*
+*  deprecated functions
+*
+*/
+
+
+
+/*------------------------------------------------------------------
+ * isr_qr_link -- QR link rx interrupt handler
+ *------------------------------------------------------------------
+ */
+
+ /*
+////
+void isr_button(void)
+{
+	button = 1;
+}
+
+/////////////////////////////////////
+
+	// prepare button interrupt handler
+	 
+        SET_INTERRUPT_VECTOR(INTERRUPT_BUTTONS, &isr_button);
+        SET_INTERRUPT_PRIORITY(INTERRUPT_BUTTONS, 8);
+	button = 0;
+        ENABLE_INTERRUPT(INTERRUPT_BUTTONS);
+
+void isr_led_timer(void) {
+	if (ALIVE) {
+		toggle_led(0);
+	}	
+}
+
+///////////////////////////////////////
+
+X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
+
+if (button == 1){
+	printf("You have pushed the button!!!\r\n");
+	button = 0;
+}
+
+///////////////////////////////////////
+
+
+
+
+
 */
