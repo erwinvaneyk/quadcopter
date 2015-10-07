@@ -49,6 +49,7 @@ struct INPUT joystickInput;
 struct INPUT keyboardInput;
 struct INPUT inputModel;
 
+struct SPECIAL_INPUT p_input;
 
 int getSerialDevice(char *argv) {
 	if (strncmp(argv,"serial",3) == 0)
@@ -160,6 +161,12 @@ int main(int argc, char **argv)
 	/* Timer init
 	*/
 	struct timeval timer1, timer2;
+
+	//init special input
+	p_input.current_yaw_p = 1; // must match the initial P value on QR
+	p_input.yaw_p = 0;
+	p_input.updated = false;
+
 
 	/* send & receive
 	 */
