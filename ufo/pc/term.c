@@ -108,7 +108,7 @@ void processInput() {
 		processJoystickEvent(fd, js, &joystick);
 		updateJoystickInputModel(&joystickInput, &joystick);
 	}
-	processKeyboardEvent(c, &keyboardInput);
+	processKeyboardEvent(c, &keyboardInput, &p_input);
 	updateInputModel(&inputModel, &keyboardInput, &joystickInput);
 }
 
