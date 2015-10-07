@@ -220,8 +220,6 @@ int main(int argc, char **argv)
 	} //end of inf. loop
 
 
-
-
 		term_exitio();
 		if(link_status > -1) {
 			rs232_close();

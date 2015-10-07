@@ -44,7 +44,7 @@ int a0 = 1;
 unsigned int a1 ;  //0.0305;
 unsigned int b1 ;  //0.0305;
 
-int yaw_P = 3;
+int yaw_P = 1;
 int yaw;
 
 //packet processing global variables
@@ -154,6 +154,7 @@ int main()
 			#endif
 
 			// I believe we should use the setpoint here
+
 			ae[0] = ae[0] - (yaw - zr_v) * yaw_P;
 			ae[2] = ae[0];
 			ae[1] = ae[1] + (yaw - zr_v) * yaw_P;
@@ -233,41 +234,40 @@ void process_packet(void)  //we need to process packet and decide what should be
 			if ( (data4&0x10) == 0x00) 
 				{
 					ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
-
-				if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[3]=ae[3] - 15 * (data4&0x0F);
+					if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[3]=ae[3] - 15 * (data4&0x0F);
 				}
 			else
 				{
-				ae[3]=ae[3] + 15 * (data4&0x0F);
-				if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
+					ae[3]=ae[3] + 15 * (data4&0x0F);
+					if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
 				}
 
 			//PITCH
 			if ( (data3&0x10) == 0x00) 
 				{
-				ae[2] = ae[2] + 15 * (data3&0x0F); 
-				if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
+					ae[2] = ae[2] + 15 * (data3&0x0F); 
+					if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
 				}
 			else
 				{
-				ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
-				if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[2] = ae[2] - 15 * (data3&0x0F); 
+					ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
+					if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[2] = ae[2] - 15 * (data3&0x0F); 
 				}
 
 			//YAW in CONTROL LOOP
 			//set the yaw rate variable that is used in the control loop
 			if ( (data2&0x10) == 0x00) 
-			{
-				yaw  = data2&0x0F;
-			}
+				{
+					yaw  = data2&0x0F;
+				}
 			else
-			{
-				yaw = -1 * data2&0x0F;
-	 		}
+				{
+					yaw = -1 * data2&0x0F;
+		 		}
 		}
 	else if (modecommand == MANUAL_MODE)
 		{
@@ -282,29 +282,28 @@ void process_packet(void)  //we need to process packet and decide what should be
 			if ( (data4&0x10) == 0x00) 
 				{
 					ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
-
-				if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[3]=ae[3] - 15 * (data4&0x0F);
+					if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[3]=ae[3] - 15 * (data4&0x0F);
 				}
 			else
 				{
-				ae[3]=ae[3] + 15 * (data4&0x0F);
-				if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
+					ae[3]=ae[3] + 15 * (data4&0x0F);
+					if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
 				}
 
 			//PITCH
 			if ( (data3&0x10) == 0x00) 
 				{
-				ae[2] = ae[2] + 15 * (data3&0x0F); 
-				if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
+					ae[2] = ae[2] + 15 * (data3&0x0F); 
+					if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
 				}
 			else
 				{
-				ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
-				if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[2] = ae[2] - 15 * (data3&0x0F); 
+					ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
+					if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[2] = ae[2] - 15 * (data3&0x0F); 
 				}
 
 			//YAW
