@@ -34,6 +34,19 @@ int	inst;
 int log_sent = 0;
 int log_counter;
 
+int lift_setpoint = 0;
+
+//filter & yaw control
+int zr_old = 0;
+int zr_filtered = 0;
+int zr_filtered_old = 0;
+int a0 = 1;
+unsigned int a1 ;  //0.0305;
+unsigned int b1 ;  //0.0305;
+
+int yaw_P = 1;
+int yaw;
+
 //packet processing global variables
 uint8_t modecommand;
 uint8_t data1;
@@ -64,7 +77,6 @@ void	move_optr();
 int 	get_packet(void);
 void	process_packet(void);
 
-
 /*------------------------------------------------------------------
  * main loop
  *------------------------------------------------------------------
@@ -75,6 +87,7 @@ int main()
 	int timer1;
 	int timer2;
 	int count = 1;
+	int zr_v;
 
 	ALIVE = 1;
 	mode = SAFE_MODE_INT;
@@ -87,17 +100,6 @@ int main()
 	isr_qr_counter = isr_qr_time = 0;
 	ae[0] = ae[1] = ae[2] = ae[3] = 0;
 	ENABLE_INTERRUPT(INTERRUPT_XUFO);
- 	
-
-	//IN the original code we had this, should we get rid off it???
-	//Because right now i dont understand how it is being done
-
-	/* prepare timer interrupt
-	*/
-	//X32_timer_per = 200 * CLOCKS_PER_MS;
-	//SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &isr_qr_link);
-	//SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 21);
-	//ENABLE_INTERRUPT(INTERRUPT_TIMER1);
 
 	/* prepare timer interrupt #1
 	*/
@@ -106,32 +108,12 @@ int main()
 	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
 	ENABLE_INTERRUPT(INTERRUPT_TIMER1);
 
-
-	/* prepare timer interrupt #2 // LOGGING ISR
-	*/
-	/*   X32_timer_per2 = 1 * CLOCKS_PER_MS;
-	SET_INTERRUPT_VECTOR(INTERRUPT_TIMER2, &logging);
-	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER2, 4);
-	ENABLE_INTERRUPT(INTERRUPT_TIMER2);
-	*/
-	
-
 	/* prepare rs232 rx interrupt and getchar handler
 	*/
 	SET_INTERRUPT_VECTOR(INTERRUPT_PRIMARY_RX, &isr_rs232_rx);
 	SET_INTERRUPT_PRIORITY(INTERRUPT_PRIMARY_RX, 20);
 	while (X32_rs232_char) c = X32_rs232_data; // empty buffer
 	ENABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
-
-	/* prepare wireless rx interrupt and getchar handler
-	*/
-	//not used at the moment
-	/*
-	SET_INTERRUPT_VECTOR(INTERRUPT_WIRELESS_RX, &isr_wireless_rx);
-	SET_INTERRUPT_PRIORITY(INTERRUPT_WIRELESS_RX, 19);
-	while (X32_wireless_char) c = X32_wireless_data; // empty buffer
-	ENABLE_INTERRUPT(INTERRUPT_WIRELESS_RX);
-	*/
 
 	/* initialize some other stuff
 	*/
@@ -157,6 +139,30 @@ int main()
 
 		PRINT_STATE(250);
 
+		if (mode == YAW_CONTROL_INT)
+		{
+			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+			zr_v = zr();
+			/*
+		    zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
+			zr_old = zr;
+			zr_filtered_old = zr_filtered;
+			*/
+			//#define DEBUG
+			#ifdef DEBUG
+			printf("zr is %d   yaw is %d    yap_P is %d \n", zr_v, yaw, yaw_P);
+			#endif
+
+			// I believe we should use the setpoint here
+
+			ae[0] = ae[0] - (yaw - zr_v) * yaw_P;
+			ae[2] = ae[0];
+			ae[1] = ae[1] + (yaw - zr_v) * yaw_P;
+			ae[3] = ae[1];
+			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+		}
+
+
 	}//end of main loop
 
 	printf("Exit\r\n");
@@ -176,7 +182,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	if ((modecommand == SAFE_MODE) )
 		{
-			ae[0]=ae[1]=ae[2]=ae[3] = 0;
+			SET_ALL_ENGINE_RPM(0);
 			mode = SAFE_MODE_INT;
 		}
 	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
@@ -209,6 +215,60 @@ void process_packet(void)  //we need to process packet and decide what should be
 			printf("********Going to SAFE MODE!**********\n");
 			mode = SAFE_MODE_INT;
 		}
+	else if (modecommand == YAW_CONTROL)
+		{
+			mode = YAW_CONTROL_INT;
+			//LIFT
+			if ( (data1&0x10) == 0x00)
+				{
+					//modify engine values if lift is changed!
+					//DND the yaw control
+					if (lift_setpoint != (int)data1&0x0F)
+					{
+						SET_ALL_ENGINE_RPM(65 * (data1&0x0F));
+						lift_setpoint = (int)(data1&0x0F);
+					}
+				}
+
+			//ROLL
+			if ( (data4&0x10) == 0x00) 
+				{
+					ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
+					if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[3]=ae[3] - 15 * (data4&0x0F);
+				}
+			else
+				{
+					ae[3]=ae[3] + 15 * (data4&0x0F);
+					if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
+				}
+
+			//PITCH
+			if ( (data3&0x10) == 0x00) 
+				{
+					ae[2] = ae[2] + 15 * (data3&0x0F); 
+					if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
+				}
+			else
+				{
+					ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
+					if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[2] = ae[2] - 15 * (data3&0x0F); 
+				}
+
+			//YAW in CONTROL LOOP
+			//set the yaw rate variable that is used in the control loop
+			if ( (data2&0x10) == 0x00) 
+				{
+					yaw  = data2&0x0F;
+				}
+			else
+				{
+					yaw = -1 * data2&0x0F;
+		 		}
+		}
 	else if (modecommand == MANUAL_MODE)
 		{
 			mode = MANUAL_MODE_INT;
@@ -222,29 +282,28 @@ void process_packet(void)  //we need to process packet and decide what should be
 			if ( (data4&0x10) == 0x00) 
 				{
 					ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
-
-				if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[3]=ae[3] - 15 * (data4&0x0F);
+					if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[3]=ae[3] - 15 * (data4&0x0F);
 				}
 			else
 				{
-				ae[3]=ae[3] + 15 * (data4&0x0F);
-				if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
+					ae[3]=ae[3] + 15 * (data4&0x0F);
+					if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
 				}
 
 			//PITCH
 			if ( (data3&0x10) == 0x00) 
 				{
-				ae[2] = ae[2] + 15 * (data3&0x0F); 
-				if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
+					ae[2] = ae[2] + 15 * (data3&0x0F); 
+					if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
 				}
 			else
 				{
-				ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
-				if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-					ae[2] = ae[2] - 15 * (data3&0x0F); 
+					ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
+					if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+						ae[2] = ae[2] - 15 * (data3&0x0F); 
 				}
 
 			//YAW
@@ -346,7 +405,7 @@ void calibrate(void)
 
 void logging(void) {
 //#ifdef LOGGING
-    	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) {
+    	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) { //or YAW CONTROL MODE
     		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
     		log[log_counter].ae[0] = (uint16_t) ae[0];
     		log[log_counter].ae[1] = (uint16_t) ae[1];
@@ -480,6 +539,7 @@ int get_packet(void)
 			checker = modecommand ^ data1 ^ data2 ^ data3 ^ data4 ^ checksum;
 			//hack, because we shouldn't be getting this error. it somehow gets out of sync
 			if (iptr != optr) return -1;
+			//#define DEBUG
 			#ifdef DEBUG
 			printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
 			printf("mode is: %x \n", modecommand);
@@ -552,9 +612,12 @@ void print_state(void)
 	int i;
 	//char text[100] , a;
 	printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
+	//printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
+		//sax,say,say,sp,sq,sr,isr_qr_time, inst);
+
 	printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
-		sax,say,say,sp,sq,sr,isr_qr_time, inst);
-	
+		zax(),zay(),zaz(),zp(),zq(),zr(),isr_qr_time, inst);
+
     //wireless transmission
     /*  
 	sprintf(text, "%d %d %d %d \r\n",ae[0],ae[1],ae[2],ae[3]);
@@ -568,97 +631,3 @@ void print_state(void)
 	}
     */
 }
-
-
-
-/*************************
-*
-*  deprecated functions
-*
-*/
-
-
-
-/*------------------------------------------------------------------
- * isr_qr_link -- QR link rx interrupt handler
- *------------------------------------------------------------------
- */
-
- /*
-////
-void isr_button(void)
-{
-	button = 1;
-}
-
-/////////////////////////////////////
-
-	// prepare button interrupt handler
-	 
-        SET_INTERRUPT_VECTOR(INTERRUPT_BUTTONS, &isr_button);
-        SET_INTERRUPT_PRIORITY(INTERRUPT_BUTTONS, 8);
-	button = 0;
-        ENABLE_INTERRUPT(INTERRUPT_BUTTONS);
-
-void isr_led_timer(void) {
-	if (ALIVE) {
-		toggle_led(0);
-	}	
-}
-
-///////////////////////////////////////
-
-X32_leds = (X32_leds & 0xFC) | (X32_switches & 0x03 );
-
-if (button == 1){
-	printf("You have pushed the button!!!\r\n");
-	button = 0;
-}
-
-///////////////////////////////////////
-
-//getchar -- read char from rx fifo, return -1 if no char available
-
-int getchar(void)
-{
-	int	c;
-	if (optr == iptr)
-		return -1;
-	c = fifo[optr++];
-	if (optr > FIFOSIZE)
-		optr = 0;
-	return c;
-}
-/////////////////////////////////////
-
-
-*/
-
-
-////////////////////////////////Might be used later
-
-/*------------------------------------------------------------------
- * isr_wireless_rx -- wireless rx interrupt handler
- *------------------------------------------------------------------
- */
-
- /*
-void isr_wireless_rx(void)
-{
-	int c;
-	// signal interrupt
-	 
-	toggle_led(4);
-
-	//may have received > 1 char before IRQ is serviced so loop
-	 
-	while (X32_wireless_char) {
-		fifo[iptr++] = X32_wireless_data;
-		if (iptr > FIFOSIZE)
-			iptr = 0;
-	}
-
-}
-*/
-
-////////////////////////////////////////////////

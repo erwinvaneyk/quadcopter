@@ -81,7 +81,7 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 		resetInputModel(keyboard);
 		resetInputModel(joystick);
 	} 
-	else if (model->mode == MANUAL_MODE_INT)
+	else if ( (model->mode == MANUAL_MODE_INT) || (model->mode == YAW_CONTROL_INT) )
 	{
 		model->lift = within_bounds(keyboard->lift + joystick->lift, MAX_LEVEL);
 		model->yaw = within_bounds(keyboard->yaw + joystick->yaw, MAX_LEVEL);
