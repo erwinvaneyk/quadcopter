@@ -219,6 +219,20 @@ void process_packet(void)  //we need to process packet and decide what should be
 	else if (modecommand == YAW_CONTROL)
 		{
 			mode = YAW_CONTROL_INT;
+
+			//check for P value changes
+			printf("\n %x \n", data1&0xE0);
+			if ((data1&0xE0) == 0xE0)
+			{
+				printf("\n Incrementing YAW P \n");
+				if (yaw_P < 10)	yaw_P ++;
+			}
+			else if ((data1&0xE0) == 0xA0)
+			{
+				printf("\n Decrementing YAW P \n");
+				if (yaw_P > 1)	yaw_P --;
+			}
+			
 			//LIFT
 			if ( (data1&0x10) == 0x00)
 				{
