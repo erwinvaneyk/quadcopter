@@ -55,7 +55,7 @@ uint32_t convert_data(struct INPUT* inputModel) {
 	return data;
 }
 
-void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet) {
+void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet, struct SPECIAL_INPUT* p_input) {
 	packet->header = HEADER;
 	packet->modecommand = convert_modecommand(inputModel->mode);
 	packet->data = convert_data(inputModel);

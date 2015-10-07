@@ -195,7 +195,7 @@ int main(int argc, char **argv)
 						    exit(1); //change this
 						}
 						//artificailly sent a packet
-						input_to_pkt(&inputModel, &pkt);
+						input_to_pkt(&inputModel, &pkt, &p_input);
 						inputModel.updated = false;
 						rs232_put_pkt(&pkt);
 						while(c!='$')
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
 				inputModel.mode = SAFE_MODE_INT;
 			}
 			/////
-			input_to_pkt(&inputModel, &pkt);
+			input_to_pkt(&inputModel, &pkt, &p_input);
 			inputModel.updated = false;
 			//show_input(&inputModel);
 			//show_pkt(&pkt);

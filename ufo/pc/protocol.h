@@ -79,7 +79,7 @@ struct PACKET {
 //typedef struct PACKET packet;
 
 void generate_pkt(struct PACKET* packet, uint8_t mode, uint8_t command, uint16_t data);
-void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet);
+void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet, struct SPECIAL_INPUT* p_input);
 void show_pkt(struct PACKET* packet);
 uint8_t level_convert(int level);
 void periodic_send (struct timeval* timer_main, struct timeval* timer_r, struct PACKET* pkt, int link_status);
