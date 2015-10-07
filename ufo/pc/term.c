@@ -181,6 +181,18 @@ int main(int argc, char **argv)
 				}
 			}
 
+			//check special input
+			//without this it doesn't stop, although it should
+			//this check can be moved to input_to_pkt // or remove altogether #redundant
+			if ((p_input.updated == true) && (inputModel.mode == YAW_CONTROL_INT))
+			{
+				input_to_pkt(&inputModel, &pkt, &p_input);
+				rs232_put_pkt(&pkt);
+				inputModel.updated = false;
+				p_input.updated = false;
+				p_input.yaw_p = 0x00; //reduntand, but just in case
+			}
+
 			//if we are logging save to a file
 			if (inputModel.mode == SEND_TELEMETRY_INT)
 			{

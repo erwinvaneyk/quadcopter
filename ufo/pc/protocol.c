@@ -44,13 +44,30 @@ uint8_t convert_modecommand(int mode) {
 	}
 }
 
+uint8_t addons(struct SPECIAL_INPUT* p_input)
+{
+	if (p_input->yaw_p == 1)
+		{
+			p_input->current_yaw_p ++;
+			p_input->yaw_p = 0;
+			return 0xE0;
+		}
+	else if (p_input->yaw_p == -1) //just in case
+		{
+			p_input->current_yaw_p --;
+			p_input->yaw_p = 0;
+			return 0xA0;
+		}
+	return 0x00;
+}
+
 uint32_t convert_data(struct INPUT* inputModel, struct SPECIAL_INPUT* p_input) {
 	uint32_t data;
 
 	data = level_convert(inputModel->roll) << 8;
 	data = (data | level_convert(inputModel->pitch)) << 8;
 	data = (data | level_convert(inputModel->yaw)) << 8;
-	data = data | level_convert(inputModel->lift);
+	data = data | level_convert(inputModel->lift) | addons(p_input);
 
 	return data;
 }

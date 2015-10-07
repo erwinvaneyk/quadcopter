@@ -633,8 +633,8 @@ void print_state(void)
 	//printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
 		//sax,say,say,sp,sq,sr,isr_qr_time, inst);
 
-	printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
-		zax(),zay(),zaz(),zp(),zq(),zr(),isr_qr_time, inst);
+	printf("%3d %3d %3d %3d %3d %3d ==%d== (%3d, %d)\r\n",
+		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_P, isr_qr_time, inst);
 
     //wireless transmission
     /*  
