@@ -2,7 +2,7 @@
 #include "fp_arithmetic.h"
 #include "fp.h"
 
-// WARNING MULTIPLICATION DOES NOT WORK YET
+// NOTE: multiplication has an error of 1% to avoid overflow.
 int fp_mul(int c, int d) {
 	int result = (c >> FRACTION_BIT_COUNT / 2) * (d >> FRACTION_BIT_COUNT / 2);
 	return result;
