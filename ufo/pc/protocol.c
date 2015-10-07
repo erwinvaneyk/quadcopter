@@ -44,7 +44,7 @@ uint8_t convert_modecommand(int mode) {
 	}
 }
 
-uint32_t convert_data(struct INPUT* inputModel) {
+uint32_t convert_data(struct INPUT* inputModel, struct SPECIAL_INPUT* p_input) {
 	uint32_t data;
 
 	data = level_convert(inputModel->roll) << 8;
@@ -58,7 +58,7 @@ uint32_t convert_data(struct INPUT* inputModel) {
 void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet, struct SPECIAL_INPUT* p_input) {
 	packet->header = HEADER;
 	packet->modecommand = convert_modecommand(inputModel->mode);
-	packet->data = convert_data(inputModel);
+	packet->data = convert_data(inputModel, p_input);
 	add_checksum(packet);
 }
 
