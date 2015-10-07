@@ -161,15 +161,6 @@ int main(int argc, char **argv)
 	*/
 	struct timeval timer1, timer2;
 
-/*debug
-c=' ';
-f = fopen("log", "w");
-if (f == NULL)
-{
-    printf("Error opening file!\n");
-    exit(1); //change this
-}
-*/
 	/* send & receive
 	 */
 	for (;;) 
@@ -226,12 +217,10 @@ if (f == NULL)
 
 		if (link_status > -1 && (c = rs232_getchar_nb()) != -1) 
 			term_putchar(c);
-			//fprintf(f, "%c", c); //debugs
-		//else {printf("error\n");}
 	} //end of inf. loop
 
 
-// fclose(f);
+
 
 		term_exitio();
 		if(link_status > -1) {
