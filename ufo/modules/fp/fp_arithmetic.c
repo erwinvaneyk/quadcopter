@@ -4,9 +4,8 @@
 
 // WARNING MULTIPLICATION DOES NOT WORK YET
 int fp_mul(int c, int d) {
-	int result = c * d;
-	printf("%d * %d = %d\n", c, d, result);
-	return (result >> FRACTION_BIT_COUNT);
+	int result = (c >> FRACTION_BIT_COUNT / 2) * (d >> FRACTION_BIT_COUNT / 2);
+	return result;
 }
 
 int fp_add(int c, int d) {

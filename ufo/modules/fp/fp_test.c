@@ -65,18 +65,20 @@ void testArithmetic() {
 
 	result = fp_add(a,b);
 	if(!floatEquals(convertFPToFloat(result), (inputA + inputB), EPSILON)) {
+		printf("%f == %f\n", convertFPToFloat(result), inputA * inputB);
 		printResult(false, "fp_add failed");
 		return;
 	}
 
 	result = fp_min(a, b);
 	if(!floatEquals(convertFPToFloat(result), (inputA - inputB), EPSILON)) {
+		printf("%f == %f\n", convertFPToFloat(result), inputA * inputB);
 		printResult(false, "fp_min failed");
 		return;
 	}
 
 	result = fp_mul(a, b);
-	if(!floatEquals(convertFPToFloat(result), (inputA * inputB), EPSILON)) {
+	if(!floatEquals(convertFPToFloat(result), (inputA * inputB), (inputA * inputB) / 1000)) {
 		printf("%f == %f\n", convertFPToFloat(result), inputA * inputB);
 		printResult(false, "fp_mul failed");
 		return;
