@@ -35,6 +35,7 @@ int log_sent = 0;
 int log_counter;
 
 int lift_setpoint = 0;
+int lift_setpoint_rpm = 0;
 
 //filter & yaw control
 int zr_old = 0;
@@ -155,9 +156,9 @@ int main()
 
 			// I believe we should use the setpoint here
 
-			ae[0] = ae[0] - (yaw - zr_v) * yaw_P;
+			ae[0] = lift_setpoint_rpm - (yaw - zr_v) * yaw_P;
 			ae[2] = ae[0];
-			ae[1] = ae[1] + (yaw - zr_v) * yaw_P;
+			ae[1] = lift_setpoint_rpm + (yaw - zr_v) * yaw_P;
 			ae[3] = ae[1];
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		}
@@ -225,8 +226,9 @@ void process_packet(void)  //we need to process packet and decide what should be
 					//DND the yaw control
 					if (lift_setpoint != (int)data1&0x0F)
 					{
-						SET_ALL_ENGINE_RPM(65 * (data1&0x0F));
 						lift_setpoint = (int)(data1&0x0F);
+						lift_setpoint_rpm = lift_setpoint * 65;
+						SET_ALL_ENGINE_RPM(lift_setpoint_rpm);
 					}
 				}
 
