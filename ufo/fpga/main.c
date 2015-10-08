@@ -47,6 +47,8 @@ unsigned int b1 ;  //0.0305;
 
 int yaw_P = 1;
 int yaw;
+int calibrated = FALSE;
+int YAW_CONTROL_LOOP = FALSE;
 
 //packet processing global variables
 uint8_t modecommand;
@@ -140,7 +142,7 @@ int main()
 
 		PRINT_STATE(250);
 
-		if (mode == YAW_CONTROL_INT)
+		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 			zr_v = zr();
@@ -216,7 +218,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 			printf("********Going to SAFE MODE!**********\n");
 			mode = SAFE_MODE_INT;
 		}
-	else if (modecommand == YAW_CONTROL)
+	else if ((modecommand == YAW_CONTROL) && (calibrated == TRUE))
 		{
 			mode = YAW_CONTROL_INT;
 			//LIFT
@@ -229,6 +231,8 @@ void process_packet(void)  //we need to process packet and decide what should be
 						lift_setpoint = (int)(data1&0x0F);
 						lift_setpoint_rpm = lift_setpoint * 65;
 						SET_ALL_ENGINE_RPM(lift_setpoint_rpm);
+						if (lift_setpoint > 2) 	YAW_CONTROL_LOOP = TRUE;
+						else YAW_CONTROL_LOOP = FALSE;
 					}
 				}
 
@@ -269,7 +273,11 @@ void process_packet(void)  //we need to process packet and decide what should be
 			else
 				{
 					yaw = -1 * data2&0x0F;
-		 		}
+				}
+		}
+	else if ((modecommand == YAW_CONTROL) && (calibrated == FALSE))
+		{
+			printf("QR must be calibrated first! \n");
 		}
 	else if (modecommand == MANUAL_MODE)
 		{
@@ -368,6 +376,8 @@ void process_packet(void)  //we need to process packet and decide what should be
 			toggle_led(3);
 			delay_ms(500);
 			toggle_led(3);
+
+			calibrated = TRUE;
 		}
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
