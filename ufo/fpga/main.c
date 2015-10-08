@@ -35,6 +35,7 @@ int log_sent = 0;
 int log_counter;
 
 int lift_setpoint = 0;
+int lift_setpoint_rpm = 0;
 
 //filter & yaw control
 int zr_old = 0;
@@ -155,9 +156,9 @@ int main()
 
 			// I believe we should use the setpoint here
 
-			ae[0] = ae[0] - (yaw - zr_v) * yaw_P;
+			ae[0] = lift_setpoint_rpm - (yaw - zr_v) * yaw_P;
 			ae[2] = ae[0];
-			ae[1] = ae[1] + (yaw - zr_v) * yaw_P;
+			ae[1] = lift_setpoint_rpm + (yaw - zr_v) * yaw_P;
 			ae[3] = ae[1];
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		}
@@ -225,8 +226,9 @@ void process_packet(void)  //we need to process packet and decide what should be
 					//DND the yaw control
 					if (lift_setpoint != (int)data1&0x0F)
 					{
-						SET_ALL_ENGINE_RPM(65 * (data1&0x0F));
 						lift_setpoint = (int)(data1&0x0F);
+						lift_setpoint_rpm = lift_setpoint * 65;
+						SET_ALL_ENGINE_RPM(lift_setpoint_rpm);
 					}
 				}
 
@@ -349,6 +351,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 				printf("%d ", log[log_counter].s[3] );
 				printf("%d ", log[log_counter].s[4] );
 				printf("%d ", log[log_counter].s[5] );
+				printf("%d ", log[log_counter].lift_point );
 				printf("\n");
 			}
 			printf("$"); //signal end of transmission
@@ -405,7 +408,7 @@ void calibrate(void)
 
 void logging(void) {
 //#ifdef LOGGING
-    	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) { //or YAW CONTROL MODE
+    	if ((log_counter < LOG_LENGTH) && (mode == YAW_CONTROL_INT) ) { //or YAW CONTROL MODE
     		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
     		log[log_counter].ae[0] = (uint16_t) ae[0];
     		log[log_counter].ae[1] = (uint16_t) ae[1];
@@ -417,6 +420,7 @@ void logging(void) {
     		log[log_counter].s[3] = sp;
     		log[log_counter].s[4] = sq;
     		log[log_counter].s[5] = sr;
+    		log[log_counter].lift_point = lift_setpoint_rpm;
     		log_counter++;
     	}
     	//exceeding the allocated memory, disable the interrupt
