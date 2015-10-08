@@ -57,6 +57,8 @@ uint8_t data4;
 uint8_t checksum;
 uint8_t checker;
 
+int startTimestamp, endTimestamp, counter;
+
 void 	delay_ms(int ms);
 void 	delay_us(int us);
 void 	toggle_led(int i);
@@ -143,6 +145,10 @@ int main()
 		if (mode == YAW_CONTROL_INT)
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+			if(startTimestamp == 0) {
+				startTimestamp = timestamp;
+			}
+			counter++;
 			zr_v = zr();
 			/*
 		    zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
@@ -161,6 +167,10 @@ int main()
 			ae[1] = lift_setpoint_rpm + (yaw - zr_v) * yaw_P;
 			ae[3] = ae[1];
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+		} else {
+			if(startTimestamp != 0) {
+				endTimestamp = timestamp;
+			}
 		}
 
 
@@ -367,7 +377,12 @@ void process_packet(void)  //we need to process packet and decide what should be
 				printf("%d ", log[log_counter].s[5] );
 				printf("%d ", log[log_counter].lift_point );
 				printf("\n");
+
 			}
+			printf("%d ", startTimestamp);
+			printf("%d ", endTimestamp);
+			printf("%d ", counter);
+			printf("\n");
 			printf("$"); //signal end of transmission
 			#endif
 			log_sent = 1;
