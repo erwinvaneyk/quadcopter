@@ -351,6 +351,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 				printf("%d ", log[log_counter].s[3] );
 				printf("%d ", log[log_counter].s[4] );
 				printf("%d ", log[log_counter].s[5] );
+				printf("%d ", log[log_counter].lift_point );
 				printf("\n");
 			}
 			printf("$"); //signal end of transmission
@@ -407,7 +408,7 @@ void calibrate(void)
 
 void logging(void) {
 //#ifdef LOGGING
-    	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) { //or YAW CONTROL MODE
+    	if ((log_counter < LOG_LENGTH) && (mode == YAW_CONTROL_INT) ) { //or YAW CONTROL MODE
     		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
     		log[log_counter].ae[0] = (uint16_t) ae[0];
     		log[log_counter].ae[1] = (uint16_t) ae[1];
@@ -419,6 +420,7 @@ void logging(void) {
     		log[log_counter].s[3] = sp;
     		log[log_counter].s[4] = sq;
     		log[log_counter].s[5] = sr;
+    		log[log_counter].lift_point = lift_setpoint_rpm;
     		log_counter++;
     	}
     	//exceeding the allocated memory, disable the interrupt
