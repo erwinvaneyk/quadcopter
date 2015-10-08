@@ -2,7 +2,7 @@
 #include "consoleio.h"
 #include "input.h"
 
-void processKeyboardEvent(char c, struct INPUT* keyboardInput) {
+void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_INPUT* p_input) {
 	bool updated;
 	if ((c = term_getchar_nb()) != -1) {
 		updated = true;
@@ -92,12 +92,14 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput) {
 
 			// Controls for p values
 			case 'u': // p control yaw
-				printf("Not implemented yet!\n");
-				updated = false;
+				printf("Incremented P value for YAW!\n");
+				p_input->yaw_p = 1;
+				p_input->updated = true;
 				break;
 			case 'j': // p control yaw
-				printf("Not implemented yet!\n");
-				updated = false;
+				printf("Decremented P value for YAW!\n");
+				p_input->yaw_p = -1;
+				p_input->updated = true;
 				break;
 			case 'i': // p1 control pitch/roll
 				printf("Not implemented yet!\n");

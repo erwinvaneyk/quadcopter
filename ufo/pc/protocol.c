@@ -44,21 +44,38 @@ uint8_t convert_modecommand(int mode) {
 	}
 }
 
-uint32_t convert_data(struct INPUT* inputModel) {
+uint8_t addons(struct SPECIAL_INPUT* p_input)
+{
+	if (p_input->yaw_p == 1)
+		{
+			p_input->current_yaw_p ++;
+			p_input->yaw_p = 0;
+			return 0xE0;
+		}
+	else if (p_input->yaw_p == -1) //just in case
+		{
+			p_input->current_yaw_p --;
+			p_input->yaw_p = 0;
+			return 0xA0;
+		}
+	return 0x00;
+}
+
+uint32_t convert_data(struct INPUT* inputModel, struct SPECIAL_INPUT* p_input) {
 	uint32_t data;
 
 	data = level_convert(inputModel->roll) << 8;
 	data = (data | level_convert(inputModel->pitch)) << 8;
 	data = (data | level_convert(inputModel->yaw)) << 8;
-	data = data | level_convert(inputModel->lift);
+	data = data | level_convert(inputModel->lift) | addons(p_input);
 
 	return data;
 }
 
-void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet) {
+void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet, struct SPECIAL_INPUT* p_input) {
 	packet->header = HEADER;
 	packet->modecommand = convert_modecommand(inputModel->mode);
-	packet->data = convert_data(inputModel);
+	packet->data = convert_data(inputModel, p_input);
 	add_checksum(packet);
 }
 

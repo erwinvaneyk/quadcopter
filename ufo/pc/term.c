@@ -49,6 +49,7 @@ struct INPUT joystickInput;
 struct INPUT keyboardInput;
 struct INPUT inputModel;
 
+struct SPECIAL_INPUT p_input;
 
 int getSerialDevice(char *argv) {
 	if (strncmp(argv,"serial",3) == 0)
@@ -107,7 +108,7 @@ void processInput() {
 		processJoystickEvent(fd, js, &joystick);
 		updateJoystickInputModel(&joystickInput, &joystick);
 	}
-	processKeyboardEvent(c, &keyboardInput);
+	processKeyboardEvent(c, &keyboardInput, &p_input);
 	updateInputModel(&inputModel, &keyboardInput, &joystickInput);
 }
 
@@ -161,6 +162,12 @@ int main(int argc, char **argv)
 	*/
 	struct timeval timer1, timer2;
 
+	//init special input
+	p_input.current_yaw_p = 1; // must match the initial P value on QR
+	p_input.yaw_p = 0;
+	p_input.updated = false;
+
+
 	/* send & receive
 	 */
 	for (;;) 
@@ -172,6 +179,18 @@ int main(int argc, char **argv)
 				if(link_status > -1) {
 					show_pkt(&pkt);
 				}
+			}
+
+			//check special input
+			//without this it doesn't stop, although it should
+			//this check can be moved to input_to_pkt // or remove altogether #redundant
+			if ((p_input.updated == true) && (inputModel.mode == YAW_CONTROL_INT))
+			{
+				input_to_pkt(&inputModel, &pkt, &p_input);
+				rs232_put_pkt(&pkt);
+				inputModel.updated = false;
+				p_input.updated = false;
+				p_input.yaw_p = 0x00; //reduntand, but just in case
 			}
 
 			//if we are logging save to a file
@@ -188,7 +207,7 @@ int main(int argc, char **argv)
 						    exit(1); //change this
 						}
 						//artificailly sent a packet
-						input_to_pkt(&inputModel, &pkt);
+						input_to_pkt(&inputModel, &pkt, &p_input);
 						inputModel.updated = false;
 						rs232_put_pkt(&pkt);
 						while(c!='$')
@@ -205,7 +224,7 @@ int main(int argc, char **argv)
 				inputModel.mode = SAFE_MODE_INT;
 			}
 			/////
-			input_to_pkt(&inputModel, &pkt);
+			input_to_pkt(&inputModel, &pkt, &p_input);
 			inputModel.updated = false;
 			//show_input(&inputModel);
 			//show_pkt(&pkt);

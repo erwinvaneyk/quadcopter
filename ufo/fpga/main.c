@@ -59,6 +59,8 @@ uint8_t data4;
 uint8_t checksum;
 uint8_t checker;
 
+int startTimestamp, endTimestamp, counter;
+
 void 	delay_ms(int ms);
 void 	delay_us(int us);
 void 	toggle_led(int i);
@@ -145,6 +147,10 @@ int main()
 		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+			if(startTimestamp == 0) {
+				startTimestamp = timestamp;
+			}
+			counter++;
 			zr_v = zr();
 			/*
 		    zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
@@ -163,6 +169,10 @@ int main()
 			ae[1] = lift_setpoint_rpm + (yaw - zr_v) * yaw_P;
 			ae[3] = ae[1];
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+		} else {
+			if(startTimestamp != 0) {
+				endTimestamp = timestamp;
+			}
 		}
 
 
@@ -221,6 +231,20 @@ void process_packet(void)  //we need to process packet and decide what should be
 	else if ((modecommand == YAW_CONTROL) && (calibrated == TRUE))
 		{
 			mode = YAW_CONTROL_INT;
+
+			//check for P value changes
+			printf("\n %x \n", data1&0xE0);
+			if ((data1&0xE0) == 0xE0)
+			{
+				printf("\n Incrementing YAW P \n");
+				if (yaw_P < 10)	yaw_P ++;
+			}
+			else if ((data1&0xE0) == 0xA0)
+			{
+				printf("\n Decrementing YAW P \n");
+				if (yaw_P > 1)	yaw_P --;
+			}
+			
 			//LIFT
 			if ( (data1&0x10) == 0x00)
 				{
@@ -361,7 +385,12 @@ void process_packet(void)  //we need to process packet and decide what should be
 				printf("%d ", log[log_counter].s[5] );
 				printf("%d ", log[log_counter].lift_point );
 				printf("\n");
+
 			}
+			printf("%d ", startTimestamp);
+			printf("%d ", endTimestamp);
+			printf("%d ", counter);
+			printf("\n");
 			printf("$"); //signal end of transmission
 			#endif
 			log_sent = 1;
@@ -629,8 +658,8 @@ void print_state(void)
 	//printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
 		//sax,say,say,sp,sq,sr,isr_qr_time, inst);
 
-	printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
-		zax(),zay(),zaz(),zp(),zq(),zr(),isr_qr_time, inst);
+	printf("%3d %3d %3d %3d %3d %3d ==%d== (%3d, %d)\r\n",
+		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_P, isr_qr_time, inst);
 
     //wireless transmission
     /*  

@@ -17,6 +17,12 @@ struct INPUT {
 	// TODO: add control params and others when we have those implemented..
 };
 
+struct SPECIAL_INPUT {
+	int yaw_p; //increment or decrement
+	int current_yaw_p; //keep track of current P value
+	bool updated; // updated?
+};
+
 #include "protocol.h"
 
 #define SAFE_MODE_INT		0
