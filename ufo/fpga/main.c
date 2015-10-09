@@ -108,7 +108,7 @@ int main()
 
 	/* prepare timer interrupt #1
 	*/
-	X32_timer_per = 1 * CLOCKS_PER_MS;
+	X32_timer_per = 2 * CLOCKS_PER_MS;
 	SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &logging);
 	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
 	ENABLE_INTERRUPT(INTERRUPT_TIMER1);
@@ -144,6 +144,7 @@ int main()
 
 		PRINT_STATE(250);
 
+/*
 		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
@@ -152,11 +153,11 @@ int main()
 			}
 			counter++;
 			zr_v = zr();
-			/*
-		    zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
-			zr_old = zr;
-			zr_filtered_old = zr_filtered;
-			*/
+			
+		    //zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
+			//zr_old = zr;
+			//zr_filtered_old = zr_filtered;
+			
 			//#define DEBUG
 			#ifdef DEBUG
 			printf("zr is %d   yaw is %d    yap_P is %d \n", zr_v, yaw, yaw_P);
@@ -174,7 +175,7 @@ int main()
 				endTimestamp = timestamp;
 			}
 		}
-
+*/
 
 	}//end of main loop
 
@@ -446,7 +447,39 @@ void calibrate(void)
 */
 
 void logging(void) {
+		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
+		{
+			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+			//if(startTimestamp == 0) {
+			//	startTimestamp = timestamp;
+			//}
+			//counter++;
+			zr_v = zr();
+			
+		    //zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
+			//zr_old = zr;
+			//zr_filtered_old = zr_filtered;
+			
+			//#define DEBUG
+			#ifdef DEBUG
+			printf("zr is %d   yaw is %d    yap_P is %d \n", zr_v, yaw, yaw_P);
+			#endif
+
+			// I believe we should use the setpoint here
+
+			ae[0] = lift_setpoint_rpm - (yaw - zr_v) * yaw_P;
+			ae[2] = ae[0];
+			ae[1] = lift_setpoint_rpm + (yaw - zr_v) * yaw_P;
+			ae[3] = ae[1];
+			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+		} 
+		/*else {
+			if(startTimestamp != 0) {
+				endTimestamp = timestamp;
+			}
+		}*/
 //#ifdef LOGGING
+	/*
     	if ((log_counter < LOG_LENGTH) && (mode == YAW_CONTROL_INT) ) { //or YAW CONTROL MODE
     		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
     		log[log_counter].ae[0] = (uint16_t) ae[0];
@@ -466,6 +499,7 @@ void logging(void) {
     	if (log_counter>=LOG_LENGTH) {
     		DISABLE_INTERRUPT(INTERRUPT_TIMER1);
     	}
+    	*/
 }
 
 /*------------------------------------------------------------------
