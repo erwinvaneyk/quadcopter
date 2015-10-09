@@ -44,6 +44,7 @@ int zr_filtered_old = 0;
 int a0 = 1;
 unsigned int a1 ;  //0.0305;
 unsigned int b1 ;  //0.0305;
+	int zr_v;
 
 int yaw_P = 1;
 int yaw;
@@ -92,7 +93,7 @@ int main()
 	int timer1;
 	int timer2;
 	int count = 1;
-	int zr_v;
+
 
 	ALIVE = 1;
 	mode = SAFE_MODE_INT;
@@ -108,7 +109,7 @@ int main()
 
 	/* prepare timer interrupt #1
 	*/
-	X32_timer_per = 2 * CLOCKS_PER_MS;
+	X32_timer_per = 1 * CLOCKS_PER_MS;
 	SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &logging);
 	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
 	ENABLE_INTERRUPT(INTERRUPT_TIMER1);
@@ -238,7 +239,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 			if ((data1&0xE0) == 0xE0)
 			{
 				printf("\n Incrementing YAW P \n");
-				if (yaw_P < 10)	yaw_P ++;
+				if (yaw_P < 20)	yaw_P ++;
 			}
 			else if ((data1&0xE0) == 0xA0)
 			{
@@ -467,9 +468,9 @@ void logging(void) {
 
 			// I believe we should use the setpoint here
 
-			ae[0] = lift_setpoint_rpm - (yaw - zr_v) * yaw_P;
+			ae[0] = lift_setpoint_rpm + (yaw - zr_v) * yaw_P;
 			ae[2] = ae[0];
-			ae[1] = lift_setpoint_rpm + (yaw - zr_v) * yaw_P;
+			ae[1] = lift_setpoint_rpm - (yaw - zr_v) * yaw_P;
 			ae[3] = ae[1];
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		} 
@@ -506,7 +507,7 @@ void logging(void) {
  * isr_qr_link -- QR link rx interrupt handler
  *------------------------------------------------------------------
  */
-void isr_qr_link(void)
+void isr_qr_link(void) //1270 Hz
 {
 	int	ae_index;
 	/* record time
