@@ -44,6 +44,7 @@ int zr_filtered_old = 0;
 int a0 = 1;
 unsigned int a1 ;  //0.0305;
 unsigned int b1 ;  //0.0305;
+	int zr_v;
 
 int yaw_P = 1;
 int yaw;
@@ -74,7 +75,7 @@ int 	zp(void)	{return sp - sp0;}
 int 	zq(void)	{return sq - sq0;}
 int 	zr(void)	{return sr - sr0;}
 
-void 	logging(void);
+void 	periodic(void);
 void 	isr_qr_link(void);
 void 	isr_rs232_rx(void);
 
@@ -92,7 +93,7 @@ int main()
 	int timer1;
 	int timer2;
 	int count = 1;
-	int zr_v;
+
 
 	ALIVE = 1;
 	mode = SAFE_MODE_INT;
@@ -109,7 +110,7 @@ int main()
 	/* prepare timer interrupt #1
 	*/
 	X32_timer_per = 1 * CLOCKS_PER_MS;
-	SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &logging);
+	SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &periodic);
 	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
 	ENABLE_INTERRUPT(INTERRUPT_TIMER1);
 
@@ -143,38 +144,6 @@ int main()
 			}
 
 		PRINT_STATE(250);
-
-		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
-		{
-			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
-			if(startTimestamp == 0) {
-				startTimestamp = timestamp;
-			}
-			counter++;
-			zr_v = zr();
-			/*
-		    zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
-			zr_old = zr;
-			zr_filtered_old = zr_filtered;
-			*/
-			//#define DEBUG
-			#ifdef DEBUG
-			printf("zr is %d   yaw is %d    yap_P is %d \n", zr_v, yaw, yaw_P);
-			#endif
-
-			// I believe we should use the setpoint here
-
-			ae[0] = lift_setpoint_rpm - (yaw - zr_v) * yaw_P;
-			ae[2] = ae[0];
-			ae[1] = lift_setpoint_rpm + (yaw - zr_v) * yaw_P;
-			ae[3] = ae[1];
-			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
-		} else {
-			if(startTimestamp != 0) {
-				endTimestamp = timestamp;
-			}
-		}
-
 
 	}//end of main loop
 
@@ -236,12 +205,12 @@ void process_packet(void)  //we need to process packet and decide what should be
 			printf("\n %x \n", data1&0xE0);
 			if ((data1&0xE0) == 0xE0)
 			{
-				printf("\n Incrementing YAW P \n");
-				if (yaw_P < 10)	yaw_P ++;
+				//printf("\n Incrementing YAW P \n");
+				if (yaw_P < 20)	yaw_P ++;
 			}
 			else if ((data1&0xE0) == 0xA0)
 			{
-				printf("\n Decrementing YAW P \n");
+				//printf("\n Decrementing YAW P \n");
 				if (yaw_P > 1)	yaw_P --;
 			}
 			
@@ -367,33 +336,29 @@ void process_packet(void)  //we need to process packet and decide what should be
 
 		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT) && !log_sent ) 
 		{
-			printf("********SENDING LOG DATA!**********\n");
-			//delay_ms(1000);
 			#ifdef LOGGING
-			for (log_counter=0; log_counter < LOG_LENGTH; log_counter++)
-			{
-				printf("%d ", log[log_counter].timestamp );
-				printf("%d ", log[log_counter].ae[0] );
-				printf("%d ", log[log_counter].ae[1] );
-				printf("%d ", log[log_counter].ae[2] );
-				printf("%d ", log[log_counter].ae[3] );
-				printf("%d ", log[log_counter].s[0] );
-				printf("%d ", log[log_counter].s[1] );
-				printf("%d ", log[log_counter].s[2] );
-				printf("%d ", log[log_counter].s[3] );
-				printf("%d ", log[log_counter].s[4] );
-				printf("%d ", log[log_counter].s[5] );
-				printf("%d ", log[log_counter].lift_point );
-				printf("\n");
+				printf("********SENDING LOG DATA!**********\n");
+				for (log_counter=0; log_counter < LOG_LENGTH; log_counter++)
+				{
+					printf("%d ", log[log_counter].timestamp );
+					printf("%d ", log[log_counter].ae[0] );
+					printf("%d ", log[log_counter].ae[1] );
+					printf("%d ", log[log_counter].ae[2] );
+					printf("%d ", log[log_counter].ae[3] );
+					printf("%d ", log[log_counter].s[0] );
+					printf("%d ", log[log_counter].s[1] );
+					printf("%d ", log[log_counter].s[2] );
+					printf("%d ", log[log_counter].s[3] );
+					printf("%d ", log[log_counter].s[4] );
+					printf("%d ", log[log_counter].s[5] );
+					printf("%d ", log[log_counter].lift_point );
+					printf("\n");
 
-			}
-			printf("%d ", startTimestamp);
-			printf("%d ", endTimestamp);
-			printf("%d ", counter);
-			printf("\n");
-			printf("$"); //signal end of transmission
+				}
+				printf("\n");
+				printf("$"); //signal end of transmission
+				log_sent = 1;
 			#endif
-			log_sent = 1;
 		}
 		else if ( (modecommand == CALIBRATE_MODE) && (mode == SAFE_MODE_INT) )
 		{
@@ -441,38 +406,40 @@ void calibrate(void)
 }
 
 /*------------------------------------------------------------------
- * Logging the QR values
+ * Periodic execution via Timer1 interrupt
  *------------------------------------------------------------------
 */
 
-void logging(void) {
-//#ifdef LOGGING
-    	if ((log_counter < LOG_LENGTH) && (mode == YAW_CONTROL_INT) ) { //or YAW CONTROL MODE
-    		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
-    		log[log_counter].ae[0] = (uint16_t) ae[0];
-    		log[log_counter].ae[1] = (uint16_t) ae[1];
-    		log[log_counter].ae[2] = (uint16_t) ae[2];
-    		log[log_counter].ae[3] = (uint16_t) ae[3];
-    		log[log_counter].s[0] = sax;  //should we log these RAW or callibrated values?
-    		log[log_counter].s[1] = say;
-    		log[log_counter].s[2] = saz;
-    		log[log_counter].s[3] = sp;
-    		log[log_counter].s[4] = sq;
-    		log[log_counter].s[5] = sr;
-    		log[log_counter].lift_point = lift_setpoint_rpm;
-    		log_counter++;
-    	}
-    	//exceeding the allocated memory, disable the interrupt
-    	if (log_counter>=LOG_LENGTH) {
-    		DISABLE_INTERRUPT(INTERRUPT_TIMER1);
-    	}
+void periodic(void) {
+		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
+		{
+			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+			zr_v = zr();
+			
+		    //zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
+			//zr_old = zr;
+			//zr_filtered_old = zr_filtered;
+			
+			//#define DEBUG
+			#ifdef DEBUG
+			printf("zr is %d   yaw is %d    yap_P is %d \n", zr_v, yaw, yaw_P);
+			#endif
+
+			ae[0] = lift_setpoint_rpm + (yaw - zr_v) * yaw_P;
+			ae[2] = ae[0];
+			ae[1] = lift_setpoint_rpm - (yaw - zr_v) * yaw_P;
+			ae[3] = ae[1];
+			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+		} 
 }
 
 /*------------------------------------------------------------------
  * isr_qr_link -- QR link rx interrupt handler
+ * This function is executed at 1270Hz
+ * Logging can be done here as well
  *------------------------------------------------------------------
  */
-void isr_qr_link(void)
+void isr_qr_link(void) //1270 Hz
 {
 	int	ae_index;
 	/* record time
@@ -515,6 +482,28 @@ void isr_qr_link(void)
 	 */
 	inst = X32_instruction_counter - inst;
 	isr_qr_time = X32_us_clock - isr_qr_time;
+
+
+	/*
+	* Logging
+	*/
+#ifdef LOGGING
+	if ((log_counter < LOG_LENGTH) && (mode == YAW_CONTROL_INT) ) {
+		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
+		log[log_counter].ae[0] = (uint16_t) ae[0];
+		log[log_counter].ae[1] = (uint16_t) ae[1];
+		log[log_counter].ae[2] = (uint16_t) ae[2];
+		log[log_counter].ae[3] = (uint16_t) ae[3];
+		log[log_counter].s[0] = sax;  //should we log these RAW or callibrated values?
+		log[log_counter].s[1] = say;
+		log[log_counter].s[2] = saz;
+		log[log_counter].s[3] = sp;
+		log[log_counter].s[4] = sq;
+		log[log_counter].s[5] = sr;
+		log[log_counter].lift_point = lift_setpoint_rpm;
+		log_counter++;
+	}
+#endif
 }
 
 /*------------------------------------------------------------------

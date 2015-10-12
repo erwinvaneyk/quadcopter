@@ -125,12 +125,6 @@ int main(int argc, char **argv)
 
 	term_puts("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
 	
-	// fd is for the joystick
-	if ((fd = open(JS_DEV, O_RDONLY)) < 0) {
-		perror("jstest");
-		exit(1);
-	}
-
 	/* 
 	 * Check input 
 	 */
@@ -140,6 +134,15 @@ int main(int argc, char **argv)
 	{
 		printHelp();
 		return -1;
+	}
+
+	// fd is for the joystick
+	if (ENABLE_JOYSTICK)
+	{ 
+		if ((fd = open(JS_DEV, O_RDONLY)) < 0) {
+			perror("jstest");
+			exit(1);
+		}
 	}
 
 	/*
