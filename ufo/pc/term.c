@@ -208,12 +208,12 @@ int main(int argc, char **argv)
 
 	attron(A_BOLD | A_STANDOUT );
 	attron(COLOR_PAIR(1));
-	mvprintw(6,0, "                                                                             ");
+	mvprintw(6,0, "                                                                                ");
 	attroff(COLOR_PAIR(1));
 
 	attron(A_BOLD | A_STANDOUT ); 
 	attron(COLOR_PAIR(1));
-	mvprintw(7,0, "MESSAGES:                                                                        ");
+	mvprintw(7,0, "MESSAGES:                                                                       ");
 	attroff(COLOR_PAIR(1));
 	attroff(A_BOLD | A_STANDOUT ); 
 

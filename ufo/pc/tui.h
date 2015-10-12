@@ -40,11 +40,10 @@ extern int msg_cursor;
 #define TUI_PRINT_MODE(msg)\
 	move(MODE_LINE,0);\
 	clrtoeol();\
-	attron(A_BOLD | A_STANDOUT );\
 	attron(COLOR_PAIR(5));\
 	printw(#msg);\
 	attroff(COLOR_PAIR(5));\
-	attroff(A_BOLD | A_STANDOUT );\
+
 
 
 
