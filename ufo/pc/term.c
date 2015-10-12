@@ -27,6 +27,9 @@
 #include <stdbool.h>
 #include <signal.h>
 
+#include <ncurses.h>
+
+
 #include "rs232.h"
 #include "protocol.h"
 #include "consoleio.h" 
@@ -122,6 +125,8 @@ int main(int argc, char **argv)
 	struct PACKET pkt;
 	int bad_input = 0;
 	int link_status;
+	int cursor;
+	initscr();
 
 	term_puts("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
 	
@@ -170,6 +175,47 @@ int main(int argc, char **argv)
 	p_input.yaw_p = 0;
 	p_input.updated = false;
 
+	//TUI
+	start_color();
+	init_pair(1, COLOR_BLACK, COLOR_GREEN);
+	init_pair(2, COLOR_RED, COLOR_BLACK);
+	init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
+	init_pair(4, COLOR_RED, COLOR_BLACK);
+
+	attron(A_BOLD | A_STANDOUT ); 
+	attron(COLOR_PAIR(1));
+	mvprintw(0,0, "- - - - - - - - - - - -  Quadcopter Terminal  - - - - - - - - - - - ");
+	mvprintw(1,0, "                                                                    ");
+	mvprintw(2,0, "STATUS:                                                             ");
+	attroff(COLOR_PAIR(1));
+
+	attron(COLOR_PAIR(2));
+	attron(A_UNDERLINE);
+	mvprintw(3,0, "**ENGINE RPM***  |   *SENSOR values* | CONTROL values    |...       ");
+	attroff(A_UNDERLINE);
+	mvprintw(4,0, "AE0 AE1 AE2 AE3  | AX AY AZ P Q R    | yaw P -----       |...       ");
+	attroff(COLOR_PAIR(2));
+	attroff(A_BOLD | A_STANDOUT );
+
+	//attron(COLOR_PAIR(3));
+	//attron(A_BOLD | A_STANDOUT );
+	//mvprintw(5,0, "250 250 250 250 - - AX AY AZ P Q R  - - yaw P -----                 ");
+	//attroff(A_BOLD | A_STANDOUT );
+	//attroff(COLOR_PAIR(3));
+
+
+	attron(A_BOLD | A_STANDOUT );
+	attron(COLOR_PAIR(1));
+	mvprintw(6,0, "                                                                    ");
+	attroff(COLOR_PAIR(1));
+
+	attron(A_BOLD | A_STANDOUT ); 
+	attron(COLOR_PAIR(1));
+	mvprintw(7,0, "MESSAGES:                                                           ");
+	attroff(COLOR_PAIR(1));
+	attroff(A_BOLD | A_STANDOUT ); 
+
+	move(5,0);
 
 	/* send & receive
 	 */
@@ -237,11 +283,25 @@ int main(int argc, char **argv)
 		gettimeofday(&timer1, NULL);
 		periodic_send (&timer1, &timer2, &pkt, link_status);
 
-		if (link_status > -1 && (c = rs232_getchar_nb()) != -1) 
-			term_putchar(c);
+		if (link_status > -1 && (c = rs232_getchar_nb()) != -1)
+		{
+			attron(COLOR_PAIR(3));
+			attron(A_BOLD | A_STANDOUT );
+				mvaddch(5,cursor++,c);
+			attroff(A_BOLD | A_STANDOUT );
+			attroff(COLOR_PAIR(3));
+			
+			if (c=='\n') 
+			{
+				cursor = 0;
+				refresh();
+			} 
+			
+		}
+			//term_putchar(c);
 	} //end of inf. loop
 
-
+		endwin();
 		term_exitio();
 		if(link_status > -1) {
 			rs232_close();

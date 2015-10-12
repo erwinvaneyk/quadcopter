@@ -1,6 +1,7 @@
 #include "keyboardio.h"
 #include "consoleio.h"
 #include "input.h"
+#include  <ncurses.h>
 
 void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_INPUT* p_input) {
 	bool updated;
@@ -126,7 +127,8 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 
 			default:
 				if(unknownKey) {
-					printf("Unknown key: %i\n", c);
+					//printf("Unknown key: %i\n", c);
+					mvprintw(8,0,"Unknown key: %i\n", c);
 					updated = false;
 				}
 				// TODO: add other keys for P
