@@ -7,6 +7,8 @@
 #ifndef TUI_H
 #define TUI_H
 
+#include  <ncurses.h>
+
 #define MESSAGE_FIELD_START 8
 #define MESSAGE_FIELD_SIZE 15
 
@@ -29,6 +31,7 @@
 
 
 #endif
+
 
 //Alternatively:
 //mvprintw(MESSAGE_FIELD_START + msg_cursor,0,"Set to safe mode (%d)\n", SAFE_MODE_INT);

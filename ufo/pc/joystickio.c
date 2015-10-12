@@ -11,9 +11,13 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include "tui.h"
 
 #include "joystickio.h"
 #include "protocol.h"
+
+//TUI related
+extern int msg_cursor;
 
 short normalizeAxis(short axis_value, short buckets) {
 	assert(buckets > 0);
@@ -67,7 +71,9 @@ void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK*
 					joystickInputModel->mode = MANUAL_MODE_INT;
 					break;
 				default:
-					printf("Unknown joystick mode: %d\n", i);
+					mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "Unknown joystick mode: %d\n", i);
+					TUI_MOVE_CURSOR;
+					//printf("Unknown joystick mode: %d\n", i);
 					break;
 			}
 			break;
@@ -88,7 +94,7 @@ void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK*
 	joystickInputModel->updated = true;
 }
 
-//DEBUG purpose
+//DEBUG purpose TODO: change to support TUI
 void show_joystick(struct JOYSTICK* joystick){
 	printf("JOYSTICK: {\n");
 	printf("	PITCH: %x\n", joystick->axis[JS_AXIS_PITCH]);

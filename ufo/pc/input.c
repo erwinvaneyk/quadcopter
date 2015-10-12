@@ -1,5 +1,9 @@
 #include "input.h"
 #include <stdio.h>
+#include "tui.h"
+
+//TUI related
+extern int msg_cursor;
 
 int within_bounds(int x, int y) {
 	if(x > y) {
@@ -33,7 +37,10 @@ void updateModeIfValid(struct INPUT* model, int newMode) {
 		return;
 	}
 	
-	printf("Invalid mode transition %d -> %d\n", model->mode, newMode); 
+	//printf("Invalid mode transition %d -> %d\n", model->mode, newMode); 
+	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "Invalid mode transition %d -> %d", model->mode, newMode);
+	TUI_MOVE_CURSOR;
+
 }
 
 bool isSafeInputModel(struct INPUT* model) {
@@ -65,10 +72,14 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 
 	// Update mode (keyboard's mode overrides joystick's mode)
 	if(keyboard->mode != model->mode) {
-		printf("Keyboard switched mode: %x\n", keyboard->mode);
+		//printf("Keyboard switched mode: %x\n", keyboard->mode);
+		mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "Keyboard switched mode: %x", keyboard->mode);
+		TUI_MOVE_CURSOR;
 		updateModeIfValid(model, keyboard->mode);
 	} else if(joystick->mode != model->mode) {
-		printf("Joystick switched mode: %x\n", joystick->mode);
+		//printf("Joystick switched mode: %x\n", joystick->mode);
+		mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "Joystick switched mode: %x", joystick->mode);
+		TUI_MOVE_CURSOR;
 		updateModeIfValid(model, joystick->mode);
 	}
 	// Sync modes across all input-devices
@@ -95,7 +106,7 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 	model->updated = true;
 }
 
-//DEBUG purpose
+//DEBUG purpose TODO: change to support TUI
 void show_input(struct INPUT* input) {
 	printf("INPUT (%i) {\n", input->updated);
 	printf("	lift: %i\n", input->lift);

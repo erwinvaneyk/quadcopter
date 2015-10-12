@@ -130,7 +130,8 @@ int main(int argc, char **argv)
 	initscr();
 
 	term_puts("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
-	
+	getch();
+	refresh();
 	/* 
 	 * Check input 
 	 */
@@ -141,7 +142,8 @@ int main(int argc, char **argv)
 		printHelp();
 		return -1;
 	}
-
+	getch();
+	refresh();
 	// fd is for the joystick
 	if (ENABLE_JOYSTICK)
 	{ 
@@ -176,12 +178,14 @@ int main(int argc, char **argv)
 	p_input.yaw_p = 0;
 	p_input.updated = false;
 
+	getch();
+	refresh();
+
 	//TUI
 	start_color();
 	init_pair(1, COLOR_BLACK, COLOR_GREEN);
 	init_pair(2, COLOR_RED, COLOR_BLACK);
 	init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
-	init_pair(4, COLOR_RED, COLOR_BLACK);
 
 	attron(A_BOLD | A_STANDOUT ); 
 	attron(COLOR_PAIR(1));
@@ -197,13 +201,6 @@ int main(int argc, char **argv)
 	mvprintw(4,0, "AE0 AE1 AE2 AE3  | AX AY AZ P Q R    | yaw P -----       |...       ");
 	attroff(COLOR_PAIR(2));
 	attroff(A_BOLD | A_STANDOUT );
-
-	//attron(COLOR_PAIR(3));
-	//attron(A_BOLD | A_STANDOUT );
-	//mvprintw(5,0, "250 250 250 250 - - AX AY AZ P Q R  - - yaw P -----                 ");
-	//attroff(A_BOLD | A_STANDOUT );
-	//attroff(COLOR_PAIR(3));
-
 
 	attron(A_BOLD | A_STANDOUT );
 	attron(COLOR_PAIR(1));

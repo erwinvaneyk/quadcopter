@@ -1,7 +1,6 @@
 #include "keyboardio.h"
 #include "consoleio.h"
 #include "input.h"
-#include  <ncurses.h>
 #include "tui.h"
 
 //TUI related
