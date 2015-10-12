@@ -169,7 +169,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		}
 	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
 		{
-			printf("********Going to PANIC_MODE!**********\n");
+			printf("$********Going to PANIC_MODE!**********\n");
 			mode = PANIC_MODE_INT;
 			if (ae[0] > 400)
 			{
@@ -178,7 +178,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 				SET_ALL_ENGINE_RPM(250);
 				delay_ms(500);
 			}
-			printf("********Engines decreased!**********\n");
+			printf("$********Engines decreased!**********\n");
 			if (ae[0] >= 250)
 			{
 				SET_ALL_ENGINE_RPM(200);
@@ -194,7 +194,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 				delay_ms(500);
 			}
 			SET_ALL_ENGINE_RPM(0);
-			printf("********Going to SAFE MODE!**********\n");
+			printf("$********Going to SAFE MODE!**********\n");
 			mode = SAFE_MODE_INT;
 		}
 	else if ((modecommand == YAW_CONTROL) && (calibrated == TRUE))
@@ -270,7 +270,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		}
 	else if ((modecommand == YAW_CONTROL) && (calibrated == FALSE))
 		{
-			printf("QR must be calibrated first! \n");
+			printf("$QR must be calibrated first! \n");
 		}
 	else if (modecommand == MANUAL_MODE)
 		{
@@ -364,7 +364,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		{
 			delay_ms(1000);
 			calibrate();
-			printf("QR calibrated...\n");
+			printf("$QR calibrated...\n");
 			toggle_led(3);
 			delay_ms(500);
 			toggle_led(3);

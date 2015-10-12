@@ -36,6 +36,7 @@
 #include "joystickio.h"
 #include "input.h"
 #include "keyboardio.h"
+#include "tui.h"
 
 int serial_device = 1;
 int fd;
@@ -127,6 +128,7 @@ int main(int argc, char **argv)
 	int bad_input = 0;
 	int link_status;
 	int cursor;
+	int PRINT_MODE = STATUS;
 	initscr();
 
 	term_puts("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
@@ -186,6 +188,7 @@ int main(int argc, char **argv)
 	init_pair(1, COLOR_BLACK, COLOR_GREEN);
 	init_pair(2, COLOR_RED, COLOR_BLACK);
 	init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
+	init_pair(4, COLOR_YELLOW, COLOR_BLACK);
 
 	attron(A_BOLD | A_STANDOUT ); 
 	attron(COLOR_PAIR(1));
@@ -281,20 +284,42 @@ int main(int argc, char **argv)
 		gettimeofday(&timer1, NULL);
 		periodic_send (&timer1, &timer2, &pkt, link_status);
 
+		//printing to screen
 		if (link_status > -1 && (c = rs232_getchar_nb()) != -1)
 		{
-			attron(COLOR_PAIR(3));
-			attron(A_BOLD | A_STANDOUT );
-				mvaddch(5,cursor++,c);
-			attroff(A_BOLD | A_STANDOUT );
-			attroff(COLOR_PAIR(3));
-			
-			if (c=='\n') 
+			if (c=='$') //msg from QR
 			{
-				cursor = 0;
-				refresh();
-			} 
-			
+				PRINT_MODE = MESSAGE;
+			}
+
+			switch(PRINT_MODE) {
+				case STATUS:
+					attron(COLOR_PAIR(3));
+					attron(A_BOLD | A_STANDOUT );
+					mvaddch(5,cursor++,c);
+					attroff(A_BOLD | A_STANDOUT );
+					attroff(COLOR_PAIR(3));
+					if (c=='\n') 
+					{
+						cursor = 0;
+						refresh();
+					} 
+					break;
+				case MESSAGE:
+					attron(COLOR_PAIR(4));
+					//attron(A_BOLD | A_STANDOUT );
+					mvaddch(CURRENT_MSG_CURSOR,cursor++,c);
+					//attroff(A_BOLD | A_STANDOUT );
+					attroff(COLOR_PAIR(4));
+					if (c=='\n') 
+					{
+						TUI_MOVE_CURSOR;
+						cursor = 0;
+						refresh();
+						PRINT_MODE = STATUS;
+					} 
+					break;
+			}			
 		}
 			//term_putchar(c);
 	} //end of inf. loop

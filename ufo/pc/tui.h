@@ -7,10 +7,16 @@
 #ifndef TUI_H
 #define TUI_H
 
-#include  <ncurses.h>
+#include <ncurses.h>
+
+extern int msg_cursor;
 
 #define MESSAGE_FIELD_START 8
 #define MESSAGE_FIELD_SIZE 15
+#define CURRENT_MSG_CURSOR MESSAGE_FIELD_START + msg_cursor
+
+#define STATUS 	1
+#define MESSAGE 2
 
 #define TUI_MOVE_CURSOR \
 	msg_cursor++;\
