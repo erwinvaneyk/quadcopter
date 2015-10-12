@@ -3,8 +3,8 @@
 
 #include "fp.h"
 
-int convertFloatToFP(float value);
+float_x32 convertFloatToFP(float value);
 
-float convertFPToFloat(int fpValue);
+float convertFPToFloat(float_x32 fpValue);
 
 #endif

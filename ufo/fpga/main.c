@@ -14,6 +14,11 @@
 #include "../modules/pkt/pkt.h"
 #include "../modules/pkt/pkt_checksum.h"
 
+#include "../modules/fp/fp.h"
+#include "../modules/fp/fp_conversion.h"
+#include "../modules/fp/fp_arithmetic.h"
+
+
 uint8_t	fifo[FIFOSIZE]; 
 int	iptr = 0; 
 int optr = 0;
@@ -42,13 +47,13 @@ int lift_setpoint = 0;
 int lift_setpoint_rpm = 0;
 
 //filter & yaw control
-int zr_old = 0;
-int zr_filtered = 0;
-int zr_filtered_old = 0;
-int a0 = 1;
-unsigned int a1 ;  //0.0305;
-unsigned int b1 ;  //0.0305;
-	int zr_v;
+int zr_filtered = 0; // = rounded(zr_filtered_old)
+float_x32 zr_filtered_old = 0x0;
+float_x32 zr_old = 0x0;
+float_x32 a0 = 0x4000; // 1
+float_x32 a1 = 0x1f3;  // 0.0305;
+float_x32 b1 = 0x1f3;  // 0.0305;
+float_x32 zr_v;
 
 
 int yaw;
@@ -441,20 +446,14 @@ void periodic(void) {
 		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
-			zr_v = zr();
-			
-		    //zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
-			//zr_old = zr;
-			//zr_filtered_old = zr_filtered;
-			
-			//#define DEBUG
-			#ifdef DEBUG
-			printf("zr is %d   yaw is %d    yap_P is %d \n", zr_v, yaw, yaw_p);
-			#endif
+			zr_v = convertIntToFP(zr());
+			zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
+			zr_old = zr;
+			zr_filtered = convertFPToInt(zr_filtered_old);
 
-			ae[0] = lift_setpoint_rpm + (yaw - zr_v) * yaw_p;
+			ae[0] = lift_setpoint_rpm + (yaw - zr_filtered) * yaw_p;
 			ae[2] = ae[0];
-			ae[1] = lift_setpoint_rpm - (yaw - zr_v) * yaw_p;
+			ae[1] = lift_setpoint_rpm - (yaw - zr_filtered) * yaw_p;
 			ae[3] = ae[1];
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		}

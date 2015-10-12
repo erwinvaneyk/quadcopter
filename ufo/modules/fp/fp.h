@@ -24,9 +24,9 @@
  *
  */
 
+typedef int float_x32;
+
 #define FRACTION_BIT_COUNT 	14 // 14 bit precision gives us 4 digit precision
 #define FRACTION_MAX_VALUE  pow(2, FRACTION_BIT_COUNT)
-
-
 
 #endif

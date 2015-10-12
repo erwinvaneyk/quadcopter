@@ -30,7 +30,7 @@ bool floatEquals(float a, float b, float epsilon) {
 }
 
 void testConversion() {
-	int result;
+	float_x32 result;
 	result = convertIntFloatToFP(0, 5, 0);
 	if(result != 8192) {
 		printResult(false, "convertIntFloatToFP failed");
@@ -47,7 +47,7 @@ void testConversion() {
 }
 
 void testConversionPC() {
-	int result;
+	float_x32 result;
 	float expected = 78.435;
 	result = convertFPToFloat(convertFloatToFP(expected));
 	printResult(result != expected, "fp_conversion_pc");
@@ -55,7 +55,7 @@ void testConversionPC() {
 
 void testArithmetic() {
 	// Setup
-	int a, b, result;
+	float_x32 a, b, result;
 	float expected;
 	float inputA = 44.67;
 	float inputB = 27.942;
@@ -70,10 +70,10 @@ void testArithmetic() {
 		return;
 	}
 
-	result = fp_min(a, b);
+	result = fp_sub(a, b);
 	if(!floatEquals(convertFPToFloat(result), (inputA - inputB), EPSILON)) {
 		printf("%f == %f\n", convertFPToFloat(result), inputA * inputB);
-		printResult(false, "fp_min failed");
+		printResult(false, "fp_sub failed");
 		return;
 	}
 
@@ -88,6 +88,12 @@ void testArithmetic() {
 }
 
 int main(int argc, char **argv) {
+	 // For the qr constants
+	printf("0.0305 -> %x\n", convertFloatToFP(0.0305));
+	printf("1 -> %x\n", convertFloatToFP(1));
+	printf("0 -> %x\n", convertFloatToFP(0));
+
+	// Tests
 	printf("Running tests...\n");
 	if(FRACTION_BIT_COUNT != 14) {
 		printResult(false, "Tests made to work with 14 bit precision!");
