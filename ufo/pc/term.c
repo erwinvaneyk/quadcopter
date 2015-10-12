@@ -42,6 +42,7 @@ int fd;
 char c;
 bool DEBUG;
 bool ENABLE_JOYSTICK;
+int msg_cursor =0;
 
 FILE *f;
 
