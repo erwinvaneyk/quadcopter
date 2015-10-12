@@ -189,30 +189,31 @@ int main(int argc, char **argv)
 	init_pair(2, COLOR_RED, COLOR_BLACK);
 	init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
 	init_pair(4, COLOR_YELLOW, COLOR_BLACK);
+	init_pair(5, COLOR_BLACK, COLOR_YELLOW);
 
 	attron(A_BOLD | A_STANDOUT ); 
 	attron(COLOR_PAIR(1));
-	mvprintw(0,0, "- - - - - - - - - - - -  Quadcopter Terminal  - - - - - - - - - - - ");
-	mvprintw(1,0, "                                                                    ");
-	mvprintw(2,0, "STATUS:                                                             ");
+	mvprintw(0,0, "- - - - - - - - - - - - - - -  Quadcopter Terminal  - - - - - - - - - - - - - - ");
+	mvprintw(1,0, "                                                                                ");
+	mvprintw(2,0, "STATUS:                                                                         ");
 	attroff(COLOR_PAIR(1));
 
 	attron(COLOR_PAIR(2));
 	attron(A_UNDERLINE);
-	mvprintw(3,0, "**ENGINE RPM***  |   *SENSOR values* | CONTROL values    |...       ");
+	mvprintw(3,0, "***ENGINE RPM***|    ***SENSOR values***    | ***CONTROL values***     ");
 	attroff(A_UNDERLINE);
-	mvprintw(4,0, "AE0 AE1 AE2 AE3  | AX AY AZ P Q R    | yaw P -----       |...       ");
+	mvprintw(4,0, "AE0 AE1 AE2 AE3 | AX   AY   AZ   P   Q   R  | yaw P                    ");
 	attroff(COLOR_PAIR(2));
 	attroff(A_BOLD | A_STANDOUT );
 
 	attron(A_BOLD | A_STANDOUT );
 	attron(COLOR_PAIR(1));
-	mvprintw(6,0, "                                                                    ");
+	mvprintw(6,0, "                                                                             ");
 	attroff(COLOR_PAIR(1));
 
 	attron(A_BOLD | A_STANDOUT ); 
 	attron(COLOR_PAIR(1));
-	mvprintw(7,0, "MESSAGES:                                                           ");
+	mvprintw(7,0, "MESSAGES:                                                                        ");
 	attroff(COLOR_PAIR(1));
 	attroff(A_BOLD | A_STANDOUT ); 
 
@@ -230,7 +231,27 @@ int main(int argc, char **argv)
 					show_pkt(&pkt);
 				}
 			}
-
+				switch(inputModel.mode) {
+					case SAFE_MODE_INT:
+						TUI_PRINT_MODE(SAFE MODE);
+						break;
+					case PANIC_MODE_INT:
+						TUI_PRINT_MODE(PANIC MODE);
+						break;
+					case MANUAL_MODE_INT:
+						TUI_PRINT_MODE(MANUAL MODE);
+						break;
+					case YAW_CONTROL_INT:
+						TUI_PRINT_MODE(YAW CONTROL MODE);
+						break;
+					case CALIBRATE_MODE_INT:
+						TUI_PRINT_MODE(CALIBRATING);
+						break;
+					case FULL_CONTROL_INT:
+						TUI_PRINT_MODE(FULL CONTROL MODE);
+						break;			
+			}
+		
 			//check special input
 			//without this it doesn't stop, although it should
 			//this check can be moved to input_to_pkt // or remove altogether #redundant

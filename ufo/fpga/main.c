@@ -633,12 +633,11 @@ void toggle_led(int i)
 	X32_leds = (X32_leds ^ (1 << i));
 }
 
+
 /*------------------------------------------------------------------
  * print_state -- print all sensors and actuators
  *------------------------------------------------------------------
  */
-
-
 void print_state(void) 
 {
 	int i;
@@ -647,8 +646,12 @@ void print_state(void)
 	//printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
 		//sax,say,say,sp,sq,sr,isr_qr_time, inst);
 
-	printf("%3d %3d %3d %3d %3d %3d ==%d== (%3d, %d)\r\n",
+	/*printf("%3d %3d %3d %3d %3d %3d | %d | (%3d, %d)\r\n",
 		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_P, isr_qr_time, inst);
+		*/
+
+	printf("%3d %3d %3d %3d %3d %3d | %d\r\n",
+		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_P);
 
     //wireless transmission
     /*  

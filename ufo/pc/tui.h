@@ -13,6 +13,8 @@ extern int msg_cursor;
 
 #define MESSAGE_FIELD_START 8
 #define MESSAGE_FIELD_SIZE 15
+#define MODE_LINE 25
+
 #define CURRENT_MSG_CURSOR MESSAGE_FIELD_START + msg_cursor
 
 #define STATUS 	1
@@ -35,9 +37,24 @@ extern int msg_cursor;
 	mvprintw(MESSAGE_FIELD_START + msg_cursor,0,#msg);\
 	TUI_MOVE_CURSOR;\
 
+#define TUI_PRINT_MODE(msg)\
+	move(MODE_LINE,0);\
+	clrtoeol();\
+	attron(A_BOLD | A_STANDOUT );\
+	attron(COLOR_PAIR(5));\
+	printw(#msg);\
+	attroff(COLOR_PAIR(5));\
+	attroff(A_BOLD | A_STANDOUT );\
+
+
+
 
 #endif
 
+//void TUI_MODE(struct INPUT* model)
+//{
+	//mvprintw(MESSAGE_FIELD_START + msg_cursor,0,#msg);
+//}
 
 //Alternatively:
 //mvprintw(MESSAGE_FIELD_START + msg_cursor,0,"Set to safe mode (%d)\n", SAFE_MODE_INT);

@@ -68,6 +68,7 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case '0': // Safe mode
 				//printf("Set to safe mode (%x)\n", SAFE_MODE_INT);
 				TUI_PRINT_MESSAGE(Set to safe mode);
+				mvprintw(25,0, "MODE: ");
 				keyboardInput->mode = SAFE_MODE_INT;
 				break;
 			case '1': // Panic mode
@@ -82,7 +83,7 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 				break;
 			case '3': // Calibrate mode
 				//printf("Set to calibrate mode (%x)\n", CALIBRATE_MODE_INT);
-				TUI_PRINT_MESSAGE(SSet to calibrate mode);
+				TUI_PRINT_MESSAGE(Set to calibrate mode);
 				keyboardInput->mode = CALIBRATE_MODE_INT;
 				break;
 			case '4': // Yaw control mode
