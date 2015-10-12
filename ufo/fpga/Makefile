@@ -1,6 +1,6 @@
 CC=lcc-x32
 CFLAGS=-I$(X32INC)
-OBJS=main.o log.o fp_arithmetic.o fp_conversion.o
+OBJS=main.o log.o ../modules/fp/fp_arithmetic.o ../modules/fp/fp_conversion.o
 
 .PHONY: clean stubbed stubbedrun uploadrun test
 
