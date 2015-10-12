@@ -75,7 +75,7 @@ int 	zp(void)	{return sp - sp0;}
 int 	zq(void)	{return sq - sq0;}
 int 	zr(void)	{return sr - sr0;}
 
-void 	logging(void);
+void 	periodic(void);
 void 	isr_qr_link(void);
 void 	isr_rs232_rx(void);
 
@@ -110,7 +110,7 @@ int main()
 	/* prepare timer interrupt #1
 	*/
 	X32_timer_per = 1 * CLOCKS_PER_MS;
-	SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &logging);
+	SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &periodic);
 	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
 	ENABLE_INTERRUPT(INTERRUPT_TIMER1);
 
@@ -144,39 +144,6 @@ int main()
 			}
 
 		PRINT_STATE(250);
-
-/*
-		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
-		{
-			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
-			if(startTimestamp == 0) {
-				startTimestamp = timestamp;
-			}
-			counter++;
-			zr_v = zr();
-			
-		    //zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
-			//zr_old = zr;
-			//zr_filtered_old = zr_filtered;
-			
-			//#define DEBUG
-			#ifdef DEBUG
-			printf("zr is %d   yaw is %d    yap_P is %d \n", zr_v, yaw, yaw_P);
-			#endif
-
-			// I believe we should use the setpoint here
-
-			ae[0] = lift_setpoint_rpm - (yaw - zr_v) * yaw_P;
-			ae[2] = ae[0];
-			ae[1] = lift_setpoint_rpm + (yaw - zr_v) * yaw_P;
-			ae[3] = ae[1];
-			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
-		} else {
-			if(startTimestamp != 0) {
-				endTimestamp = timestamp;
-			}
-		}
-*/
 
 	}//end of main loop
 
@@ -238,12 +205,12 @@ void process_packet(void)  //we need to process packet and decide what should be
 			printf("\n %x \n", data1&0xE0);
 			if ((data1&0xE0) == 0xE0)
 			{
-				printf("\n Incrementing YAW P \n");
+				//printf("\n Incrementing YAW P \n");
 				if (yaw_P < 20)	yaw_P ++;
 			}
 			else if ((data1&0xE0) == 0xA0)
 			{
-				printf("\n Decrementing YAW P \n");
+				//printf("\n Decrementing YAW P \n");
 				if (yaw_P > 1)	yaw_P --;
 			}
 			
@@ -443,18 +410,14 @@ void calibrate(void)
 }
 
 /*------------------------------------------------------------------
- * Logging the QR values
+ * Periodic execution via Timer1 interrupt
  *------------------------------------------------------------------
 */
 
-void logging(void) {
+void periodic(void) {
 		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
-			//if(startTimestamp == 0) {
-			//	startTimestamp = timestamp;
-			//}
-			//counter++;
 			zr_v = zr();
 			
 		    //zr_filtered = (a0 * zr) + (a1 * zr_old) - (b1 * zr_filtered_old);
@@ -474,11 +437,7 @@ void logging(void) {
 			ae[3] = ae[1];
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		} 
-		/*else {
-			if(startTimestamp != 0) {
-				endTimestamp = timestamp;
-			}
-		}*/
+
 //#ifdef LOGGING
 	/*
     	if ((log_counter < LOG_LENGTH) && (mode == YAW_CONTROL_INT) ) { //or YAW CONTROL MODE
@@ -505,6 +464,8 @@ void logging(void) {
 
 /*------------------------------------------------------------------
  * isr_qr_link -- QR link rx interrupt handler
+ * This function is executed at 1270Hz
+ * Logging can be done here as well
  *------------------------------------------------------------------
  */
 void isr_qr_link(void) //1270 Hz
