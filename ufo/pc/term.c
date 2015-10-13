@@ -130,6 +130,7 @@ int main(int argc, char **argv)
 	int cursor;
 	int PRINT_MODE = STATUS;
 	initscr();
+	int ae0, ae1, ae2, ae3;
 
 	term_puts("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
 	getch();
@@ -217,6 +218,8 @@ int main(int argc, char **argv)
 	attroff(COLOR_PAIR(1));
 	attroff(A_BOLD | A_STANDOUT ); 
 
+	//TUI_engines_init();
+
 	move(5,0);
 
 	/* send & receive
@@ -231,26 +234,44 @@ int main(int argc, char **argv)
 					show_pkt(&pkt);
 				}
 			}
-				switch(inputModel.mode) {
-					case SAFE_MODE_INT:
-						TUI_PRINT_MODE(SAFE MODE);
-						break;
-					case PANIC_MODE_INT:
-						TUI_PRINT_MODE(PANIC MODE);
-						break;
-					case MANUAL_MODE_INT:
-						TUI_PRINT_MODE(MANUAL MODE);
-						break;
-					case YAW_CONTROL_INT:
-						TUI_PRINT_MODE(YAW CONTROL MODE);
-						break;
-					case CALIBRATE_MODE_INT:
-						TUI_PRINT_MODE(CALIBRATING);
-						break;
-					case FULL_CONTROL_INT:
-						TUI_PRINT_MODE(FULL CONTROL MODE);
-						break;			
+			//Print Current MODE
+			switch(inputModel.mode) {
+				case SAFE_MODE_INT:
+					TUI_PRINT_MODE(SAFE MODE);
+					break;
+				case PANIC_MODE_INT:
+					TUI_PRINT_MODE(PANIC MODE);
+					break;
+				case MANUAL_MODE_INT:
+					TUI_PRINT_MODE(MANUAL MODE);
+					//proof of concept
+					//TODO: better parse real values though
+					/*ae0 = ae1 = ae2 = ae3 = 65*inputModel.lift;
+					
+					ae1 = ae1 + 15 * inputModel.roll;
+					ae3 = ae3 - 15 * inputModel.roll;
+					
+					ae0 = ae0 + 15 * inputModel.pitch;
+					ae2 = ae2 - 15 * inputModel.pitch;
+
+					ae0 = ae0 + 25 * inputModel.yaw;
+					ae1 = ae1 - 25 * inputModel.yaw;
+					ae2 = ae2 + 25 * inputModel.yaw;
+					ae3 = ae3 - 25 * inputModel.yaw;
+
+					TUI_engines(ae0, ae1, ae2, ae3);*/
+					break;
+				case YAW_CONTROL_INT:
+					TUI_PRINT_MODE(YAW CONTROL MODE);
+					break;
+				case CALIBRATE_MODE_INT:
+					TUI_PRINT_MODE(CALIBRATING);
+					break;
+				case FULL_CONTROL_INT:
+					TUI_PRINT_MODE(FULL CONTROL MODE);
+					break;			
 			}
+
 		
 			//check special input
 			//without this it doesn't stop, although it should
@@ -311,6 +332,7 @@ int main(int argc, char **argv)
 			if (c=='$') //msg from QR
 			{
 				PRINT_MODE = MESSAGE;
+				c = rs232_getchar_nb();
 			}
 
 			switch(PRINT_MODE) {

@@ -16,7 +16,7 @@ clean:
 	rm -f term $(OBJS) $(OBJS:.o=.d)
 
 term: term.c protocol.c rs232.c consoleio.c joystickio.c keyboardio.c input.c protocol.h tui.h
-	gcc -Wall term.c protocol.c rs232.c consoleio.c joystickio.c keyboardio.c input.c -o term -lrt -lncurses
+	gcc -Wall term.c protocol.c rs232.c consoleio.c joystickio.c keyboardio.c input.c tui.c -o term -lrt -lncurses
 
 %.o : %.c
 	@$(COMPILE.c) -M -o $@ $< > $*.d

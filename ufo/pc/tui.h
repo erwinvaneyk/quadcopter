@@ -14,6 +14,8 @@ extern int msg_cursor;
 #define MESSAGE_FIELD_START 8
 #define MESSAGE_FIELD_SIZE 15
 #define MODE_LINE 25
+#define BASE_Y 15
+#define BASE_X 65
 
 #define CURRENT_MSG_CURSOR MESSAGE_FIELD_START + msg_cursor
 
@@ -45,15 +47,11 @@ extern int msg_cursor;
 	attroff(COLOR_PAIR(5));\
 
 
-
+void TUI_engines(int ae0, int ae1, int ae2, int ae3);
+void TUI_engines_init(void);
 
 
 #endif
-
-//void TUI_MODE(struct INPUT* model)
-//{
-	//mvprintw(MESSAGE_FIELD_START + msg_cursor,0,#msg);
-//}
 
 //Alternatively:
 //mvprintw(MESSAGE_FIELD_START + msg_cursor,0,"Set to safe mode (%d)\n", SAFE_MODE_INT);
