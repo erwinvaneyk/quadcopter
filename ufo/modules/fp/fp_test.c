@@ -94,6 +94,16 @@ int main(int argc, char **argv) {
 	printf("0 -> %x\n", convertFloatToFP(0));
 	printf("0.00410-> %x\n", convertFloatToFP(0.00410));
 	printf("0 -> %x\n", convertFloatToFP(0));
+	printf("0.00390625-> %x\n", convertFloatToFP(0.00390625)); //C1
+	printf("0 -> %x\n", convertFloatToFP(0));
+	printf("0.000001-> %x\n", convertFloatToFP(0.0001)); //C2
+	printf("0 -> %x\n", convertFloatToFP(0));
+	printf("256-> %x\n", convertFloatToFP(256)); //C2
+	printf("0 -> %x\n", convertFloatToFP(0));
+	printf("256-> %x\n", convertFloatToFP(244)); //C2
+	printf("0 -> %x\n", convertFloatToFP(0));
+	printf("1000-> %x\n", convertFloatToFP(10000)); //C2
+	printf("0 -> %x\n", convertFloatToFP(0));
 
 	// Tests
 	printf("Running tests...\n");
