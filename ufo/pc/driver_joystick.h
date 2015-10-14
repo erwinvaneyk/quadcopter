@@ -124,9 +124,6 @@ struct JS_DATA_SAVE_TYPE {
 	struct JS_DATA_TYPE JS_SAVE;
 	struct JS_DATA_TYPE JS_CORR;
 };
+#define BUTTONS_COUNT 12
 
 #endif /* _LINUX_JOYSTICK_H */
-
-#define JS_DEV	"/dev/input/js2"
-
-#define BUTTONS_COUNT 12
