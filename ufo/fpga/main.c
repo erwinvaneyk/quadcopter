@@ -50,6 +50,7 @@ int yaw_P = 1;
 int yaw;
 int calibrated = FALSE;
 int YAW_CONTROL_LOOP = FALSE;
+int MAX_PERSENTAGE = 15;
 
 //packet processing global variables
 uint8_t modecommand;
@@ -477,22 +478,22 @@ void isr_qr_link(void) //1270 Hz
 	}
 
 	//Check for rapid changes in egine values
-	If (ae[0] > (X32_QR_a0 + (X32_QR_a0/15))
-		ae[0] = X32_QR_a0+(X32_QR_a0/15_);
-	else if (ae[0] < (X32_QR_a0 - (X32_QR_a0/15))	
-		ae[0] = X32_QR_a0+(X32_QR_a0/15_);
-	If (ae[1] > (X32_QR_a1 + (X32_QR_a1/15))
-		ae[1] = X32_QR_a1+(X32_QR_a1/15_);
-	else if (ae[1] < (X32_QR_a1 - (X32_QR_a1/15))	
-		ae[1] = X32_QR_a1+(X32_QR_a1/15_);	
-	If (ae[2] > (X32_QR_a2 + (X32_QR_a2/15))
-		ae[2] = X32_QR_a2+(X32_QR_a2/15_);
-	else if (ae[2] < (X32_QR_a2 - (X32_QR_a2/15))	
-		ae2] = X32_QR_a2+(X32_QR_a2/15_);
-	If (ae[3] > (X32_QR_a1 + (X32_QR_a1/15))
-		ae[3] = X32_QR_a1+(X32_QR_a1/15_);
-	else if (ae[3] < (X32_QR_a3 - (X32_QR_a3/15))	
-		ae[3] = X32_QR_a3+(X32_QR_a3/15_);		
+	If (ae[0] > (X32_QR_a0 + (X32_QR_a0/MAX_PERSENTAGE))
+		ae[0] = X32_QR_a0+(X32_QR_a0/MAX_PERSENTAGE);
+	else if (ae[0] < (X32_QR_a0 - (X32_QR_a0/MAX_PERSENTAGE))	
+		ae[0] = X32_QR_a0+(X32_QR_a0/MAX_PERSENTAGE);
+	If (ae[1] > (X32_QR_a1 + (X32_QR_a1/MAX_PERSENTAGE))
+		ae[1] = X32_QR_a1+(X32_QR_a1/MAX_PERSENTAGE);
+	else if (ae[1] < (X32_QR_a1 - (X32_QR_a1/MAX_PERSENTAGE))	
+		ae[1] = X32_QR_a1+(X32_QR_a1/MAX_PERSENTAGE);	
+	If (ae[2] > (X32_QR_a2 + (X32_QR_a2/MAX_PERSENTAGE))
+		ae[2] = X32_QR_a2+(X32_QR_a2/MAX_PERSENTAGE);
+	else if (ae[2] < (X32_QR_a2 - (X32_QR_a2/MAX_PERSENTAGE))	
+		ae2] = X32_QR_a2+(X32_QR_a2/MAX_PERSENTAGE);
+	If (ae[3] > (X32_QR_a1 + (X32_QR_a1/MAX_PERSENTAGE))
+		ae[3] = X32_QR_a1+(X32_QR_a1/MAX_PERSENTAGE);
+	else if (ae[3] < (X32_QR_a3 - (X32_QR_a3/MAX_PERSENTAGE))	
+		ae[3] = X32_QR_a3+(X32_QR_a3/MAX_PERSENTAGE);		
 	/* Send actuator values
 	 * (Need to supply a continous stream, otherwise
 	 * QR will go to safe mode, so just send every ms)
