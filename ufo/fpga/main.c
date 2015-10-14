@@ -166,6 +166,7 @@ int main()
 	/* initialize some other stuff
 	*/
 	X32_leds = 0;
+	initiliaze_kalman_filter();
 
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
 
@@ -488,19 +489,21 @@ void periodic(void) {
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 			
+            kalman_filter();
+
 			full_yaw = (yaw - zr_v) * yaw_P;
 			
-			full_pitch = (full_p1*());
+			full_pitch = (full_p1*(pitch-theta_kalman) - (full_p2*q_kalman);
 
-			full_roll = (full_p1*());
+			full_roll = (full_p1*(roll-phi_kalman) - (full_p2*p_kalman);
 
-			//sp_old = zp;
-			//p_bias_old = p_bias;
-			//phi_kalman_old = phi_kalman;
+			sp_old = zp;
+			p_bias_old = p_bias;
+			phi_kalman_old = phi_kalman;
 
-			//sq_old = zq;
-			//q_bias_old = q_bias;
-			//theta_kalman_old = theta_kalman;
+			sq_old = zq;
+			q_bias_old = q_bias;
+			theta_kalman_old = theta_kalman;
 
 			ae[0] = lift_setpoint_rpm - (full_pitch + full_yaw);
 			ae[2] = lift_setpoint_rpm - (full_pitch + full_yaw);
@@ -515,7 +518,7 @@ void periodic(void) {
 
 }
 
-void initiliaze_kalman_filter(void)
+void initiliaze_kalman_filter()
 {
 	
    p_kalman = 0;
@@ -535,7 +538,7 @@ void kalman_filter()
 {
 	
    p_kalman = sp_old - p_bias_old;
-   phi_kalman = phi_kalman_old + p_kalman * P2PHI;
+   phi_kalman = phi_kalman_old + (p_kalman * P2PHI);
    phi_error = phi_kalman - zay;
    phi_kalman = phi_kalman - (phi_error / C1);
    p_bias = p_bias +((phi_error/p2phi) / C2);
