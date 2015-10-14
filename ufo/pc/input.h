@@ -19,7 +19,10 @@ struct INPUT {
 
 struct SPECIAL_INPUT {
 	int yaw_p; //increment or decrement
-	int current_yaw_p; //keep track of current P value
+	int current_yaw_p; //keep track of current P value //we dont need this really
+	int full_p1;
+	int full_p2;
+
 	bool updated; // updated?
 };
 

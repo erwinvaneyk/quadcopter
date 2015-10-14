@@ -116,23 +116,27 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 				break;
 			case 'i': // p1 control pitch/roll
 				//printf("Not implemented yet!\n");
-				TUI_PRINT_MESSAGE(Not implemented yet!);
-				updated = false;
+				TUI_PRINT_MESSAGE(Incremented P1 value for FULL CONTROL!);
+				p_input->full_p1 = 1;
+				p_input->updated = true;
 				break;
 			case 'k': // p1 control pitch/roll
 				//printf("Not implemented yet!\n");
-				TUI_PRINT_MESSAGE(Not implemented yet!);
-				updated = false;
+				TUI_PRINT_MESSAGE(Decremented P1 value for FULL CONTROL!);
+				p_input->full_p1 = -1;
+				p_input->updated = true;
 				break;
 			case 'o': // p2 control pitch/roll
 				//printf("Not implemented yet!\n");
-				TUI_PRINT_MESSAGE(Not implemented yet!);
-				updated = false;
+				TUI_PRINT_MESSAGE(Incremented P2 value for FULL CONTROL!);
+				p_input->full_p2 = 1;
+				p_input->updated = true;
 				break;
 			case 'l': // p2 control pitch/roll
 				//printf("Not implemented yet!\n");
-				TUI_PRINT_MESSAGE(Not implemented yet!);
-				updated = false;
+				TUI_PRINT_MESSAGE(Decremented P2 value for FULL CONTROL!);
+				p_input->full_p2 = -1;
+				p_input->updated = true;
 				break;
 
 			// Additional controls
