@@ -103,7 +103,7 @@ int main()
 	/* prepare QR rx interrupt handler
 	*/
 	SET_INTERRUPT_VECTOR(INTERRUPT_XUFO, &isr_qr_link);
-	SET_INTERRUPT_PRIORITY(INTERRUPT_XUFO, 21);
+	SET_INTERRUPT_PRIORITY(INTERRUPT_XUFO, 24);
 	isr_qr_counter = isr_qr_time = 0;
 	ae[0] = ae[1] = ae[2] = ae[3] = 0;
 	ENABLE_INTERRUPT(INTERRUPT_XUFO);
@@ -112,7 +112,7 @@ int main()
 	*/
 	X32_timer_per = 1 * CLOCKS_PER_MS;
 	SET_INTERRUPT_VECTOR(INTERRUPT_TIMER1, &periodic);
-	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 5);
+	SET_INTERRUPT_PRIORITY(INTERRUPT_TIMER1, 22);
 	ENABLE_INTERRUPT(INTERRUPT_TIMER1);
 
 	/* prepare rs232 rx interrupt and getchar handler
