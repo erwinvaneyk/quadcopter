@@ -1,6 +1,5 @@
 /*------------------------------------------------------------------
  *  QR
- *
  *------------------------------------------------------------------
  */
 
@@ -74,6 +73,7 @@ int startTimestamp, endTimestamp, counter;
 
 void 	delay_ms(int ms);
 void 	delay_us(int us);
+void	epileptic_delay_ms(int ms);
 void 	toggle_led(int i);
 void 	print_state(void);
 
@@ -149,7 +149,7 @@ int main()
 
 		// Toogle alive led
 	 	if(X32_ms_clock - timestamp_alive_led_toggle > 1000) {
-			toggle_led(0);
+			toggle_led(LED_ALIVE);
 			timestamp_alive_led_toggle = X32_ms_clock;
 		}  
 
@@ -322,11 +322,11 @@ void process_packet(void)  //we need to process packet and decide what should be
 			delay_ms(1000);
 			calibrate();
 			printf("$QR calibrated...\n");
-			toggle_led(3);
+			toggle_led(LED_OTHER);
 			delay_ms(500);
-			toggle_led(3);
+			toggle_led(LED_OTHER);
 			delay_ms(500);
-			toggle_led(3);
+			toggle_led(LED_OTHER);
 
 			calibrated = TRUE;
 		}
@@ -482,7 +482,7 @@ void isr_qr_link(void) //1270 Hz
 	 */
 	isr_qr_counter++;
 	if (isr_qr_counter % 500 == 0) {
-		toggle_led(2);
+		toggle_led(LED_QR);
 	}	
 
 	/* Clip engine values to be positive and 10 bits.
@@ -536,26 +536,16 @@ void isr_qr_link(void) //1270 Hz
  * isr_rs232_rx -- rs232 rx interrupt handler
  *------------------------------------------------------------------
  */
-void isr_rs232_rx(void)
-{
-	int	c;
-
-	/* signal interrupt
-	 */
-	toggle_led(1);
+void isr_rs232_rx(void) {
+	toggle_led(LED_RS232);
 
 	/* may have received > 1 char before IRQ is serviced so loop
 	 */
 	while (X32_rs232_char) {
 		fifo[iptr++] = X32_rs232_data;
-#ifdef DEBUG
-printf("ISR uart: iptr: %d", iptr-1);		
-printf(" => %x\n", fifo[iptr-1]);
-#endif
 		if (iptr >= FIFOSIZE)
 			iptr = 0;
 	}
-
 }
 
 
@@ -564,11 +554,11 @@ printf(" => %x\n", fifo[iptr-1]);
  *------------------------------------------------------------------
  */
 
-void move_optr()
-{	
+void move_optr() {	
 	if (optr == FIFOSIZE-1)
 		optr = 0;
-	else optr++;
+	else 
+		optr++;
 }
 
 int get_packet(void)
@@ -597,24 +587,20 @@ int get_packet(void)
 			checker = modecommand ^ data1 ^ data2 ^ data3 ^ data4 ^ checksum;
 			//hack, because we shouldn't be getting this error. it somehow gets out of sync
 			if (iptr != optr) return -1;
-			//#define DEBUG
+
 			#ifdef DEBUG
-			printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
-			printf("mode is: %x \n", modecommand);
-			printf("LIFT is: %x \n", data1);
-			printf("YAW is: %x \n", data2);
-			printf("PITCH is: %x \n", data3);
-			printf("ROLL is: %x \n", data4);
-			printf("Checksum is: %x \n", checksum);
-			printf("%s\n", checker==0 ? "PASS" : "FAIL");
+				printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
+				printf("mode is: %x \n", modecommand);
+				printf("LIFT is: %x \n", data1);
+				printf("YAW is: %x \n", data2);
+				printf("PITCH is: %x \n", data3);
+				printf("ROLL is: %x \n", data4);
+				printf("Checksum is: %x \n", checksum);
+				printf("%s\n", checker==0 ? "PASS" : "FAIL");
 			#endif
 			//check checksum
-			if ( (int)checker != 0)
-			{
-				#ifdef DEBUG
-				printf("Invalid packet recieved! Discarding!\n");
-				#endif
-			 return -1; //ERROR, invalid packet
+			if ( (int)checker != 0) {
+				return -1; //ERROR, invalid packet
 			}
 			else if (TERM_CONNECTED == 0); {  //a check for communication safety mechanism
 				TERM_CONNECTED = 1;  //maybe we can move this somewhere else
@@ -626,7 +612,7 @@ int get_packet(void)
 		optr = iptr = 0;
 		return -1;
 	}
-return 0;
+	return 0;
 }
 
 
@@ -645,8 +631,10 @@ void epileptic_delay_ms(int ms)
 {
 	int time = X32_ms_clock;
 	while(X32_ms_clock - time < ms) {
-		if(X32_ms_clock % 10 == 0)
-		toggle_led(0);
+		if(X32_ms_clock % 20 == 0) {
+			toggle_led(LED_OTHER);
+			toggle_led(LED_ALIVE);
+		}
 	}
 }
 
@@ -676,31 +664,9 @@ void toggle_led(int i)
  */
 void print_state(void) 
 {
-	int i;
-	//char text[100] , a;
 	printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
-	//printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
-		//sax,say,say,sp,sq,sr,isr_qr_time, inst);
-
-	/*printf("%3d %3d %3d %3d %3d %3d | %d | (%3d, %d)\r\n",
-		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, isr_qr_time, inst);
-		*/
-
 	printf("%3d %3d %3d %3d %3d %3d | %d %d %d %d \r\n",
 		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, full_p1, full_p2, sensitivity);
-
-    //wireless transmission
-    /*  
-	sprintf(text, "%d %d %d %d \r\n",ae[0],ae[1],ae[2],ae[3]);
-	i = 0;
-	while( text[i] != 0) {
-		delay_ms(1);
-		// if (X32_switches == 0x03)
-		if (X32_wireless_stat & 0x01 == 0x01)
-			X32_wireless_data = text[i];
-		i++;
-	}
-    */
 }
 
 int within_bounds(int x, int lower_limit, int upper_limit) {

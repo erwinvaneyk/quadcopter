@@ -33,6 +33,12 @@
 #define X32_button					peripherals[PERIPHERAL_BUTTONS]
 #define X32_switches				peripherals[PERIPHERAL_SWITCHES]
 
+// LEDs
+ #define LED_ALIVE	0
+ #define LED_RS232	1
+ #define LED_QR		2
+ #define LED_OTHER	3
+
  /*
  * more shorthands
  */
