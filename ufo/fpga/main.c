@@ -77,7 +77,11 @@ int full_pitch = 0;
 int full_roll = 0;
 int pitch;
 int roll;
-
+int p_kalman = 0;
+int phi_kalman = 0;
+int phi_error = 0;
+int phi_kalman = 0;
+int p_bias = 0 ;
 
 
 //packet processing global variables
