@@ -15,7 +15,6 @@
 uint8_t	fifo[FIFOSIZE]; 
 int	iptr = 0; 
 int optr = 0;
-int TERM_CONNECTED = 0; //communication safety mechanism
 
 // 
 struct LOG log[LOG_LENGTH];
@@ -154,22 +153,21 @@ int main()
 		}  
 
 		// we have lost communication to the qr -> panic
-		if ((X32_ms_clock - timestamp_last_pkt) > THRESHOLD && TERM_CONNECTED) {	
+		if ((X32_ms_clock - timestamp_last_pkt) > THRESHOLD && timestamp_alive_led_toggle != 0) {	
 			panic();
-			timestamp_last_pkt = X32_ms_clock;
-			TERM_CONNECTED = 0;
+			timestamp_last_pkt = 0;
 		}
 		PRINT_STATE(250);
 
 	}
+	printf("Exit\r\n");
+    DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 
 	// If for some reason the qr is not in safe/panic mode -> panic 
 	if(mode != PANIC_MODE_INT || mode != SAFE_MODE_INT) {
 		panic();
 	} 
 
-	printf("Exit\r\n");
-    DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	return 0;
 }
 
@@ -602,9 +600,6 @@ int get_packet(void)
 			if ( (int)checker != 0) {
 				return -1; //ERROR, invalid packet
 			}
-			else if (TERM_CONNECTED == 0); {  //a check for communication safety mechanism
-				TERM_CONNECTED = 1;  //maybe we can move this somewhere else
-			}						//such that we do this check only once
 		}
 	else
 	{
