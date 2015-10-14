@@ -1,6 +1,6 @@
 CC=lcc-x32
 CFLAGS=-I$(X32INC)
-OBJS=main.o log.o
+OBJS=main.o ../modules/log/log.o
 
 .PHONY: clean stubbed stubbedrun uploadrun test
 

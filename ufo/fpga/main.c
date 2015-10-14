@@ -8,7 +8,7 @@
 #include "assert.h"
 #include <stdint.h>
 #include <stdlib.h>
-#include "log.h"
+#include "../modules/log/log.h"
 #include "defines.h"
 #include "../modules/pkt/pkt.h"
 
@@ -17,7 +17,6 @@ int	iptr = 0;
 int optr = 0;
 
 // 
-struct LOG log[LOG_LENGTH];
 char c;
 int	ALIVE = 1;
 int mode = SAFE_MODE_INT;
@@ -30,10 +29,6 @@ int	isr_qr_counter;
 int	isr_qr_time;
 int	button;
 int	inst;
-
-// Logging
-int log_sent = 0;
-int log_counter = 0;
 
 int lift_setpoint = 0;
 int lift_setpoint_rpm = 0;
@@ -320,9 +315,12 @@ void process_packet(void)  //we need to process packet and decide what should be
 	 		}
 		}
 
-		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT) && !log_sent ) 
+		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT)) 
 		{
-			logs_send();
+			#ifdef LOGGING
+				logs_send();
+			#endif
+			modecommand = SAFE_MODE;
 		}
 		else if ( (modecommand == CALIBRATE_MODE) && (mode == SAFE_MODE_INT) )
 		{
@@ -345,35 +343,6 @@ void process_packet(void)  //we need to process packet and decide what should be
 			sensitivity = within_bounds(data4,1,20);
 		}
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
-}
-
-void logs_send() {
-	int i = 0;
-	#ifdef LOGGING
-		printf("********SENDING LOG DATA!**********\n");
-		for (i=0; i < log_counter; i++)
-		{
-			printf("%d ", log[i].timestamp );
-			printf("%d ", log[i].ae[0] );
-			printf("%d ", log[i].ae[1] );
-			printf("%d ", log[i].ae[2] );
-			printf("%d ", log[i].ae[3] );
-			printf("%d ", log[i].s[0] );
-			printf("%d ", log[i].s[1] );
-			printf("%d ", log[i].s[2] );
-			printf("%d ", log[i].s[3] );
-			printf("%d ", log[i].s[4] );
-			printf("%d ", log[i].s[5] );
-			printf("%d ", log[i].lift_point );
-			printf("\n");
-		}
-		printf("\n");
-		printf("$"); //signal end of transmission
-		log_sent = 1;
-	#endif
-	#ifndef LOGGING
-		printf("$Failed to send logs, because logging was not enabled on quadcopter.\n");
-	#endif
 }
 
 void panic() {
@@ -521,20 +490,8 @@ void isr_qr_link(void) //1270 Hz
 	* Logging
 	*/
 	#ifdef LOGGING
-		if ((log_counter < LOG_LENGTH) && (mode == YAW_CONTROL_INT) ) {
-			log[log_counter].timestamp = X32_ms_clock; 
-			log[log_counter].ae[0] = (uint16_t) ae[0];
-			log[log_counter].ae[1] = (uint16_t) ae[1];
-			log[log_counter].ae[2] = (uint16_t) ae[2];
-			log[log_counter].ae[3] = (uint16_t) ae[3];
-			log[log_counter].s[0] = sax;
-			log[log_counter].s[1] = say;
-			log[log_counter].s[2] = saz;
-			log[log_counter].s[3] = sp;
-			log[log_counter].s[4] = sq;
-			log[log_counter].s[5] = sr;
-			log[log_counter].lift_point = lift_setpoint_rpm;
-			log_counter++;
+		if(mode == YAW_CONTROL_INT) {
+			addLog(X32_ms_clock, ae, sax, say, saz, sp, sq, sr, lift_setpoint_rpm);
 		}
 	#endif
 }

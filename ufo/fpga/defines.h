@@ -1,7 +1,7 @@
 #define LOGGING
 #define TRUE 1
 #define FALSE 0
-#define LOG_LENGTH 10000	//=10 seconds of logging in Manual Mode at 1000Hz
+#define NULL 0
 #define THRESHOLD 2000		//(ms) Communicaton safety mechanism threshold value
 
 /*

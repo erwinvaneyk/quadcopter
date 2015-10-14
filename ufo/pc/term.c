@@ -139,6 +139,32 @@ void processInput() {
 }
 
 
+// Note: to many dependencies on other variables/functions to extract to module
+void saveLogsToFile() {
+	printf("Saving to a file...\n");
+	c=' ';
+	f = fopen("logs/log", "w");
+	if (f == NULL)
+	{
+		printf("Error opening file!\n");
+		exit(1); //change this
+	}
+	//artificailly sent a packet
+	input_to_pkt(&inputModel, &pkt, &p_input);
+	inputModel.updated = false;
+	rs232_put_pkt(&pkt);
+	while(c!='$')
+	{
+		if ((c = rs232_getchar_nb()) != -1)
+		{
+			fprintf(f, "%c", c);
+		}
+	}
+	fclose(f);
+	printf("LOG saved to file.\n");
+}
+
+
 /*----------------------------------------------------------------
  * main -- execute terminal
  *----------------------------------------------------------------
@@ -255,30 +281,9 @@ int main(int argc, char **argv)
 			//if we are logging save to a file
 			if (inputModel.mode == SEND_TELEMETRY_INT)
 			{
-				printf("Saving to a file...\n");
-				if (link_status > -1)
-				{
-					c=' ';
-					f = fopen("logs/log", "w");
-					if (f == NULL)
-					{
-						printf("Error opening file!\n");
-						exit(1); //change this
-					}
-					//artificailly sent a packet
-					input_to_pkt(&inputModel, &pkt, &p_input);
-					inputModel.updated = false;
-					rs232_put_pkt(&pkt);
-					while(c!='$')
-					{
-						if ((c = rs232_getchar_nb()) != -1)
-						{
-							fprintf(f, "%c", c);
-						}
-					}
-					fclose(f);
+				if(link_status > -1) {
+					saveLogsToFile();
 				}
-				printf("LOG saved to file.\n");
 				inputModel.mode = SAFE_MODE_INT;
 			}
 		}
