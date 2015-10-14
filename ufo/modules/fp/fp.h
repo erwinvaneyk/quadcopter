@@ -3,8 +3,6 @@
 #ifndef FP_H_
 #define FP_H_
 
-#include <math.h>
-
 /* Hi there! Looking for floating-point support on your fpga?
  * 
  * Suppose f is your floating point value. You will need to convert
@@ -27,6 +25,6 @@
 typedef int float_x32;
 
 #define FRACTION_BIT_COUNT 	14 // 14 bit precision gives us 4 digit precision
-#define FRACTION_MAX_VALUE  pow(2, FRACTION_BIT_COUNT)
+#define FRACTION_MAX_VALUE  16384 // 2^FRACTION_BIT_COUNT
 
 #endif

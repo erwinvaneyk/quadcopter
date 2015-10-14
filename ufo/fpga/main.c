@@ -447,8 +447,9 @@ void periodic(void) {
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 			zr_v = convertIntToFP(zr());
-			zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
-			zr_old = zr;
+		    	zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
+			zr_old = zr_v;
+
 			zr_filtered = convertFPToInt(zr_filtered_old);
 
 			ae[0] = lift_setpoint_rpm + (yaw - zr_filtered) * yaw_p;
