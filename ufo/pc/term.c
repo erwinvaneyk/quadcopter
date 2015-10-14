@@ -27,18 +27,23 @@
 #include <stdbool.h>
 #include <signal.h>
 
+#include <ncurses.h>
+
+
 #include "rs232.h"
 #include "protocol.h"
 #include "consoleio.h" 
 #include "joystickio.h"
 #include "input.h"
 #include "keyboardio.h"
+#include "tui.h"
 
 int serial_device = 1;
 int fd;
 char c;
 bool DEBUG;
 bool ENABLE_JOYSTICK;
+int msg_cursor =0;
 
 FILE *f;
 
@@ -122,9 +127,14 @@ int main(int argc, char **argv)
 	struct PACKET pkt;
 	int bad_input = 0;
 	int link_status;
+	int cursor;
+	int PRINT_MODE = STATUS;
+	initscr();
+	//int ae0, ae1, ae2, ae3; //needed for engine TUI
 
-	term_puts("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
-	
+	printw("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
+	getch();
+	refresh();
 	/* 
 	 * Check input 
 	 */
@@ -133,9 +143,11 @@ int main(int argc, char **argv)
 	if (bad_input == -1) 
 	{
 		printHelp();
+		getch();
+		refresh();
 		return -1;
 	}
-
+	
 	// fd is for the joystick
 	if (ENABLE_JOYSTICK)
 	{ 
@@ -151,10 +163,10 @@ int main(int argc, char **argv)
 	term_initio();
 	link_status = rs232_open(serial_device);
 	if(link_status == -1) {
-		term_puts("FPGA not detected! Connect it to communicate.\n");
+		printw("FPGA not detected! Connect it to communicate.\n");
 	}
 
-	term_puts("Type ^C to exit\n");
+	printw("Type ^C to exit\n");
 
 	/* discard any incoming text
 	 */
@@ -170,6 +182,10 @@ int main(int argc, char **argv)
 	p_input.yaw_p = 0;
 	p_input.updated = false;
 
+	getch();
+	refresh();
+
+	TUI_frame_init(); //Initialize the TUI
 
 	/* send & receive
 	 */
@@ -183,7 +199,45 @@ int main(int argc, char **argv)
 					show_pkt(&pkt);
 				}
 			}
+			//Print Current MODE
+			switch(inputModel.mode) {
+				case SAFE_MODE_INT:
+					TUI_PRINT_MODE(SAFE MODE);
+					break;
+				case PANIC_MODE_INT:
+					TUI_PRINT_MODE(PANIC MODE);
+					break;
+				case MANUAL_MODE_INT:
+					TUI_PRINT_MODE(MANUAL MODE);
+					//proof of concept
+					//TODO: better parse real values though
+					/*ae0 = ae1 = ae2 = ae3 = 65*inputModel.lift;
+					
+					ae1 = ae1 + 15 * inputModel.roll;
+					ae3 = ae3 - 15 * inputModel.roll;
+					
+					ae0 = ae0 + 15 * inputModel.pitch;
+					ae2 = ae2 - 15 * inputModel.pitch;
 
+					ae0 = ae0 + 25 * inputModel.yaw;
+					ae1 = ae1 - 25 * inputModel.yaw;
+					ae2 = ae2 + 25 * inputModel.yaw;
+					ae3 = ae3 - 25 * inputModel.yaw;
+
+					TUI_engines(ae0, ae1, ae2, ae3);*/
+					break;
+				case YAW_CONTROL_INT:
+					TUI_PRINT_MODE(YAW CONTROL MODE);
+					break;
+				case CALIBRATE_MODE_INT:
+					TUI_PRINT_MODE(CALIBRATING);
+					break;
+				case FULL_CONTROL_INT:
+					TUI_PRINT_MODE(FULL CONTROL MODE);
+					break;			
+			}
+
+		
 			//check special input
 			//without this it doesn't stop, although it should
 			//this check can be moved to input_to_pkt // or remove altogether #redundant
@@ -229,19 +283,56 @@ int main(int argc, char **argv)
 			/////
 			input_to_pkt(&inputModel, &pkt, &p_input);
 			inputModel.updated = false;
-			//show_input(&inputModel);
-			//show_pkt(&pkt);
+			show_input(&inputModel);
+			show_pkt(&pkt);
 		}
 		
 		// Send the packet periodically
 		gettimeofday(&timer1, NULL);
 		periodic_send (&timer1, &timer2, &pkt, link_status);
 
-		if (link_status > -1 && (c = rs232_getchar_nb()) != -1) 
-			term_putchar(c);
+		//printing to screen
+		if (link_status > -1 && (c = rs232_getchar_nb()) != -1)
+		{
+			if (c=='$') //msg from QR
+			{
+				PRINT_MODE = MESSAGE;
+				c = rs232_getchar_nb();
+			}
+
+			switch(PRINT_MODE) {
+				case STATUS:
+					attron(COLOR_PAIR(3));
+					attron(A_BOLD | A_STANDOUT );
+					mvaddch(5,cursor++,c);
+					attroff(A_BOLD | A_STANDOUT );
+					attroff(COLOR_PAIR(3));
+					if (c=='\n') 
+					{
+						cursor = 0;
+						refresh();
+					} 
+					break;
+				case MESSAGE:
+					attron(COLOR_PAIR(4));
+					//attron(A_BOLD | A_STANDOUT );
+					mvaddch(CURRENT_MSG_CURSOR,cursor++,c);
+					//attroff(A_BOLD | A_STANDOUT );
+					attroff(COLOR_PAIR(4));
+					if (c=='\n') 
+					{
+						TUI_MOVE_CURSOR;
+						cursor = 0;
+						refresh();
+						PRINT_MODE = STATUS;
+					} 
+					break;
+			}			
+		}
+			//term_putchar(c);
 	} //end of inf. loop
 
-
+		endwin();
 		term_exitio();
 		if(link_status > -1) {
 			rs232_close();

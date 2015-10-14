@@ -5,10 +5,11 @@
  *------------------------------------------------------------
  */
 
- #include "protocol.h"
- #include <stdio.h>
- #include "rs232.h"
- #include <stdlib.h>
+#include "protocol.h"
+#include <stdio.h>
+#include "rs232.h"
+#include <stdlib.h>
+#include "tui.h"
 
 void add_checksum(struct PACKET* packet) {
 	packet->checksum = packet->modecommand ^ (packet->data & 0x000000FF) ^ (packet->data >> 8 & 0x000000FF) ^ (packet->data >> 16 & 0x000000FF) ^ (packet->data >> 24 & 0x000000FF);
@@ -82,11 +83,27 @@ void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet, struct SPECIA
 //DEBUG purpose
 void show_pkt(struct PACKET* packet)
 {
-	printf("PACKET: {\n");
+	/*printf("PACKET: {\n");
 	printf("	HEADER: %x\n", packet->header);
 	printf("	MODECOMMAND: %x\n", packet->modecommand);
 	printf("	DATA: %x\n", packet->data);
-	printf("	CHECKSUM: %x\n}\n", packet->checksum);
+	printf("	CHECKSUM: %x\n}\n", packet->checksum);*/
+
+	attron(COLOR_PAIR(6));
+	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt: PACKET: {\n");
+	TUI_MOVE_CURSOR;
+	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt:   HEADER: %x\n", packet->header);
+	TUI_MOVE_CURSOR;
+	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt:   MODECOMMAND: %x\n", packet->modecommand);
+	TUI_MOVE_CURSOR;
+	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt:   DATA: %x\n", packet->data);
+	TUI_MOVE_CURSOR;
+	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt:   CHECKSUM: %x }\n", packet->checksum);
+	TUI_MOVE_CURSOR;
+	attroff(COLOR_PAIR(6));
+
+
+
 }
 
 uint8_t level_convert(int level)
