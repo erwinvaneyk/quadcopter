@@ -489,7 +489,18 @@ void periodic(void) {
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 			
-            kalman_filter();
+             p_kalman = sp_old - p_bias_old;
+		     phi_kalman = phi_kalman_old + (p_kalman * P2PHI);
+		     phi_error = phi_kalman - zay;
+		     phi_kalman = phi_kalman - (phi_error / C1);
+		     p_bias = p_bias +((phi_error/p2phi) / C2);
+		   
+		   
+		     q_kalman = sq_old - q_bias_old;
+		     theta_kalman = theta_kalman_old + (q_kalman * P2PHI);
+		     theta_error = theta_kalman - zax;
+		     theta_kalman = theta_kalman - (theta_error / C1);
+		     q_bias = p_bias +((phi_error/p2phi) / C2);
 
 			full_yaw = (yaw - zr_v) * yaw_P;
 			
@@ -534,23 +545,7 @@ void initiliaze_kalman_filter()
    q_bias = 0;
 }
 
-void kalman_filter()
-{
-	
-   p_kalman = sp_old - p_bias_old;
-   phi_kalman = phi_kalman_old + (p_kalman * P2PHI);
-   phi_error = phi_kalman - zay;
-   phi_kalman = phi_kalman - (phi_error / C1);
-   p_bias = p_bias +((phi_error/p2phi) / C2);
-   
-   
-   q_kalman = sq_old - q_bias_old;
-   theta_kalman = theta_kalman_old + (q_kalman * P2PHI);
-   theta_error = theta_kalman - zax;
-   theta_kalman = theta_kalman - (theta_error / C1);
-   q_bias = p_bias +((phi_error/p2phi) / C2);
-   
-}
+
 /*------------------------------------------------------------------
  * isr_qr_link -- QR link rx interrupt handler
  * This function is executed at 1270Hz
