@@ -96,14 +96,10 @@ int full_pitch = 0;
 int full_roll = 0;
 int pitch;
 int roll;
-int p_kalman = 0;
-int phi_kalman = 0;
-int phi_error = 0;
-int phi_kalman = 0;
-int p_bias = 0 ;
-int sp_old = 0;
-int p_bias_old = 0;
-int phi_kalman_old = 0;
+
+int p_kalman, phi_kalman, phi_error, p_bias, sp_old, p_bias_old, phi_kalman_old; 
+
+int q_kalman, theta_kalman,theta_error = 0, q_bias = 0,sq_old,q_bias_old, theta_kalman_old;
 
 
 
