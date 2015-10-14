@@ -91,7 +91,9 @@ float_x32 q_kalman, theta_kalman,theta_error, q_bias,sq_old,q_bias_old, theta_ka
 //Full control variables
 //bias pitch,roll etc
 int FULL_CONTROL_LOOP = FALSE;
-
+int full_yaw =0;
+int full_pitch = 0;
+int full_roll = 0;
 
 
 
@@ -521,6 +523,13 @@ void periodic(void) {
 		    zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
 			zr_old = zr_v;
 
+
+			ae[0] = lift_setpoint_rpm - (full_pitch + full_yaw);
+			ae[2] = lift_setpoint_rpm - (full_pitch + full_yaw);
+
+			ae[1] = lift_setpoint_rpm - (full_roll + full_yaw);
+			ae[3] = lift_setpoint_rpm + (full_roll + full_yaw);
+
 			zr_filtered = convertFPToInt(zr_filtered_old); 
 
 			theta_kalman = convertFPToInt(theta_kalman);
@@ -598,7 +607,6 @@ void isr_qr_link(void) //1270 Hz
 		ae[ae_index] &= 0x3ff;
 	}
 
-	
 	/* Send actuator values
 	 * (Need to supply a continous stream, otherwise
 	 * QR will go to safe mode, so just send every ms)
