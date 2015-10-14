@@ -198,10 +198,12 @@ int main(int argc, char **argv)
 	*/
 	struct timeval timer1, timer2;
 
-	//init special input
+	//init p values input
 	p_input.current_yaw_p = 1; // must match the initial P value on QR
-	p_input.yaw_p = 0;
-	p_input.updated = false;
+	p_input.yaw_p = 1;
+	p_input.full_p1 = 1;
+	p_input.full_p2 = 1;
+	p_input.updated = true; //this fill force the values to be sent over once
 
 	getch();
 	refresh();
@@ -220,8 +222,10 @@ int main(int argc, char **argv)
 					show_pkt(&pkt);
 				}
 			}
-			//Print Current MODE
-			switch(inputModel.mode) {
+
+			//TUI: Print Current MODE
+			switch(inputModel.mode)
+			{
 				case SAFE_MODE_INT:
 					TUI_PRINT_MODE(SAFE MODE);
 					break;
@@ -230,22 +234,6 @@ int main(int argc, char **argv)
 					break;
 				case MANUAL_MODE_INT:
 					TUI_PRINT_MODE(MANUAL MODE);
-					//proof of concept
-					//TODO: better parse real values though
-					/*ae0 = ae1 = ae2 = ae3 = 65*inputModel.lift;
-					
-					ae1 = ae1 + 15 * inputModel.roll;
-					ae3 = ae3 - 15 * inputModel.roll;
-					
-					ae0 = ae0 + 15 * inputModel.pitch;
-					ae2 = ae2 - 15 * inputModel.pitch;
-
-					ae0 = ae0 + 25 * inputModel.yaw;
-					ae1 = ae1 - 25 * inputModel.yaw;
-					ae2 = ae2 + 25 * inputModel.yaw;
-					ae3 = ae3 - 25 * inputModel.yaw;
-
-					TUI_engines(ae0, ae1, ae2, ae3);*/
 					break;
 				case YAW_CONTROL_INT:
 					TUI_PRINT_MODE(YAW CONTROL MODE);
@@ -258,56 +246,41 @@ int main(int argc, char **argv)
 					break;			
 			}
 
-		
-			//check special input
-			//without this it doesn't stop, although it should
-			//this check can be moved to input_to_pkt // or remove altogether #redundant
-			if ((p_input.updated == true) && (inputModel.mode == YAW_CONTROL_INT))
-			{
-				input_to_pkt(&inputModel, &pkt, &p_input);
-				rs232_put_pkt(&pkt);
-				inputModel.updated = false;
-				p_input.updated = false;
-				p_input.yaw_p = 0x00; //reduntand, but just in case
-			}
+			input_to_pkt(&inputModel, &pkt, &p_input);
+			inputModel.updated = false;
+			//show_input(&inputModel);
+			//show_pkt(&pkt);
 
 			//if we are logging save to a file
 			if (inputModel.mode == SEND_TELEMETRY_INT)
 			{
 				printf("Saving to a file...\n");
 				if (link_status > -1)
+				{
+					c=' ';
+					f = fopen("logs/log", "w");
+					if (f == NULL)
 					{
-						c=' ';
-						f = fopen("logs/log", "w");
-						if (f == NULL)
-						{
-						    printf("Error opening file!\n");
-						    exit(1); //change this
-						}
-						//artificailly sent a packet
-						input_to_pkt(&inputModel, &pkt, &p_input);
-						inputModel.updated = false;
-						rs232_put_pkt(&pkt);
-						while(c!='$')
-						{
-							if ((c = rs232_getchar_nb()) != -1)
-							{
-								fprintf(f, "%c", c);
-							}
-						}
-						fclose(f);
+						printf("Error opening file!\n");
+						exit(1); //change this
 					}
+					//artificailly sent a packet
+					input_to_pkt(&inputModel, &pkt, &p_input);
+					inputModel.updated = false;
+					rs232_put_pkt(&pkt);
+					while(c!='$')
+					{
+						if ((c = rs232_getchar_nb()) != -1)
+						{
+							fprintf(f, "%c", c);
+						}
+					}
+					fclose(f);
+				}
 				printf("LOG saved to file.\n");
-				
 				inputModel.mode = SAFE_MODE_INT;
 			}
-			/////
-			input_to_pkt(&inputModel, &pkt, &p_input);
-			inputModel.updated = false;
-			//show_input(&inputModel);
-			//show_pkt(&pkt);
 		}
-		
 		// Send the packet periodically
 		gettimeofday(&timer1, NULL);
 		periodic_send (&timer1, &timer2, &pkt, link_status);
@@ -336,9 +309,7 @@ int main(int argc, char **argv)
 					break;
 				case MESSAGE:
 					attron(COLOR_PAIR(4));
-					//attron(A_BOLD | A_STANDOUT );
 					mvaddch(CURRENT_MSG_CURSOR,cursor++,c);
-					//attroff(A_BOLD | A_STANDOUT );
 					attroff(COLOR_PAIR(4));
 					if (c=='\n') 
 					{
@@ -347,17 +318,18 @@ int main(int argc, char **argv)
 						refresh();
 						PRINT_MODE = STATUS;
 					} 
-					break;
+				break;
 			}			
 		}
-			//term_putchar(c);
+		//term_putchar(c);
 	} //end of inf. loop
 
-		endwin();
-		term_exitio();
-		if(link_status > -1) {
-			rs232_close();
-		}
-		term_puts("\n<exit>\n");
-		return 0;
+
+	endwin();
+	term_exitio();
+	if(link_status > -1) {
+		rs232_close();
+	}
+	term_puts("\n<exit>\n");
+	return 0;
 }

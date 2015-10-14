@@ -20,6 +20,7 @@
 #define YAW_CONTROL		0x04
 #define FULL_CONTROL	0x05
 #define PANIC_MODE		0x0F
+#define P_VALUES_MODE	0x42
 
 // Additional special modes/commands
 #define SEND_TELEMETRY	0x07
