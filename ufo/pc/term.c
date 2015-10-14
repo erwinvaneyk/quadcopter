@@ -257,7 +257,7 @@ int main(int argc, char **argv)
 				if (link_status > -1)
 					{
 						c=' ';
-						f = fopen("log", "w");
+						f = fopen("logs/log", "w");
 						if (f == NULL)
 						{
 						    printf("Error opening file!\n");
