@@ -17,7 +17,7 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 					}
 					break;
 				case 'z':
-					if (keyboardInput->lift > -MAX_LEVEL) {
+					if (keyboardInput->lift > 0) {
 						keyboardInput->lift--;
 					}
 					break;
