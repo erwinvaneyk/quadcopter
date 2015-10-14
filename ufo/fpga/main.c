@@ -50,7 +50,6 @@ int yaw_P = 1;
 int yaw;
 int calibrated = FALSE;
 int YAW_CONTROL_LOOP = FALSE;
-int MAX_PERSENTAGE = 15;
 
 //packet processing global variables
 uint8_t modecommand;
@@ -478,22 +477,22 @@ void isr_qr_link(void) //1270 Hz
 	}
 
 	//Check for rapid changes in egine values
-	If (ae[0] > (X32_QR_a0 + (X32_QR_a0/MAX_PERSENTAGE))
-		ae[0] = X32_QR_a0+(X32_QR_a0/MAX_PERSENTAGE);
-	else if (ae[0] < (X32_QR_a0 - (X32_QR_a0/MAX_PERSENTAGE))	
-		ae[0] = X32_QR_a0+(X32_QR_a0/MAX_PERSENTAGE);
-	If (ae[1] > (X32_QR_a1 + (X32_QR_a1/MAX_PERSENTAGE))
-		ae[1] = X32_QR_a1+(X32_QR_a1/MAX_PERSENTAGE);
-	else if (ae[1] < (X32_QR_a1 - (X32_QR_a1/MAX_PERSENTAGE))	
-		ae[1] = X32_QR_a1+(X32_QR_a1/MAX_PERSENTAGE);	
-	If (ae[2] > (X32_QR_a2 + (X32_QR_a2/MAX_PERSENTAGE))
-		ae[2] = X32_QR_a2+(X32_QR_a2/MAX_PERSENTAGE);
-	else if (ae[2] < (X32_QR_a2 - (X32_QR_a2/MAX_PERSENTAGE))	
-		ae2] = X32_QR_a2+(X32_QR_a2/MAX_PERSENTAGE);
-	If (ae[3] > (X32_QR_a1 + (X32_QR_a1/MAX_PERSENTAGE))
-		ae[3] = X32_QR_a1+(X32_QR_a1/MAX_PERSENTAGE);
-	else if (ae[3] < (X32_QR_a3 - (X32_QR_a3/MAX_PERSENTAGE))	
-		ae[3] = X32_QR_a3+(X32_QR_a3/MAX_PERSENTAGE);		
+	If (ae[0] > (X32_QR_a0 + (X32_QR_a0/MAX_PERCENTAGE))
+		ae[0] = X32_QR_a0+(X32_QR_a0/MAX_PERCENTAGE);
+	else if (ae[0] < (X32_QR_a0 - (X32_QR_a0/MAX_PERCENTAGE))	
+		ae[0] = X32_QR_a0+(X32_QR_a0/MAX_PERCENTAGE);
+	If (ae[1] > (X32_QR_a1 + (X32_QR_a1/MAX_PERCENTAGE))
+		ae[1] = X32_QR_a1+(X32_QR_a1/MAX_PERCENTAGE);
+	else if (ae[1] < (X32_QR_a1 - (X32_QR_a1/MAX_PERCENTAGE))	
+		ae[1] = X32_QR_a1+(X32_QR_a1/MAX_PERCENTAGE);	
+	If (ae[2] > (X32_QR_a2 + (X32_QR_a2/MAX_PERCENTAGE))
+		ae[2] = X32_QR_a2+(X32_QR_a2/MAX_PERCENTAGE);
+	else if (ae[2] < (X32_QR_a2 - (X32_QR_a2/MAX_PERCENTAGE))	
+		ae2] = X32_QR_a2+(X32_QR_a2/MAX_PERCENTAGE);
+	If (ae[3] > (X32_QR_a1 + (X32_QR_a1/MAX_PERCENTAGE))
+		ae[3] = X32_QR_a1+(X32_QR_a1/MAX_PERCENTAGE);
+	else if (ae[3] < (X32_QR_a3 - (X32_QR_a3/MAX_PERCENTAGE))	
+		ae[3] = X32_QR_a3+(X32_QR_a3/MAX_PERCENTAGE);		
 	/* Send actuator values
 	 * (Need to supply a continous stream, otherwise
 	 * QR will go to safe mode, so just send every ms)
