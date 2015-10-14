@@ -177,6 +177,30 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 				keyboardInput->mode = SEND_TELEMETRY_INT;
 				break;
 
+			case 'p': // p2 control pitch/roll
+				//printf("Not implemented yet!\n");
+				TUI_PRINT_MESSAGE(Increased Sensitivity);
+				p_input->sensitivity = within_bounds(p_input->sensitivity+1,20,1);
+				p_input->updated = true;
+			#ifdef DEBUG
+			attron(COLOR_PAIR(6));
+			mvprintw(MESSAGE_FIELD_START + msg_cursor,0,"sensitivity++: sen. = %d", p_input->sensitivity);
+			attroff(COLOR_PAIR(6));
+			#endif
+				break;
+
+			case ';': // p2 control pitch/roll
+				//printf("Not implemented yet!\n");
+				TUI_PRINT_MESSAGE(Decreased Sensitivity);
+				p_input->sensitivity = within_bounds(p_input->sensitivity-1,20,1);
+				p_input->updated = true;
+			#ifdef DEBUG
+			attron(COLOR_PAIR(6));
+			mvprintw(MESSAGE_FIELD_START + msg_cursor,0,"sensitivity--: sen. = %d", p_input->sensitivity);
+			attroff(COLOR_PAIR(6));
+			#endif
+				break;
+
 			default:
 				if(unknownKey) {
 					#ifdef DEBUG_KEYBOARD

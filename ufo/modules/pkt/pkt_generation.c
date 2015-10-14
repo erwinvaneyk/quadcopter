@@ -46,7 +46,7 @@ uint32_t convert_p_values_to_data(struct SPECIAL_INPUT* p_input)
 {
 	uint32_t data;
 
-	data = 0x00 << 8; //data4
+	data = p_input->sensitivity << 8; //data4
 	data = (data | p_input->full_p2) << 8; //data3 Full-P2
 	data = (data | p_input->full_p1) << 8; //data2 Full-P1
 	data = data | p_input->yaw_p; //data1 Yaw-P
