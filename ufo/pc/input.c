@@ -5,12 +5,12 @@
 //TUI related
 extern int msg_cursor;
 
-int within_bounds(int x, int y) {
-	if(x > y) {
-		return y;
+int within_bounds(int x, int upper_limit, int lower_limit) {
+	if(x > upper_limit) {
+		return upper_limit;
 	}
-	if(x < -y) {
-		return -y;
+	if(x < lower_limit) {
+		return lower_limit;
 	}
 	return x;
 }
@@ -93,10 +93,10 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 	} 
 	else if ( (model->mode == MANUAL_MODE_INT) || (model->mode == YAW_CONTROL_INT) )
 	{
-		model->lift = within_bounds(keyboard->lift + joystick->lift, MAX_LEVEL);
-		model->yaw = within_bounds(keyboard->yaw + joystick->yaw, MAX_LEVEL);
-		model->roll = within_bounds(keyboard->roll + joystick->roll, MAX_LEVEL);
-		model->pitch = within_bounds(keyboard->pitch + joystick->pitch, MAX_LEVEL);
+		model->lift = within_bounds(keyboard->lift + joystick->lift, MAX_LEVEL, 0);
+		model->yaw = within_bounds(keyboard->yaw + joystick->yaw, MAX_LEVEL, -MAX_LEVEL);
+		model->roll = within_bounds(keyboard->roll + joystick->roll, MAX_LEVEL, -MAX_LEVEL);
+		model->pitch = within_bounds(keyboard->pitch + joystick->pitch, MAX_LEVEL, -MAX_LEVEL);
 	}
 
 	// Update flags
