@@ -476,6 +476,23 @@ void isr_qr_link(void) //1270 Hz
 		ae[ae_index] &= 0x3ff;
 	}
 
+	//Check for rapid changes in egine values
+	If (ae[0] > (X32_QR_a0 + (X32_QR_a0/15))
+		ae[0] = X32_QR_a0+(X32_QR_a0/15_);
+	else if (ae[0] < (X32_QR_a0 - (X32_QR_a0/15))	
+		ae[0] = X32_QR_a0+(X32_QR_a0/15_);
+	If (ae[1] > (X32_QR_a1 + (X32_QR_a1/15))
+		ae[1] = X32_QR_a1+(X32_QR_a1/15_);
+	else if (ae[1] < (X32_QR_a1 - (X32_QR_a1/15))	
+		ae[1] = X32_QR_a1+(X32_QR_a1/15_);	
+	If (ae[2] > (X32_QR_a2 + (X32_QR_a2/15))
+		ae[2] = X32_QR_a2+(X32_QR_a2/15_);
+	else if (ae[2] < (X32_QR_a2 - (X32_QR_a2/15))	
+		ae2] = X32_QR_a2+(X32_QR_a2/15_);
+	If (ae[3] > (X32_QR_a1 + (X32_QR_a1/15))
+		ae[3] = X32_QR_a1+(X32_QR_a1/15_);
+	else if (ae[3] < (X32_QR_a3 - (X32_QR_a3/15))	
+		ae[3] = X32_QR_a3+(X32_QR_a3/15_);		
 	/* Send actuator values
 	 * (Need to supply a continous stream, otherwise
 	 * QR will go to safe mode, so just send every ms)
