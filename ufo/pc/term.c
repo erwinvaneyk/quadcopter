@@ -39,6 +39,7 @@
 #include "tui.h"
 
 int serial_device = 1;
+char* js_device = "/dev/input/js0";
 int fd;
 char c;
 bool DEBUG;
@@ -98,8 +99,14 @@ int parseArgs(int argc, char **argv) {
 			DEBUG = true;
 			printf("Debug mode enabled!\n");
 		} else if(checkArg(arg, "-j", "--joystick")) {
+			c += 1;
+			if(c < argc) {
+				js_device = argv[c];
+			} else {
+				printf("No device-param found for --joystick; using device /dev/input/js0 \n");
+			}
 			ENABLE_JOYSTICK = true;
-			printf("Joystick enabled, note that joystick provides shitty values if not connected!\n");
+			printf("Joystick enabled, note that joystick provides shitty values if not connected at /dev/input/jsX!\n");
 		} else if(checkArg(arg, "-h", "--help")) {
 			printHelp();
 			return -1;
@@ -151,7 +158,7 @@ int main(int argc, char **argv)
 	// fd is for the joystick
 	if (ENABLE_JOYSTICK)
 	{ 
-		if ((fd = open(JS_DEV, O_RDONLY)) < 0) {
+		if ((fd = open(js_device, O_RDONLY)) < 0) {
 			perror("jstest");
 			exit(1);
 		}
