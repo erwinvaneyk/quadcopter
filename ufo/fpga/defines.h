@@ -51,6 +51,10 @@
 
 #define FIFOSIZE 16
 
+#define C1
+#define C2
+#define P2PHI
+
 #define SET_ALL_ENGINE_RPM(rpm) ae[0]=ae[1]=ae[2]=ae[3]= rpm;
 
 #define PRINT_STATE(f) 	if (count%f == 0)\
