@@ -11,11 +11,11 @@
 
 extern int msg_cursor;
 
-#define MESSAGE_FIELD_START 8
-#define MESSAGE_FIELD_SIZE 20
-#define MODE_LINE 30
-#define BASE_Y 15
-#define BASE_X 65
+#define MESSAGE_FIELD_START 8 	// y coordinate of where 'messages' are printed
+#define MESSAGE_FIELD_SIZE 20 	// the size of the 'messages' buffer
+#define MODE_LINE 30			// y coordinate of where MODE is printed
+#define BASE_Y 15				// NOT_USED //Engines graph y coordinate
+#define BASE_X 65				// NOT_USED //Engines graph x coordinate
 
 #define CURRENT_MSG_CURSOR MESSAGE_FIELD_START + msg_cursor
 
