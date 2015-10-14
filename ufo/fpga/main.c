@@ -75,6 +75,8 @@ int FULL_CONTROL_LOOP = FALSE;
 int full_yaw =0;
 int full_pitch = 0;
 int full_roll = 0;
+int pitch;
+int roll;
 
 
 
@@ -244,7 +246,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 				}
 			//YAW in CONTROL LOOP
 			//set the yaw rate variable that is used in the control loop
-			if (data2 != data2_old) //save time if no changes in yaw input
+		if (data2 != data2_old) //save time if no changes in yaw input
 			{
 				data2_old = data2;
 
