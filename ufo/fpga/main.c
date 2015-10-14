@@ -18,7 +18,7 @@ int optr = 0;
 
 // 
 struct LOG log[LOG_LENGTH];
-char	c;
+char c;
 int	ALIVE = 1;
 int mode = SAFE_MODE_INT;
 int	ae[4];
@@ -50,7 +50,7 @@ unsigned int b1 ;  //0.0305;
 
 int yaw;
 int calibrated = FALSE;
-int YAW_CONTROL_LOOP = FALSE;
+int yaw_control_loop = FALSE;
 
 uint8_t yaw_p = 1;
 uint8_t full_p1 = 1;
@@ -140,7 +140,7 @@ int main()
 
 	while (ALIVE)
 	{
-		c=get_packet();  //<- possibly add no change packet
+		c = get_packet();  //<- possibly add no change packet
 		if (c != -1) {
 			process_packet();
 			timestamp_last_pkt = X32_ms_clock;
@@ -190,7 +190,17 @@ void process_packet(void)  //we need to process packet and decide what should be
 	else if ((modecommand == YAW_CONTROL) && (calibrated == TRUE))
 		{
 			mode = YAW_CONTROL_INT;
-		
+			//check for P value changes
+			printf("\n %x \n", data1&0xE0);
+			if ((data1&0xE0) == 0xE0)
+			{
+				if (yaw_P < 20)	yaw_P ++;
+			}
+			else if ((data1&0xE0) == 0xA0)
+			{
+				if (yaw_P > 1)	yaw_P --;
+			}
+			
 			//LIFT
 			if ( (data1&0x10) == 0x00)
 				{
@@ -201,8 +211,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 						lift_setpoint = (int)(data1&0x0F);
 						lift_setpoint_rpm = lift_setpoint * 65;
 						SET_ALL_ENGINE_RPM(lift_setpoint_rpm);
-						if (lift_setpoint > 2) 	YAW_CONTROL_LOOP = TRUE;
-						else YAW_CONTROL_LOOP = FALSE;
+						yaw_control_loop = lift_setpoint ? TRUE : FALSE;
 					}
 				}
 
@@ -435,7 +444,7 @@ void calibrate(void)
 */
 
 void periodic(void) {
-		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
+		if ((mode == YAW_CONTROL_INT) && (yaw_control_loop == TRUE))
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 			zr_v = zr();
@@ -511,23 +520,23 @@ void isr_qr_link(void) //1270 Hz
 	/*
 	* Logging
 	*/
-#ifdef LOGGING
-	if ((log_counter < LOG_LENGTH) && (mode == YAW_CONTROL_INT) ) {
-		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
-		log[log_counter].ae[0] = (uint16_t) ae[0];
-		log[log_counter].ae[1] = (uint16_t) ae[1];
-		log[log_counter].ae[2] = (uint16_t) ae[2];
-		log[log_counter].ae[3] = (uint16_t) ae[3];
-		log[log_counter].s[0] = sax;  //should we log these RAW or callibrated values?
-		log[log_counter].s[1] = say;
-		log[log_counter].s[2] = saz;
-		log[log_counter].s[3] = sp;
-		log[log_counter].s[4] = sq;
-		log[log_counter].s[5] = sr;
-		log[log_counter].lift_point = lift_setpoint_rpm;
-		log_counter++;
-	}
-#endif
+	#ifdef LOGGING
+		if ((log_counter < LOG_LENGTH) && (mode == YAW_CONTROL_INT) ) {
+			log[log_counter].timestamp = X32_ms_clock; 
+			log[log_counter].ae[0] = (uint16_t) ae[0];
+			log[log_counter].ae[1] = (uint16_t) ae[1];
+			log[log_counter].ae[2] = (uint16_t) ae[2];
+			log[log_counter].ae[3] = (uint16_t) ae[3];
+			log[log_counter].s[0] = sax;
+			log[log_counter].s[1] = say;
+			log[log_counter].s[2] = saz;
+			log[log_counter].s[3] = sp;
+			log[log_counter].s[4] = sq;
+			log[log_counter].s[5] = sr;
+			log[log_counter].lift_point = lift_setpoint_rpm;
+			log_counter++;
+		}
+	#endif
 }
 
 /*------------------------------------------------------------------
