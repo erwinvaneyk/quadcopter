@@ -44,6 +44,6 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 
 void show_input(struct INPUT* input);
 
-int within_bounds(int x, int upper_limit, int lower_limit);
+int within_bounds(int x, int lower_limit, int upper_limit);
 
 #endif
