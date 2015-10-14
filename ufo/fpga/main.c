@@ -13,7 +13,8 @@
 #include "defines.h"
 
 uint8_t	fifo[FIFOSIZE]; 
-int	iptr, optr = 0;
+int	iptr = 0; 
+int optr = 0;
 int TERM_CONNECTED = 0; //communication safety mechanism
 
 // 
@@ -23,7 +24,7 @@ int	ALIVE = 1;
 int mode = SAFE_MODE_INT;
 int	ae[4];
 
-int	sax, say, saz, sp, sq, sr, timestamp = 0;
+int	sax, say, saz, sp, sq, sr, timestamp;
 int	sax0, say0, saz0, sp0, sq0, sr0; //Callibration offsets
 
 int	isr_qr_counter;
@@ -98,6 +99,8 @@ int main()
 	int timestamp_alive_led_toggle = 0;
 	int timestamp_last_pkt = 0;
 	int count = 1;
+
+	sax = say = saz = sp = sq = sr = 0;
 
 	/* prepare QR rx interrupt handler
 	*/
