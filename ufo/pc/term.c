@@ -132,7 +132,7 @@ int main(int argc, char **argv)
 	initscr();
 	int ae0, ae1, ae2, ae3;
 
-	term_puts("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
+	printw("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
 	getch();
 	refresh();
 	/* 
@@ -143,10 +143,11 @@ int main(int argc, char **argv)
 	if (bad_input == -1) 
 	{
 		printHelp();
+		getch();
+		refresh();
 		return -1;
 	}
-	getch();
-	refresh();
+	
 	// fd is for the joystick
 	if (ENABLE_JOYSTICK)
 	{ 
@@ -162,10 +163,10 @@ int main(int argc, char **argv)
 	term_initio();
 	link_status = rs232_open(serial_device);
 	if(link_status == -1) {
-		term_puts("FPGA not detected! Connect it to communicate.\n");
+		printw("FPGA not detected! Connect it to communicate.\n");
 	}
 
-	term_puts("Type ^C to exit\n");
+	printw("Type ^C to exit\n");
 
 	/* discard any incoming text
 	 */
