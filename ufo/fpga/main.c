@@ -25,6 +25,8 @@ int	ae[4];
 int	sax, say, saz, sp, sq, sr, timestamp;
 int	sax0, say0, saz0, sp0, sq0, sr0; //Callibration offsets
 
+int log_sent = 0;
+
 int	isr_qr_counter;
 int	isr_qr_time;
 int	button;
@@ -206,7 +208,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 						lift_setpoint = (int)(data1&0x0F);
 						lift_setpoint_rpm = lift_setpoint * 65;
 						SET_ALL_ENGINE_RPM(lift_setpoint_rpm);
-						yaw_control_loop = lift_setpoint ? TRUE : FALSE;
+						yaw_control_loop = lift_setpoint > 2 ? TRUE : FALSE;
 					}
 				}
 
@@ -315,12 +317,12 @@ void process_packet(void)  //we need to process packet and decide what should be
 	 		}
 		}
 
-		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT)) 
+		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT) && !log_sent) 
 		{
 			#ifdef LOGGING
 				logs_send();
 			#endif
-			modecommand = SAFE_MODE;
+			log_sent = 1;
 		}
 		else if ( (modecommand == CALIBRATE_MODE) && (mode == SAFE_MODE_INT) )
 		{
