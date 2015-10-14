@@ -69,11 +69,11 @@ int getSerialDevice(char *argv) {
 }
 
 void printHelp() {
-	printf("Usage: ./term [args]\n");
-	printf("-d, --debug \t Set to debug mode\n");
-	printf("-s, --serial \t Set manual serial device (options: serial, usb, wifi)\n");
-	printf("-j, --joystick \t Enable the joystick for input\n");
-	printf("-h, --help \t this.\n");
+	printw("Usage: ./term [args]\n");
+	printw("-d, --debug \t Set to debug mode\n");
+	printw("-s, --serial \t Set manual serial device (options: serial, usb, wifi)\n");
+	printw("-j, --joystick \t Enable the joystick for input\n");
+	printw("-h, --help \t this.\n");
 }
 
 int checkArg(char *arg, char *shortname, char *longname) {
@@ -93,26 +93,27 @@ int parseArgs(int argc, char **argv) {
 			if(c < argc) {
 				serial_device = getSerialDevice(argv[c]);
 			} else {
-				printf("No param found for --serial; ignoring it \n");
+				printw("No param found for --serial; ignoring it \n");
 			}
 		} else if(checkArg(arg,"-d", "--debug") > 0) {
 			DEBUG = true;
-			printf("Debug mode enabled!\n");
+			printw("Debug mode enabled!\n");
 		} else if(checkArg(arg, "-j", "--joystick")) {
 			c += 1;
 			if(c < argc) {
 				js_device = argv[c];
 			} else {
-				printf("No device-param found for --joystick; using device /dev/input/js0 \n");
+				printw("No device-param found for --joystick; using device /dev/input/js0 \n");
 			}
 			ENABLE_JOYSTICK = true;
-			printf("Joystick enabled, note that joystick provides shitty values if not connected at /dev/input/jsX!\n");
+			printw("Joystick enabled: note that incorrect data is read if not connected at %s!\n", js_device);
 		} else if(checkArg(arg, "-h", "--help")) {
-			printHelp();
+			//printHelp();
 			return -1;
 		}
 		c += 1; 
 	}
+	getch(); //hold on
 	return 0;
 }
 void processInput() {
@@ -290,8 +291,8 @@ int main(int argc, char **argv)
 			/////
 			input_to_pkt(&inputModel, &pkt, &p_input);
 			inputModel.updated = false;
-			show_input(&inputModel);
-			show_pkt(&pkt);
+			//show_input(&inputModel);
+			//show_pkt(&pkt);
 		}
 		
 		// Send the packet periodically
