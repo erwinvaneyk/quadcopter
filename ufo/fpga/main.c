@@ -49,10 +49,15 @@ unsigned int a1 ;  //0.0305;
 unsigned int b1 ;  //0.0305;
 	int zr_v;
 
-int yaw_P = 1;
+
 int yaw;
 int calibrated = FALSE;
 int YAW_CONTROL_LOOP = FALSE;
+
+uint8_t yaw_p = 1;
+uint8_t full_p1 = 1;
+uint8_t full_p2 = 1;
+
 
 //packet processing global variables
 uint8_t modecommand;
@@ -89,6 +94,7 @@ void	process_packet(void);
 // QR behaviour
 void 	panic();
 void	logs_send();
+int within_bounds(int x, int lower_limit, int upper_limit);
 
 /*------------------------------------------------------------------
  * main loop
@@ -184,20 +190,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 	else if ((modecommand == YAW_CONTROL) && (calibrated == TRUE))
 		{
 			mode = YAW_CONTROL_INT;
-
-			//check for P value changes
-			printf("\n %x \n", data1&0xE0);
-			if ((data1&0xE0) == 0xE0)
-			{
-				//printf("\n Incrementing YAW P \n");
-				if (yaw_P < 20)	yaw_P ++;
-			}
-			else if ((data1&0xE0) == 0xA0)
-			{
-				//printf("\n Decrementing YAW P \n");
-				if (yaw_P > 1)	yaw_P --;
-			}
-			
+		
 			//LIFT
 			if ( (data1&0x10) == 0x00)
 				{
@@ -335,6 +328,12 @@ void process_packet(void)  //we need to process packet and decide what should be
 
 			calibrated = TRUE;
 		}
+		else if (modecommand==P_VALUES_MODE) //((mode==YAW_CONTROL_INT) || (mode==FULL_CONTROL_INT))  &&  
+		{
+			yaw_p 	= within_bounds(data1,1,20);
+			full_p1 = within_bounds(data2,1,20);
+			full_p2 = within_bounds(data3,1,20);
+		}
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
 
@@ -446,12 +445,12 @@ void periodic(void) {
 			
 			//#define DEBUG
 			#ifdef DEBUG
-			printf("zr is %d   yaw is %d    yap_P is %d \n", zr_v, yaw, yaw_P);
+			printf("zr is %d   yaw is %d    yap_P is %d \n", zr_v, yaw, yaw_p);
 			#endif
 
-			ae[0] = lift_setpoint_rpm + (yaw - zr_v) * yaw_P;
+			ae[0] = lift_setpoint_rpm + (yaw - zr_v) * yaw_p;
 			ae[2] = ae[0];
-			ae[1] = lift_setpoint_rpm - (yaw - zr_v) * yaw_P;
+			ae[1] = lift_setpoint_rpm - (yaw - zr_v) * yaw_p;
 			ae[3] = ae[1];
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		}
@@ -681,11 +680,11 @@ void print_state(void)
 		//sax,say,say,sp,sq,sr,isr_qr_time, inst);
 
 	/*printf("%3d %3d %3d %3d %3d %3d | %d | (%3d, %d)\r\n",
-		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_P, isr_qr_time, inst);
+		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, isr_qr_time, inst);
 		*/
 
-	printf("%3d %3d %3d %3d %3d %3d | %d\r\n",
-		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_P);
+	printf("%3d %3d %3d %3d %3d %3d | %d %d %d \r\n",
+		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, full_p1, full_p2);
 
     //wireless transmission
     /*  
@@ -699,4 +698,14 @@ void print_state(void)
 		i++;
 	}
     */
+}
+
+int within_bounds(int x, int lower_limit, int upper_limit) {
+	if(x > upper_limit) {
+		return upper_limit;
+	}
+	if(x < lower_limit) {
+		return lower_limit;
+	}
+	return x;
 }

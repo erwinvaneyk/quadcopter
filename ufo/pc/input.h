@@ -2,7 +2,7 @@
 #define _INPUTH_
 
 #include <stdbool.h>
-
+#include <stdint.h>
 /*
  * The input model, which is derived from the 
  * Lift, yaw, pitch, roll in levels
@@ -18,8 +18,11 @@ struct INPUT {
 };
 
 struct SPECIAL_INPUT {
-	int yaw_p; //increment or decrement
-	int current_yaw_p; //keep track of current P value
+	uint8_t yaw_p; //increment or decrement
+	uint8_t current_yaw_p; //keep track of current P value //we dont need this really
+	uint8_t full_p1;
+	uint8_t full_p2;
+
 	bool updated; // updated?
 };
 
@@ -29,8 +32,9 @@ struct SPECIAL_INPUT {
 #define CALIBRATE_MODE_INT	3
 #define YAW_CONTROL_INT		4
 #define FULL_CONTROL_INT	5
+#define P_VALUES_MODE_INT	6
 
-#define SEND_TELEMETRY_INT 7
+#define SEND_TELEMETRY_INT 7 //<----what is this?
 
 #define NUMB_LEVELS 31
 #define MAX_LEVEL 15
@@ -39,5 +43,7 @@ struct SPECIAL_INPUT {
 void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT* joystick);
 
 void show_input(struct INPUT* input);
+
+int within_bounds(int x, int upper_limit, int lower_limit);
 
 #endif

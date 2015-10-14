@@ -44,6 +44,7 @@
 #define CALIBRATE_MODE_INT	3
 #define YAW_CONTROL_INT		4
 #define FULL_CONTROL_INT	5
+#define P_VALUES_MODE_INT	6
 
 #define FIFOSIZE 16
 

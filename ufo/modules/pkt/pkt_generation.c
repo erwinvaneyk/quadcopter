@@ -30,38 +30,45 @@ void generate_pkt(struct PACKET* packet, uint8_t mode, uint8_t command, uint16_t
 	add_checksum(packet);
 };
 
-uint8_t addons(struct SPECIAL_INPUT* p_input)
-{
-	if (p_input->yaw_p == 1)
-		{
-			p_input->current_yaw_p ++;
-			p_input->yaw_p = 0;
-			return 0xE0;
-		}
-	else if (p_input->yaw_p == -1) //just in case
-		{
-			p_input->current_yaw_p --;
-			p_input->yaw_p = 0;
-			return 0xA0;
-		}
-	return 0x00;
-}
 
-uint32_t convert_data(struct INPUT* inputModel, struct SPECIAL_INPUT* p_input) {
+uint32_t convert_data(struct INPUT* inputModel) {
 	uint32_t data;
 
 	data = level_convert(inputModel->roll) << 8;
 	data = (data | level_convert(inputModel->pitch)) << 8;
 	data = (data | level_convert(inputModel->yaw)) << 8;
-	data = data | level_convert(inputModel->lift) | addons(p_input);
+	data = data | level_convert(inputModel->lift);
+
+	return data;
+}
+
+uint32_t convert_p_values_to_data(struct SPECIAL_INPUT* p_input)
+{
+	uint32_t data;
+
+	data = 0x00 << 8; //data4
+	data = (data | p_input->full_p2) << 8; //data3 Full-P2
+	data = (data | p_input->full_p1) << 8; //data2 Full-P1
+	data = data | p_input->yaw_p; //data1 Yaw-P
 
 	return data;
 }
 
 void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet, struct SPECIAL_INPUT* p_input) {
 	packet->header = HEADER;
-	packet->modecommand = convert_modecommand(inputModel->mode);
-	packet->data = convert_data(inputModel, p_input);
+
+	switch(p_input->updated) {
+		case true:
+			packet->modecommand = P_VALUES_MODE;
+			packet->data = convert_p_values_to_data(p_input);
+			p_input->updated = false;
+			break;
+		case false:
+			packet->modecommand = convert_modecommand(inputModel->mode);
+			packet->data = convert_data(inputModel);
+			break;
+	}
+	
 	add_checksum(packet);
 }
 
