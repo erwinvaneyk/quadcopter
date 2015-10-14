@@ -80,7 +80,7 @@ int roll;
 
 int p_kalman, phi_kalman, phi_error, p_bias, sp_old, p_bias_old, phi_kalman_old; 
 
-int q_kalman, theta_kalman,theta_error = 0, q_bias = 0,sq_old,q_bias_old, theta_kalman_old;
+int q_kalman, theta_kalman,theta_error, q_bias,sq_old,q_bias_old, theta_kalman_old;
 
 
 
@@ -489,11 +489,15 @@ void periodic(void) {
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 			
 			full_yaw = (yaw - zr_v) * yaw_P;
-			full_pitch;
-			full_roll;
+			
+			full_pitch = (full_p1*());
+
+			full_roll = (full_p1*());
+
 			//sp_old = zp;
 			//p_bias_old = p_bias;
 			//phi_kalman_old = phi_kalman;
+
 			//sq_old = zq;
 			//q_bias_old = q_bias;
 			//theta_kalman_old = theta_kalman;
