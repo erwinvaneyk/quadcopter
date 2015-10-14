@@ -19,8 +19,8 @@ int TERM_CONNECTED = 0; //communication safety mechanism
 // 
 struct LOG log[LOG_LENGTH];
 char	c;
-int	ALIVE;
-int mode;
+int	ALIVE = 1;
+int mode = SAFE_MODE_INT;
 int	ae[4];
 
 int	sax, say, saz, sp, sq, sr, timestamp;
@@ -83,6 +83,8 @@ void	move_optr();
 int 	get_packet(void);
 void	process_packet(void);
 
+void 	panic();
+
 /*------------------------------------------------------------------
  * main loop
  *------------------------------------------------------------------
@@ -95,9 +97,6 @@ int main()
 	int timestamp_alive_led_toggle = 0;
 	int count = 1;
 
-
-	ALIVE = 1;
-	mode = SAFE_MODE_INT;
 	sax = say = saz = sp = sq = sr = 0;
 
 	/* prepare QR rx interrupt handler
@@ -145,14 +144,18 @@ int main()
 		}  
 
 		timer2 = X32_ms_clock;
-		if (((timer2-timer1) > THRESHOLD) && TERM_CONNECTED)
-			{	
-				PANIC_AND_EXIT;
-			}
-
+		// we have lost communication to the qr -> panic
+		if (((timer2-timer1) > THRESHOLD) && TERM_CONNECTED) {	
+			panic();
+		}
 		PRINT_STATE(250);
 
-	}//end of main loop
+	}
+
+	// If for some reason the qr is not in safe/panic mode -> panic 
+	if(mode != PANIC_MODE_INT || mode != SAFE_MODE_INT) {
+		panic();
+	} 
 
 	printf("Exit\r\n");
     DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
@@ -167,7 +170,6 @@ void process_packet(void)  //we need to process packet and decide what should be
 		return;	
 	}
 
-
 	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	if ((modecommand == SAFE_MODE) )
 		{
@@ -176,33 +178,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		}
 	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
 		{
-			printf("$********Going to PANIC_MODE!**********\n");
-			mode = PANIC_MODE_INT;
-			if (ae[0] > 400)
-			{
-				SET_ALL_ENGINE_RPM(300);
-				delay_ms(500);
-				SET_ALL_ENGINE_RPM(250);
-				delay_ms(500);
-			}
-			printf("$********Engines decreased!**********\n");
-			if (ae[0] >= 250)
-			{
-				SET_ALL_ENGINE_RPM(200);
-				delay_ms(500);
-				SET_ALL_ENGINE_RPM(150);
-				delay_ms(500);
-			}
-			if (ae[0] >= 150)
-			{
-				SET_ALL_ENGINE_RPM(100);
-				delay_ms(500);
-				SET_ALL_ENGINE_RPM(50);
-				delay_ms(500);
-			}
-			SET_ALL_ENGINE_RPM(0);
-			printf("$********Going to SAFE MODE!**********\n");
-			mode = SAFE_MODE_INT;
+			panic();
 		}
 	else if ((modecommand == YAW_CONTROL) && (calibrated == TRUE))
 		{
@@ -381,6 +357,37 @@ void process_packet(void)  //we need to process packet and decide what should be
 			calibrated = TRUE;
 		}
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+}
+
+void panic() {
+	modecommand = PANIC_MODE;
+	mode = PANIC_MODE_INT;
+	printf("$********Going to PANIC_MODE!**********\n");
+	if (ae[0] > 400)
+	{
+		SET_ALL_ENGINE_RPM(300);
+		delay_ms(500);
+		SET_ALL_ENGINE_RPM(250);
+		delay_ms(500);
+	}
+	printf("$********Engines decreased!**********\n");
+	if (ae[0] >= 250)
+	{
+		SET_ALL_ENGINE_RPM(200);
+		delay_ms(500);
+		SET_ALL_ENGINE_RPM(150);
+		delay_ms(500);
+	}
+	if (ae[0] >= 150)
+	{
+		SET_ALL_ENGINE_RPM(100);
+		delay_ms(500);
+		SET_ALL_ENGINE_RPM(50);
+		delay_ms(500);
+	}
+	SET_ALL_ENGINE_RPM(0);
+	printf("$********Going to SAFE MODE!**********\n");
+	mode = SAFE_MODE_INT;
 }
 
 /*------------------------------------------------------------------

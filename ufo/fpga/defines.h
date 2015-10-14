@@ -110,10 +110,6 @@
 
 #define FIFOSIZE 16
 
-#define PANIC_AND_EXIT 	modecommand = PANIC_MODE;\
-						process_packet();\
-						ALIVE = 0;
-
 #define SET_ALL_ENGINE_RPM(rpm) ae[0]=ae[1]=ae[2]=ae[3]= rpm;
 
 #define PRINT_STATE(f) 	if (count%f == 0)\
