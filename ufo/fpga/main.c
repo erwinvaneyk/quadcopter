@@ -505,8 +505,8 @@ void periodic(void) {
 			q_bias_old = q_bias;
 			theta_kalman_old = theta_kalman;
 
-			ae[0] = lift_setpoint_rpm - (full_pitch + full_yaw);
-			ae[2] = lift_setpoint_rpm - (full_pitch + full_yaw);
+			ae[0] = lift_setpoint_rpm + (full_pitch - full_yaw);
+			ae[2] = lift_setpoint_rpm - (full_pitch - full_yaw);
 
 			ae[1] = lift_setpoint_rpm - (full_roll + full_yaw);
 			ae[3] = lift_setpoint_rpm + (full_roll + full_yaw);
