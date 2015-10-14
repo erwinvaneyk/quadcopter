@@ -12,7 +12,7 @@
 #include <assert.h>
 #include <time.h>
 #include "rs232.h"
-#include "protocol.h"
+#include "../modules/pkt/pkt_generation.h"
 
 int rs232_open(int serial_device)
 {

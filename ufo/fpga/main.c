@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include "log.h"
 #include "defines.h"
+#include "../modules/pkt/pkt.h"
 
 uint8_t	fifo[FIFOSIZE]; 
 int	iptr, optr;

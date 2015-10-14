@@ -31,7 +31,7 @@
 
 
 #include "rs232.h"
-#include "protocol.h"
+#include "../modules/pkt/pkt_generation.h"
 #include "consoleio.h" 
 #include "joystickio.h"
 #include "input.h"
@@ -108,6 +108,19 @@ int parseArgs(int argc, char **argv) {
 	}
 	return 0;
 }
+
+void periodic_send(struct timeval* timer_main, struct timeval* timer_r, struct PACKET* pkt, int link_status)
+{
+	if ((labs(((timer_main->tv_usec + timer_main->tv_sec*1000000) - (timer_r->tv_usec + timer_r->tv_sec*1000000))) > COMM_T))
+	{	
+		if(link_status > -1) {
+			rs232_put_pkt(pkt);
+		}
+		//reset timer
+		gettimeofday(timer_r, NULL);	
+	}
+}
+
 void processInput() {
 	if(ENABLE_JOYSTICK) {
 		processJoystickEvent(fd, js, &joystick);

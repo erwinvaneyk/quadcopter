@@ -107,14 +107,6 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 
 //DEBUG purpose TODO: change to support TUI
 void show_input(struct INPUT* input) {
-	/*
-	printf("INPUT (%i) {\n", input->updated);
-	printf("	lift: %i\n", input->lift);
-	printf("	pitch: %i\n", input->pitch);
-	printf("	roll: %i\n", input->roll);
-	printf("	yaw: %i\n", input->yaw);
-	printf("	mode: %i\n}\n", input->mode);
-	*/
 	attron(COLOR_PAIR(6));
 	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_input: INPUT (%i) {\n", input->updated);
 	TUI_MOVE_CURSOR;
