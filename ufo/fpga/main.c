@@ -48,6 +48,7 @@ int lift_setpoint = 0;
 int lift_setpoint_rpm = 0;
 
 //filter & yaw control
+
 int zr_filtered = 0; // = rounded(zr_filtered_old)
 float_x32 zr_filtered_old = 0x0;
 float_x32 zr_old = 0x0;
@@ -58,6 +59,7 @@ float_x32 zr_v;
 
 
 int yaw = 0;
+
 int calibrated = FALSE;
 int YAW_CONTROL_LOOP = FALSE;
 
@@ -207,7 +209,7 @@ int main()
 }
 
 void process_packet(void)  //we need to process packet and decide what should be done
-{;
+{
 	if (mode == PANIC_MODE_INT){
 		return;	
 	}
@@ -531,18 +533,7 @@ void periodic(void) {
 
 void initiliaze_kalman_filter()
 {
-	
-   p_kalman = 0;
-   phi_kalman = 0;
-   phi_error = 0;
-   phi_kalman = 0;
-   p_bias = 0;
-    
-   q_kalman = 0;
-   theta_kalman = 0;
-   theta_error = 0;
-   theta_kalman = 0;
-   q_bias = 0;
+	p_kalman = phi_kalman = phi_error = phi_kalman =_bias = q_kalman = theta_kalman = theta_error = theta_kalman = q_bias = 0;
 }
 
 
