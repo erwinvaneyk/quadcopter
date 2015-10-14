@@ -13,26 +13,28 @@
 #include "defines.h"
 
 uint8_t	fifo[FIFOSIZE]; 
-int	iptr, optr;
+int	iptr = 0; 
+int optr = 0;
 int TERM_CONNECTED = 0; //communication safety mechanism
 
 // 
 struct LOG log[LOG_LENGTH];
 char	c;
-int	ALIVE;
-int mode;
+int	ALIVE = 1;
+int mode = SAFE_MODE_INT;
 int	ae[4];
 
 int	sax, say, saz, sp, sq, sr, timestamp;
-//Callibration offsets
-int	sax0, say0, saz0, sp0, sq0, sr0;
+int	sax0, say0, saz0, sp0, sq0, sr0; //Callibration offsets
 
 int	isr_qr_counter;
 int	isr_qr_time;
 int	button;
 int	inst;
+
+// Logging
 int log_sent = 0;
-int log_counter;
+int log_counter = 0;
 
 int lift_setpoint = 0;
 int lift_setpoint_rpm = 0;
@@ -83,6 +85,10 @@ void	move_optr();
 int 	get_packet(void);
 void	process_packet(void);
 
+// QR behaviour
+void 	panic();
+void	logs_send();
+
 /*------------------------------------------------------------------
  * main loop
  *------------------------------------------------------------------
@@ -90,14 +96,10 @@ void	process_packet(void);
 
 int main() 
 {
-	int timer1;
-	int timer2;
 	int timestamp_alive_led_toggle = 0;
+	int timestamp_last_pkt = 0;
 	int count = 1;
 
-
-	ALIVE = 1;
-	mode = SAFE_MODE_INT;
 	sax = say = saz = sp = sq = sr = 0;
 
 	/* prepare QR rx interrupt handler
@@ -124,9 +126,7 @@ int main()
 
 	/* initialize some other stuff
 	*/
-	iptr = optr = 0;
 	X32_leds = 0;
-	log_counter = 0;
 
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
 
@@ -135,7 +135,7 @@ int main()
 		c=get_packet();  //<- possibly add no change packet
 		if (c != -1) {
 			process_packet();
-			timer1 = X32_ms_clock; //<- maybe its better to move this into the get_packet()
+			timestamp_last_pkt = X32_ms_clock;
 		}
 
 		// Toogle alive led
@@ -144,15 +144,20 @@ int main()
 			timestamp_alive_led_toggle = X32_ms_clock;
 		}  
 
-		timer2 = X32_ms_clock;
-		if (((timer2-timer1) > THRESHOLD) && TERM_CONNECTED)
-			{	
-				PANIC_AND_EXIT;
-			}
-
+		// we have lost communication to the qr -> panic
+		if ((X32_ms_clock - timestamp_last_pkt) > THRESHOLD && TERM_CONNECTED) {	
+			panic();
+			timestamp_last_pkt = X32_ms_clock;
+			TERM_CONNECTED = 0;
+		}
 		PRINT_STATE(250);
 
-	}//end of main loop
+	}
+
+	// If for some reason the qr is not in safe/panic mode -> panic 
+	if(mode != PANIC_MODE_INT || mode != SAFE_MODE_INT) {
+		panic();
+	} 
 
 	printf("Exit\r\n");
     DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
@@ -161,12 +166,9 @@ int main()
 
 void process_packet(void)  //we need to process packet and decide what should be done
 {
-	int log_counter; //is this efficient?
-
 	if (mode == PANIC_MODE_INT){
 		return;	
 	}
-
 
 	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	if ((modecommand == SAFE_MODE) )
@@ -176,33 +178,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		}
 	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
 		{
-			printf("$********Going to PANIC_MODE!**********\n");
-			mode = PANIC_MODE_INT;
-			if (ae[0] > 400)
-			{
-				SET_ALL_ENGINE_RPM(300);
-				delay_ms(500);
-				SET_ALL_ENGINE_RPM(250);
-				delay_ms(500);
-			}
-			printf("$********Engines decreased!**********\n");
-			if (ae[0] >= 250)
-			{
-				SET_ALL_ENGINE_RPM(200);
-				delay_ms(500);
-				SET_ALL_ENGINE_RPM(150);
-				delay_ms(500);
-			}
-			if (ae[0] >= 150)
-			{
-				SET_ALL_ENGINE_RPM(100);
-				delay_ms(500);
-				SET_ALL_ENGINE_RPM(50);
-				delay_ms(500);
-			}
-			SET_ALL_ENGINE_RPM(0);
-			printf("$********Going to SAFE MODE!**********\n");
-			mode = SAFE_MODE_INT;
+			panic();
 		}
 	else if ((modecommand == YAW_CONTROL) && (calibrated == TRUE))
 		{
@@ -343,29 +319,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 
 		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT) && !log_sent ) 
 		{
-			#ifdef LOGGING
-				printf("********SENDING LOG DATA!**********\n");
-				for (log_counter=0; log_counter < LOG_LENGTH; log_counter++)
-				{
-					printf("%d ", log[log_counter].timestamp );
-					printf("%d ", log[log_counter].ae[0] );
-					printf("%d ", log[log_counter].ae[1] );
-					printf("%d ", log[log_counter].ae[2] );
-					printf("%d ", log[log_counter].ae[3] );
-					printf("%d ", log[log_counter].s[0] );
-					printf("%d ", log[log_counter].s[1] );
-					printf("%d ", log[log_counter].s[2] );
-					printf("%d ", log[log_counter].s[3] );
-					printf("%d ", log[log_counter].s[4] );
-					printf("%d ", log[log_counter].s[5] );
-					printf("%d ", log[log_counter].lift_point );
-					printf("\n");
-
-				}
-				printf("\n");
-				printf("$"); //signal end of transmission
-				log_sent = 1;
-			#endif
+			logs_send();
 		}
 		else if ( (modecommand == CALIBRATE_MODE) && (mode == SAFE_MODE_INT) )
 		{
@@ -381,6 +335,68 @@ void process_packet(void)  //we need to process packet and decide what should be
 			calibrated = TRUE;
 		}
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+}
+
+void logs_send() {
+	int i = 0;
+	#ifdef LOGGING
+		printf("********SENDING LOG DATA!**********\n");
+		for (i=0; i < log_counter; i++)
+		{
+			printf("%d ", log[i].timestamp );
+			printf("%d ", log[i].ae[0] );
+			printf("%d ", log[i].ae[1] );
+			printf("%d ", log[i].ae[2] );
+			printf("%d ", log[i].ae[3] );
+			printf("%d ", log[i].s[0] );
+			printf("%d ", log[i].s[1] );
+			printf("%d ", log[i].s[2] );
+			printf("%d ", log[i].s[3] );
+			printf("%d ", log[i].s[4] );
+			printf("%d ", log[i].s[5] );
+			printf("%d ", log[i].lift_point );
+			printf("\n");
+		}
+		printf("\n");
+		printf("$"); //signal end of transmission
+		log_sent = 1;
+	#endif
+	#ifndef LOGGING
+		printf("$Failed to send logs, because logging was not enabled on quadcopter.\n");
+	#endif
+}
+
+void panic() {
+	mode = PANIC_MODE_INT;
+	printf("$********Going to PANIC_MODE!********\n");
+	if (ae[0] > 400)
+	{
+		SET_ALL_ENGINE_RPM(300);
+		epileptic_delay_ms(500);
+		SET_ALL_ENGINE_RPM(250);
+		epileptic_delay_ms(500);
+	}
+	printf("$********Engines decreased!**********\n");
+	print_state();
+	if (ae[0] >= 250)
+	{
+		SET_ALL_ENGINE_RPM(200);
+		epileptic_delay_ms(500);
+		SET_ALL_ENGINE_RPM(150);
+		epileptic_delay_ms(500);
+	}
+	printf("$********Engines decreased!**********\n");
+	print_state();
+	if (ae[0] >= 150)
+	{
+		SET_ALL_ENGINE_RPM(100);
+		epileptic_delay_ms(500);
+		SET_ALL_ENGINE_RPM(50);
+		epileptic_delay_ms(500);
+	}
+	SET_ALL_ENGINE_RPM(0);
+	printf("$********Going to SAFE MODE!*********\n");
+	mode = SAFE_MODE_INT;
 }
 
 /*------------------------------------------------------------------
@@ -619,6 +635,16 @@ void delay_ms(int ms)
 {
 	int time = X32_ms_clock;
 	while(X32_ms_clock - time < ms);
+}
+
+
+void epileptic_delay_ms(int ms) 
+{
+	int time = X32_ms_clock;
+	while(X32_ms_clock - time < ms) {
+		if(X32_ms_clock % 10 == 0)
+		toggle_led(0);
+	}
 }
 
 /*------------------------------------------------------------------
