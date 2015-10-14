@@ -54,6 +54,9 @@ int yaw;
 int calibrated = FALSE;
 int YAW_CONTROL_LOOP = FALSE;
 
+int full_P1 = 1;
+int full_P2 = 1;
+
 //packet processing global variables
 uint8_t modecommand;
 uint8_t data1;
@@ -684,8 +687,8 @@ void print_state(void)
 		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_P, isr_qr_time, inst);
 		*/
 
-	printf("%3d %3d %3d %3d %3d %3d | %d\r\n",
-		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_P);
+	printf("%3d %3d %3d %3d %3d %3d | %d %d %d\r\n",
+		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_P, full_P1, full_P2);
 
     //wireless transmission
     /*  
