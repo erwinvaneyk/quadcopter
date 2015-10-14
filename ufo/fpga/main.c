@@ -495,9 +495,9 @@ void periodic(void) {
 			full_yaw = (yaw - zr_v) * yaw_P;
 			full_pitch;
 			full_roll;
-			//sp_old = 
-			//p_bias_old = 
-			//phi_kalman_old = 
+			//sp_old = zp;
+			//p_bias_old = p_bias;
+			//phi_kalman_old = phi_kalman;
 
 			ae[0] = lift_setpoint_rpm - (full_pitch + full_yaw);
 			ae[2] = lift_setpoint_rpm - (full_pitch + full_yaw);
