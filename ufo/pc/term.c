@@ -130,7 +130,7 @@ int main(int argc, char **argv)
 	int cursor;
 	int PRINT_MODE = STATUS;
 	initscr();
-	int ae0, ae1, ae2, ae3;
+	//int ae0, ae1, ae2, ae3; //needed for engine TUI
 
 	printw("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
 	getch();
@@ -187,11 +187,7 @@ int main(int argc, char **argv)
 
 	//TUI
 	start_color();
-	init_pair(1, COLOR_BLACK, COLOR_GREEN);
-	init_pair(2, COLOR_RED, COLOR_BLACK);
-	init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
-	init_pair(4, COLOR_YELLOW, COLOR_BLACK);
-	init_pair(5, COLOR_BLACK, COLOR_YELLOW);
+	TUI_INIT_COLORS;
 
 	attron(A_BOLD | A_STANDOUT ); 
 	attron(COLOR_PAIR(1));
@@ -319,8 +315,8 @@ int main(int argc, char **argv)
 			/////
 			input_to_pkt(&inputModel, &pkt, &p_input);
 			inputModel.updated = false;
-			//show_input(&inputModel);
-			//show_pkt(&pkt);
+			show_input(&inputModel);
+			show_pkt(&pkt);
 		}
 		
 		// Send the packet periodically

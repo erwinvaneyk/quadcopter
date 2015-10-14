@@ -68,7 +68,6 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case '0': // Safe mode
 				//printf("Set to safe mode (%x)\n", SAFE_MODE_INT);
 				TUI_PRINT_MESSAGE(Set to safe mode);
-				mvprintw(25,0, "MODE: ");
 				keyboardInput->mode = SAFE_MODE_INT;
 				break;
 			case '1': // Panic mode

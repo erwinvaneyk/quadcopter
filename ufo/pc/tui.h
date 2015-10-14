@@ -12,8 +12,8 @@
 extern int msg_cursor;
 
 #define MESSAGE_FIELD_START 8
-#define MESSAGE_FIELD_SIZE 15
-#define MODE_LINE 25
+#define MESSAGE_FIELD_SIZE 20
+#define MODE_LINE 30
 #define BASE_Y 15
 #define BASE_X 65
 
@@ -21,6 +21,14 @@ extern int msg_cursor;
 
 #define STATUS 	1
 #define MESSAGE 2
+
+#define TUI_INIT_COLORS \
+	init_pair(1, COLOR_BLACK, COLOR_GREEN);\
+	init_pair(2, COLOR_RED, COLOR_BLACK);\
+	init_pair(3, COLOR_MAGENTA, COLOR_BLACK);\
+	init_pair(4, COLOR_YELLOW, COLOR_BLACK);\
+	init_pair(5, COLOR_BLACK, COLOR_YELLOW);\
+	init_pair(6, COLOR_MAGENTA, COLOR_GREEN);\
 
 #define TUI_MOVE_CURSOR \
 	msg_cursor++;\
