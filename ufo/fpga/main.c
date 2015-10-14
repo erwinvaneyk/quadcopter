@@ -88,6 +88,13 @@ float_x32 q_kalman, theta_kalman,theta_error, q_bias,sq_old,q_bias_old, theta_ka
 
 
 
+//Full control variables
+//bias pitch,roll etc
+int FULL_CONTROL_LOOP = FALSE;
+
+
+
+
 //packet processing global variables
 uint8_t modecommand;
 uint8_t data1;
@@ -555,8 +562,6 @@ void initiliaze_kalman_filter()
 {
 	p_kalman = phi_kalman = phi_error = phi_kalman =_bias = q_kalman = theta_kalman = theta_error = theta_kalman = q_bias = 0;
 }
-
-
 /*------------------------------------------------------------------
  * isr_qr_link -- QR link rx interrupt handler
  * This function is executed at 1270Hz
@@ -593,7 +598,7 @@ void isr_qr_link(void) //1270 Hz
 		ae[ae_index] &= 0x3ff;
 	}
 
-		
+	
 	/* Send actuator values
 	 * (Need to supply a continous stream, otherwise
 	 * QR will go to safe mode, so just send every ms)
