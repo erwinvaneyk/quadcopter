@@ -77,14 +77,10 @@ int full_pitch = 0;
 int full_roll = 0;
 int pitch;
 int roll;
-int p_kalman = 0;
-int phi_kalman = 0;
-int phi_error = 0;
-int phi_kalman = 0;
-int p_bias = 0 ;
-int sp_old = 0;
-int p_bias_old = 0;
-int phi_kalman_old = 0;
+
+int p_kalman, phi_kalman, phi_error, p_bias, sp_old, p_bias_old, phi_kalman_old; 
+
+int q_kalman, theta_kalman,theta_error = 0, q_bias = 0,sq_old,q_bias_old, theta_kalman_old;
 
 
 
@@ -498,6 +494,9 @@ void periodic(void) {
 			//sp_old = zp;
 			//p_bias_old = p_bias;
 			//phi_kalman_old = phi_kalman;
+			//sq_old = zq;
+			//q_bias_old = q_bias;
+			//theta_kalman_old = theta_kalman;
 
 			ae[0] = lift_setpoint_rpm - (full_pitch + full_yaw);
 			ae[2] = lift_setpoint_rpm - (full_pitch + full_yaw);
@@ -514,25 +513,36 @@ void periodic(void) {
 
 void initiliaze_kalman_filter(void)
 {
-	p_bRoll = 0;
-	p_bPitch = 0;
-	p2phi = 0;
-	p_kalmanRoll = 0;
-	q_kalmanPitch = 0;
-	phi_roll = 0;
-	theta_pitch = 0;
-	theta_error  = 0;
+	
+   p_kalman = 0;
+   phi_kalman = 0;
+   phi_error = 0;
+   phi_kalman = 0;
+   p_bias = 0;
+    
+   q_kalman = 0;
+   theta_kalman = 0;
+   theta_error = 0;
+   theta_kalman = 0;
+   q_bias = 0;
 }
 
 void kalman_filter()
 {
-	/*
+	
    p_kalman = sp_old - p_bias_old;
    phi_kalman = phi_kalman_old + p_kalman * P2PHI;
-   phi_error = phi_kalman - sphi;
+   phi_error = phi_kalman - zay;
    phi_kalman = phi_kalman - (phi_error / C1);
    p_bias = p_bias +((phi_error/p2phi) / C2);
-   */
+   
+   
+   q_kalman = sq_old - q_bias_old;
+   theta_kalman = theta_kalman_old + (q_kalman * P2PHI);
+   theta_error = theta_kalman - zax;
+   theta_kalman = theta_kalman - (theta_error / C1);
+   q_bias = p_bias +((phi_error/p2phi) / C2);
+   
 }
 /*------------------------------------------------------------------
  * isr_qr_link -- QR link rx interrupt handler
