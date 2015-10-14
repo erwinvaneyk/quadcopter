@@ -101,6 +101,10 @@ int phi_kalman = 0;
 int phi_error = 0;
 int phi_kalman = 0;
 int p_bias = 0 ;
+int sp_old = 0;
+int p_bias_old = 0;
+int phi_kalman_old = 0;
+
 
 
 //packet processing global variables
@@ -529,7 +533,6 @@ void periodic(void) {
 		    zr_v = convertIntToFP(zr());
 		    zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
 			zr_old = zr_v;
-
 
 			ae[0] = lift_setpoint_rpm - (full_pitch + full_yaw);
 			ae[2] = lift_setpoint_rpm - (full_pitch + full_yaw);
