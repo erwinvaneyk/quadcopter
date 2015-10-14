@@ -58,6 +58,8 @@ uint8_t yaw_p = 1;
 uint8_t full_p1 = 1;
 uint8_t full_p2 = 1;
 
+uint8_t sensitivity = 1;
+
 
 //packet processing global variables
 uint8_t modecommand;
@@ -333,6 +335,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 			yaw_p 	= within_bounds(data1,1,20);
 			full_p1 = within_bounds(data2,1,20);
 			full_p2 = within_bounds(data3,1,20);
+			sensitivity = within_bounds(data4,1,20);
 		}
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
@@ -683,8 +686,8 @@ void print_state(void)
 		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, isr_qr_time, inst);
 		*/
 
-	printf("%3d %3d %3d %3d %3d %3d | %d %d %d \r\n",
-		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, full_p1, full_p2);
+	printf("%3d %3d %3d %3d %3d %3d | %d %d %d %d \r\n",
+		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, full_p1, full_p2, sensitivity);
 
     //wireless transmission
     /*  

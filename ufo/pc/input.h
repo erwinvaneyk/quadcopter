@@ -22,6 +22,7 @@ struct SPECIAL_INPUT {
 	uint8_t current_yaw_p; //keep track of current P value //we dont need this really
 	uint8_t full_p1;
 	uint8_t full_p2;
+	uint8_t sensitivity;
 
 	bool updated; // updated?
 };
