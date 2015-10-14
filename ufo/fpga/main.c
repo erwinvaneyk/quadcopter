@@ -365,33 +365,32 @@ void logs_send() {
 }
 
 void panic() {
-	//modecommand = PANIC_MODE;
 	mode = PANIC_MODE_INT;
 	printf("$********Going to PANIC_MODE!********\n");
 	if (ae[0] > 400)
 	{
 		SET_ALL_ENGINE_RPM(300);
-		delay_ms(500);
+		epileptic_delay_ms(500);
 		SET_ALL_ENGINE_RPM(250);
-		delay_ms(500);
+		epileptic_delay_ms(500);
 	}
 	printf("$********Engines decreased!**********\n");
 	print_state();
 	if (ae[0] >= 250)
 	{
 		SET_ALL_ENGINE_RPM(200);
-		delay_ms(500);
+		epileptic_delay_ms(500);
 		SET_ALL_ENGINE_RPM(150);
-		delay_ms(500);
+		epileptic_delay_ms(500);
 	}
 	printf("$********Engines decreased!**********\n");
 	print_state();
 	if (ae[0] >= 150)
 	{
 		SET_ALL_ENGINE_RPM(100);
-		delay_ms(500);
+		epileptic_delay_ms(500);
 		SET_ALL_ENGINE_RPM(50);
-		delay_ms(500);
+		epileptic_delay_ms(500);
 	}
 	SET_ALL_ENGINE_RPM(0);
 	printf("$********Going to SAFE MODE!*********\n");
@@ -634,6 +633,15 @@ void delay_ms(int ms)
 {
 	int time = X32_ms_clock;
 	while(X32_ms_clock - time < ms);
+}
+
+
+void epileptic_delay_ms(int ms) 
+{
+	int time = X32_ms_clock;
+	while(X32_ms_clock - time < ms) {
+		toggle_led(0);
+	}
 }
 
 /*------------------------------------------------------------------
