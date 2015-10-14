@@ -94,6 +94,8 @@ int FULL_CONTROL_LOOP = FALSE;
 int full_yaw =0;
 int full_pitch = 0;
 int full_roll = 0;
+int pitch;
+int roll;
 
 
 
@@ -264,24 +266,25 @@ void process_packet(void)  //we need to process packet and decide what should be
 				}
 			//YAW in CONTROL LOOP
 			//set the yaw rate variable that is used in the control loop
-		if (data2 != data2_old) //save time if no changes in yaw input
-			{
-				data2_old = data2;
+			if (data2 != data2_old) //save time if no changes in yaw input
+				{
+					data2_old = data2;
 
-				if ( (data2&0x10) == 0x00) 
-					{
-						yaw  = ((int)data2&0x0F)*2; //the coeff
-						//printf("$YAW (+++) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
-					}
-				else
-					{
-						yaw = ((int)data2&0x0F)*2; //quick fix + the coeff
-						//printf("$YAW before (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
-						yaw = (yaw) *(-2);
-						//printf("$YAW after (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
-					}
-			}
+					if ( (data2&0x10) == 0x00) 
+						{
+							yaw  = ((int)data2&0x0F)*2; //the coeff
+							//printf("$YAW (+++) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+						}
+					else
+						{
+							yaw = ((int)data2&0x0F)*2; //quick fix + the coeff
+							//printf("$YAW before (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+							yaw = (yaw) *(-2);
+							//printf("$YAW after (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+						}
+				}
 		} 
+
 	else if ((modecommand == YAW_CONTROL) && (calibrated == FALSE))
 		{
 			printf("$QR must be calibrated first! \n");
