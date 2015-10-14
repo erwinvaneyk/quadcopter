@@ -15,7 +15,7 @@
 #define RS232_ERROR -1
 
 int fd_RS232;
-int link_status;
+int link_status = RS232_ERROR;
 
 int rs232_open(int serial_device);
 int rs232_close(void);
