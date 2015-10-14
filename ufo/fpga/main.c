@@ -147,6 +147,7 @@ int main()
 		// we have lost communication to the qr -> panic
 		if ((X32_ms_clock - timestamp_last_pkt) > THRESHOLD && TERM_CONNECTED) {	
 			panic();
+			timestamp_last_pkt = X32_ms_clock;
 		}
 		PRINT_STATE(250);
 
@@ -640,6 +641,7 @@ void epileptic_delay_ms(int ms)
 {
 	int time = X32_ms_clock;
 	while(X32_ms_clock - time < ms) {
+		if(X32_ms_clock % 10 == 0)
 		toggle_led(0);
 	}
 }
