@@ -72,7 +72,9 @@ uint8_t sensitivity = 30;
 //Full control variables
 //bias pitch,roll etc
 int FULL_CONTROL_LOOP = FALSE;
-
+int full_yaw =0;
+int full_pitch = 0;
+int full_roll = 0;
 
 
 
@@ -480,12 +482,17 @@ void periodic(void) {
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 			
+			full_yaw = (yaw - zr_v) * yaw_P;
+			full_pitch;
+			full_roll;
+
+			ae[0] = lift_setpoint_rpm - (full_pitch + full_yaw);
+			ae[2] = lift_setpoint_rpm - (full_pitch + full_yaw);
+
+			ae[1] = lift_setpoint_rpm - (full_roll + full_yaw);
+			ae[3] = lift_setpoint_rpm + (full_roll + full_yaw);
 
 
-			ae[0] = lift_setpoint_rpm + (yaw - zr_v) * yaw_P;
-			ae[2] = ae[0];
-			ae[1] = lift_setpoint_rpm - (yaw - zr_v) * yaw_P;
-			ae[3] = ae[1];
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		} 
 
@@ -544,23 +551,6 @@ void isr_qr_link(void) //1270 Hz
 		ae[ae_index] &= 0x3ff;
 	}
 
-	//Check for rapid changes in egine values
-	If (ae[0] > (X32_QR_a0 + (X32_QR_a0/15))
-		ae[0] = X32_QR_a0+(X32_QR_a0/15_);
-	else if (ae[0] < (X32_QR_a0 - (X32_QR_a0/15))	
-		ae[0] = X32_QR_a0+(X32_QR_a0/15_);
-	If (ae[1] > (X32_QR_a1 + (X32_QR_a1/15))
-		ae[1] = X32_QR_a1+(X32_QR_a1/15_);
-	else if (ae[1] < (X32_QR_a1 - (X32_QR_a1/15))	
-		ae[1] = X32_QR_a1+(X32_QR_a1/15_);	
-	If (ae[2] > (X32_QR_a2 + (X32_QR_a2/15))
-		ae[2] = X32_QR_a2+(X32_QR_a2/15_);
-	else if (ae[2] < (X32_QR_a2 - (X32_QR_a2/15))	
-		ae2] = X32_QR_a2+(X32_QR_a2/15_);
-	If (ae[3] > (X32_QR_a1 + (X32_QR_a1/15))
-		ae[3] = X32_QR_a1+(X32_QR_a1/15_);
-	else if (ae[3] < (X32_QR_a3 - (X32_QR_a3/15))	
-		ae[3] = X32_QR_a3+(X32_QR_a3/15_);		
 		
 	/* Send actuator values
 	 * (Need to supply a continous stream, otherwise
