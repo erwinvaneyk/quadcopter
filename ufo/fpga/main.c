@@ -332,7 +332,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
 
-void logs_s() {
+void logs_send() {
 	int i = 0;
 	#ifdef LOGGING
 		printf("********SENDING LOG DATA!**********\n");
