@@ -1,8 +1,12 @@
+
+#include <x32.h>
+
 #define LOGGING
 #define TRUE 1
 #define FALSE 0
 #define LOG_LENGTH 10000	//=10 seconds of logging in Manual Mode at 1000Hz
 #define THRESHOLD 2000		//(ms) Communicaton safety mechanism threshold value
+#define CALIBRATE_ITERATIONS 128 // Number of sensor readings needed for calibration
 
 /*
  * define some peripheral short hands

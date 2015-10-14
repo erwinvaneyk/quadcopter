@@ -213,6 +213,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		{
 			YAW_CONTROL_LOOP = FALSE;
 			panic();
+			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		}
 	else if ((modecommand == YAW_CONTROL) && (calibrated == TRUE))
 		{
@@ -380,6 +381,9 @@ void logs_send() {
 }
 
 void panic() {
+	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+	DISABLE_INTERRUPT(INTERRUPT_TIMER1);
+	DISABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
 	mode = PANIC_MODE_INT;
 	printf("$********Going to PANIC_MODE!********\n");
 	if (ae[0] > 400)
@@ -387,7 +391,7 @@ void panic() {
 		SET_ALL_ENGINE_RPM(300);
 		epileptic_delay_ms(500);
 		SET_ALL_ENGINE_RPM(250);
-		epileptic_delay_ms(500);
+		epileptic_delay_ms(500);	
 	}
 	printf("$********Engines decreased!**********\n");
 	print_state();
@@ -409,8 +413,11 @@ void panic() {
 	}
 	SET_ALL_ENGINE_RPM(0);
 	printf("$********Going to SAFE MODE!*********\n");
+	ENABLE_INTERRUPT(INTERRUPT_TIMER1);
+	ENABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
 	mode = SAFE_MODE_INT;
 	YAW_CONTROL_LOOP = FALSE;
+	// NOTE: INTERRUPT_GLOBAL is enabled now!
 }
 
 /*------------------------------------------------------------------
