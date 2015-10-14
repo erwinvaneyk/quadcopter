@@ -92,7 +92,7 @@ int main()
 {
 	int timer1;
 	int timer2;
-	int timestamp_alive_led_toggle;
+	int timestamp_alive_led_toggle = 0;
 	int count = 1;
 
 
