@@ -144,9 +144,13 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 
 			default:
 				if(unknownKey) {
-					//printf("Unknown key: %i\n", c);
-					mvprintw(MESSAGE_FIELD_START + msg_cursor,0,"Unknown key: %i\n", c);
-					TUI_MOVE_CURSOR;
+					#ifdef DEBUG_KEYBOARD
+						//printf("Unknown key: %i\n", c);
+						attron(COLOR_PAIR(6));
+						mvprintw(MESSAGE_FIELD_START + msg_cursor,0,"Unknown key: %i\n", c);
+						attroff(COLOR_PAIR(6));
+						TUI_MOVE_CURSOR;
+					#endif
 					updated = false;
 				}
 				// TODO: add other keys for P
