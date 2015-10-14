@@ -148,6 +148,7 @@ int main()
 		if ((X32_ms_clock - timestamp_last_pkt) > THRESHOLD && TERM_CONNECTED) {	
 			panic();
 			timestamp_last_pkt = X32_ms_clock;
+			TERM_CONNECTED = 0;
 		}
 		PRINT_STATE(250);
 
