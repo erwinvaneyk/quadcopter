@@ -82,6 +82,10 @@ int phi_kalman = 0;
 int phi_error = 0;
 int phi_kalman = 0;
 int p_bias = 0 ;
+int sp_old = 0;
+int p_bias_old = 0;
+int phi_kalman_old = 0;
+
 
 
 //packet processing global variables
@@ -491,6 +495,9 @@ void periodic(void) {
 			full_yaw = (yaw - zr_v) * yaw_P;
 			full_pitch;
 			full_roll;
+			//sp_old = 
+			//p_bias_old = 
+			//phi_kalman_old = 
 
 			ae[0] = lift_setpoint_rpm - (full_pitch + full_yaw);
 			ae[2] = lift_setpoint_rpm - (full_pitch + full_yaw);
@@ -519,7 +526,13 @@ void initiliaze_kalman_filter(void)
 
 void kalman_filter()
 {
-
+	/*
+   p_kalman = sp_old - p_bias_old;
+   phi_kalman = phi_kalman_old + p_kalman * P2PHI;
+   phi_error = phi_kalman - sphi;
+   phi_kalman = phi_kalman - (phi_error / C1);
+   p_bias = p_bias +((phi_error/p2phi) / C2);
+   */
 }
 /*------------------------------------------------------------------
  * isr_qr_link -- QR link rx interrupt handler
