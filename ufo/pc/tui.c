@@ -1,5 +1,37 @@
 #include "tui.h"
 
+void TUI_frame_init(void)
+{
+	start_color();
+	TUI_INIT_COLORS;
+
+	attron(A_BOLD | A_STANDOUT ); 
+	attron(COLOR_PAIR(1));
+	mvprintw(0,0, "- - - - - - - - - - - - - - -  Quadcopter Terminal  - - - - - - - - - - - - - - ");
+	mvprintw(1,0, "                                                                                ");
+	mvprintw(2,0, "STATUS:                                                                         ");
+	attroff(COLOR_PAIR(1));
+
+	attron(COLOR_PAIR(2));
+	attron(A_UNDERLINE);
+	mvprintw(3,0, "***ENGINE RPM***|    ***SENSOR values***    | ***CONTROL values***     ");
+	attroff(A_UNDERLINE);
+	mvprintw(4,0, "AE0 AE1 AE2 AE3 | AX   AY   AZ   P   Q   R  | yaw P                    ");
+	attroff(COLOR_PAIR(2));
+	attroff(A_BOLD | A_STANDOUT );
+
+	attron(A_BOLD | A_STANDOUT );
+	attron(COLOR_PAIR(1));
+	mvprintw(6,0, "                                                                                ");
+	attroff(COLOR_PAIR(1));
+
+	attron(A_BOLD | A_STANDOUT ); 
+	attron(COLOR_PAIR(1));
+	mvprintw(7,0, "MESSAGES:                                                                       ");
+	attroff(COLOR_PAIR(1));
+	attroff(A_BOLD | A_STANDOUT ); 
+}
+
 void TUI_engines_init(void)
 {
 	int i;
@@ -60,3 +92,5 @@ void TUI_engines(int ae0, int ae1, int ae2, int ae3)
 	}
 	
 }
+
+

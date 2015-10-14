@@ -57,7 +57,7 @@ extern int msg_cursor;
 
 void TUI_engines(int ae0, int ae1, int ae2, int ae3);
 void TUI_engines_init(void);
-
+void TUI_frame_init(void);
 
 #endif
 
