@@ -12,6 +12,7 @@
 #include "log.h"
 #include "defines.h"
 #include "../modules/pkt/pkt.h"
+#include "../modules/pkt/pkt_checksum.h"
 
 uint8_t	fifo[FIFOSIZE]; 
 int	iptr = 0; 
@@ -594,7 +595,8 @@ int get_packet(void)
 			move_optr();
 			checksum =	(uint8_t)fifo[optr];
 			move_optr();
-			checker = modecommand ^ data1 ^ data2 ^ data3 ^ data4 ^ checksum;
+			checker = VERIFY_CHECKSUM(modecommand, data1, data2, data3, data4, checksum);
+
 			//hack, because we shouldn't be getting this error. it somehow gets out of sync
 			if (iptr != optr) return -1;
 			//#define DEBUG

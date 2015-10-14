@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "pkt_generation.h"
+#include "pkt_checksum.h"
 #include "pkt.h"
 
 #include "../../pc/tui.h"
@@ -15,48 +16,33 @@
 uint8_t level_convert(int level);
 uint8_t convert_modecommand(int mode);
 
-void add_checksum(struct PACKET* packet) {
-	packet->checksum = packet->modecommand 
-		^ (packet->data & 0x000000FF) 
-		^ (packet->data >> 8 & 0x000000FF) 
-		^ (packet->data >> 16 & 0x000000FF) 
-		^ (packet->data >> 24 & 0x000000FF);
-}
-
 void generate_pkt(struct PACKET* packet, uint8_t mode, uint8_t command, uint16_t data) {
 	packet->header 	= HEADER;
 	packet->modecommand = mode;
 	packet->data 	= data;
-	add_checksum(packet);
+	packet->checksum = CALCULATE_CHECKSUM(packet->modecommand, packet->data);
 };
 
 
 uint32_t convert_data(struct INPUT* inputModel) {
-	uint32_t data;
-
-	data = level_convert(inputModel->roll) << 8;
+	uint32_t data = level_convert(inputModel->roll) << 8;
 	data = (data | level_convert(inputModel->pitch)) << 8;
 	data = (data | level_convert(inputModel->yaw)) << 8;
 	data = data | level_convert(inputModel->lift);
-
 	return data;
 }
 
 uint32_t convert_p_values_to_data(struct SPECIAL_INPUT* p_input)
 {
-	uint32_t data;
-
-	data = p_input->sensitivity << 8; //data4
+	uint32_t data = p_input->sensitivity << 8; //data4
 	data = (data | p_input->full_p2) << 8; //data3 Full-P2
 	data = (data | p_input->full_p1) << 8; //data2 Full-P1
 	data = data | p_input->yaw_p; //data1 Yaw-P
-
-	return data;
+	return  data;
 }
 
 void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet, struct SPECIAL_INPUT* p_input) {
 	packet->header = HEADER;
-
 	switch(p_input->updated) {
 		case true:
 			packet->modecommand = P_VALUES_MODE;
@@ -68,12 +54,10 @@ void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet, struct SPECIA
 			packet->data = convert_data(inputModel);
 			break;
 	}
-	
-	add_checksum(packet);
+	packet->checksum = CALCULATE_CHECKSUM(packet->modecommand, packet->data);
 }
 
-uint8_t level_convert(int level)
-{
+uint8_t level_convert(int level) {
 	switch(level) {
 		case 0:
 			return LEVEL0;
