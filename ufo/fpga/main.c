@@ -92,6 +92,7 @@ int main()
 {
 	int timer1;
 	int timer2;
+	int timestamp_alive_led_toggle;
 	int count = 1;
 
 
@@ -136,6 +137,12 @@ int main()
 			process_packet();
 			timer1 = X32_ms_clock; //<- maybe its better to move this into the get_packet()
 		}
+
+		// Toogle alive led
+	 	if(X32_ms_clock - timestamp_alive_led_toggle > 1000) {
+			toggle_led(0);
+			timestamp_alive_led_toggle = X32_ms_clock;
+		}  
 
 		timer2 = X32_ms_clock;
 		if (((timer2-timer1) > THRESHOLD) && TERM_CONNECTED)
@@ -430,7 +437,7 @@ void periodic(void) {
 			ae[1] = lift_setpoint_rpm - (yaw - zr_v) * yaw_P;
 			ae[3] = ae[1];
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
-		} 
+		}
 }
 
 /*------------------------------------------------------------------
