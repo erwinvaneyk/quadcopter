@@ -23,8 +23,6 @@ struct SPECIAL_INPUT {
 	bool updated; // updated?
 };
 
-#include "protocol.h"
-
 #define SAFE_MODE_INT		0
 #define PANIC_MODE_INT		1
 #define MANUAL_MODE_INT		2

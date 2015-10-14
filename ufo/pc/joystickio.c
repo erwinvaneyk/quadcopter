@@ -14,7 +14,6 @@
 #include "tui.h"
 
 #include "joystickio.h"
-#include "protocol.h"
 
 //TUI related
 extern int msg_cursor;

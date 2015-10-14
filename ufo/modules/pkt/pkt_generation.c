@@ -5,45 +5,30 @@
  *------------------------------------------------------------
  */
 
-#include "protocol.h"
 #include <stdio.h>
-#include "rs232.h"
 #include <stdlib.h>
-#include "tui.h"
+#include "pkt_generation.h"
+#include "pkt.h"
+
+#include "../../pc/tui.h"
+
+uint8_t level_convert(int level);
+uint8_t convert_modecommand(int mode);
 
 void add_checksum(struct PACKET* packet) {
-	packet->checksum = packet->modecommand ^ (packet->data & 0x000000FF) ^ (packet->data >> 8 & 0x000000FF) ^ (packet->data >> 16 & 0x000000FF) ^ (packet->data >> 24 & 0x000000FF);
-	}
+	packet->checksum = packet->modecommand 
+		^ (packet->data & 0x000000FF) 
+		^ (packet->data >> 8 & 0x000000FF) 
+		^ (packet->data >> 16 & 0x000000FF) 
+		^ (packet->data >> 24 & 0x000000FF);
+}
 
-	// @deprecated
 void generate_pkt(struct PACKET* packet, uint8_t mode, uint8_t command, uint16_t data) {
 	packet->header 	= HEADER;
 	packet->modecommand = mode;
 	packet->data 	= data;
 	add_checksum(packet);
 };
-
-
-uint8_t convert_modecommand(int mode) {
-	switch(mode) {
-		case SAFE_MODE_INT:
-			return SAFE_MODE;
-		case PANIC_MODE_INT:
-			return PANIC_MODE;
-		case MANUAL_MODE_INT:
-			return MANUAL_MODE;
-		case CALIBRATE_MODE_INT:
-			return CALIBRATE_MODE;
-		case YAW_CONTROL_INT:
-			return YAW_CONTROL;
-		case FULL_CONTROL_INT:
-			return FULL_CONTROL;
-		case SEND_TELEMETRY_INT:
-			return SEND_TELEMETRY;
-		default:
-			return SAFE_MODE;
-	}
-}
 
 uint8_t addons(struct SPECIAL_INPUT* p_input)
 {
@@ -80,37 +65,11 @@ void input_to_pkt(struct INPUT* inputModel, struct PACKET* packet, struct SPECIA
 	add_checksum(packet);
 }
 
-//DEBUG purpose
-void show_pkt(struct PACKET* packet)
-{
-	/*printf("PACKET: {\n");
-	printf("	HEADER: %x\n", packet->header);
-	printf("	MODECOMMAND: %x\n", packet->modecommand);
-	printf("	DATA: %x\n", packet->data);
-	printf("	CHECKSUM: %x\n}\n", packet->checksum);*/
-
-	attron(COLOR_PAIR(6));
-	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt: PACKET: {\n");
-	TUI_MOVE_CURSOR;
-	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt:   HEADER: %x\n", packet->header);
-	TUI_MOVE_CURSOR;
-	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt:   MODECOMMAND: %x\n", packet->modecommand);
-	TUI_MOVE_CURSOR;
-	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt:   DATA: %x\n", packet->data);
-	TUI_MOVE_CURSOR;
-	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt:   CHECKSUM: %x }\n", packet->checksum);
-	TUI_MOVE_CURSOR;
-	attroff(COLOR_PAIR(6));
-
-
-
-}
-
 uint8_t level_convert(int level)
 {
-	switch(level){
+	switch(level) {
 		case 0:
-			return HOVER;
+			return LEVEL0;
 		case 1:
 			return LEVEL1;
 		case 2:
@@ -141,7 +100,6 @@ uint8_t level_convert(int level)
 			return LEVEL14;
 		case 15:
 			return LEVEL15;
-
 		case -1:
 			return LEVEL_N1;
 		case -2:
@@ -173,18 +131,44 @@ uint8_t level_convert(int level)
 		case -15:
 			return LEVEL_N15;
 		default :
-			return HOVER; 
+			return LEVEL0; 
 	}
 }
 
-void periodic_send (struct timeval* timer_main, struct timeval* timer_r, struct PACKET* pkt, int link_status)
-{
-	if ((labs(((timer_main->tv_usec + timer_main->tv_sec*1000000) - (timer_r->tv_usec + timer_r->tv_sec*1000000))) > COMM_T))
-	{	
-		if(link_status > -1) {
-//show_pkt(pkt);
-			rs232_put_pkt(pkt);
-		}
-		gettimeofday(timer_r, NULL);//reset timer	
+uint8_t convert_modecommand(int mode) {
+	switch(mode) {
+		case SAFE_MODE_INT:
+			return SAFE_MODE;
+		case PANIC_MODE_INT:
+			return PANIC_MODE;
+		case MANUAL_MODE_INT:
+			return MANUAL_MODE;
+		case CALIBRATE_MODE_INT:
+			return CALIBRATE_MODE;
+		case YAW_CONTROL_INT:
+			return YAW_CONTROL;
+		case FULL_CONTROL_INT:
+			return FULL_CONTROL;
+		case SEND_TELEMETRY_INT:
+			return SEND_TELEMETRY;
+		default:
+			return SAFE_MODE;
 	}
+}
+
+//DEBUG purpose
+void show_pkt(struct PACKET* packet)
+{
+	attron(COLOR_PAIR(6));
+	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt: PACKET: {\n");
+	TUI_MOVE_CURSOR;
+	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt:   HEADER: %x\n", packet->header);
+	TUI_MOVE_CURSOR;
+	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt:   MODECOMMAND: %x\n", packet->modecommand);
+	TUI_MOVE_CURSOR;
+	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt:   DATA: %x\n", packet->data);
+	TUI_MOVE_CURSOR;
+	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_pkt:   CHECKSUM: %x }\n", packet->checksum);
+	TUI_MOVE_CURSOR;
+	attroff(COLOR_PAIR(6));
 }

@@ -5,7 +5,8 @@
  * 115,200 baud wired and 9,600 baud wireless.
  *------------------------------------------------------------
  */
-#include "protocol.h"
+ 
+#include "../modules/pkt/pkt_generation.h"
 
 #define SERIAL_DEVICE	"/dev/ttyS0"
 #define USB_DEVICE		"/dev/ttyUSB0"
