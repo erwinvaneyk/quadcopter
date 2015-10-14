@@ -12,7 +12,10 @@
 #define USB_DEVICE		"/dev/ttyUSB0"
 #define WIFI_DEVICE 	"/dev/ttyUSB0" /* may need to change this */
 
+#define RS232_ERROR -1
+
 int fd_RS232;
+int link_status;
 
 int rs232_open(int serial_device);
 int rs232_close(void);
