@@ -362,7 +362,7 @@ void logs_send() {
 }
 
 void panic() {
-	modecommand = PANIC_MODE;
+	//modecommand = PANIC_MODE;
 	mode = PANIC_MODE_INT;
 	printf("$********Going to PANIC_MODE!**********\n");
 	if (ae[0] > 400)
@@ -373,6 +373,7 @@ void panic() {
 		delay_ms(500);
 	}
 	printf("$********Engines decreased!**********\n");
+	print_state();
 	if (ae[0] >= 250)
 	{
 		SET_ALL_ENGINE_RPM(200);
@@ -380,6 +381,8 @@ void panic() {
 		SET_ALL_ENGINE_RPM(150);
 		delay_ms(500);
 	}
+	printf("********Engines decreased!**********\n");
+	print_state();
 	if (ae[0] >= 150)
 	{
 		SET_ALL_ENGINE_RPM(100);
