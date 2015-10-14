@@ -105,7 +105,7 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case 'u': // p control yaw
 				//printf("Incremented P value for YAW!\n");
 				TUI_PRINT_MESSAGE(Incremented P value for YAW!);
-				p_input->yaw_p = within_bounds(p_input->yaw_p+1,20,1);
+				p_input->yaw_p = within_bounds(p_input->yaw_p+1,1,20);
 				p_input->updated = true;
 		#define DEBUG
 			#ifdef DEBUG
@@ -117,7 +117,7 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case 'j': // p control yaw
 				//printf("Decremented P value for YAW!\n");
 				TUI_PRINT_MESSAGE(Decremented P value for YAW!);
-				p_input->yaw_p = within_bounds(p_input->yaw_p-1,20,1);
+				p_input->yaw_p = within_bounds(p_input->yaw_p-1,1,20);
 				p_input->updated = true;
 			#ifdef DEBUG
 			attron(COLOR_PAIR(6));
@@ -128,7 +128,7 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case 'i': // p1 control pitch/roll
 				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Incremented P1 value for FULL CONTROL!);
-				p_input->full_p1 = within_bounds(p_input->full_p1+1,20,1);
+				p_input->full_p1 = within_bounds(p_input->full_p1+1,1,20);
 				p_input->updated = true;
 			#ifdef DEBUG
 			attron(COLOR_PAIR(6));
@@ -139,7 +139,7 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case 'k': // p1 control pitch/roll
 				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Decremented P1 value for FULL CONTROL!);
-				p_input->full_p1 = within_bounds(p_input->full_p1-1,20,1);
+				p_input->full_p1 = within_bounds(p_input->full_p1-1,1,20);
 				p_input->updated = true;
 			#ifdef DEBUG
 			attron(COLOR_PAIR(6));
@@ -150,7 +150,7 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case 'o': // p2 control pitch/roll
 				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Incremented P2 value for FULL CONTROL!);
-				p_input->full_p2 = within_bounds(p_input->full_p2+1,20,1);
+				p_input->full_p2 = within_bounds(p_input->full_p2+1,1,20);
 				p_input->updated = true;
 			#ifdef DEBUG
 			attron(COLOR_PAIR(6));
@@ -161,7 +161,7 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case 'l': // p2 control pitch/roll
 				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Decremented P2 value for FULL CONTROL!);
-				p_input->full_p2 = within_bounds(p_input->full_p2-1,20,1);
+				p_input->full_p2 = within_bounds(p_input->full_p2-1,1,20);
 				p_input->updated = true;
 			#ifdef DEBUG
 			attron(COLOR_PAIR(6));
