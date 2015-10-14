@@ -61,11 +61,19 @@ int yaw = 0;
 int calibrated = FALSE;
 int YAW_CONTROL_LOOP = FALSE;
 
+
 uint8_t yaw_p = 1;
 uint8_t full_p1 = 1;
 uint8_t full_p2 = 1;
 
 uint8_t sensitivity = 30;
+
+
+//Full control variables
+//bias pitch,roll etc
+int FULL_CONTROL_LOOP = FALSE;
+
+
 
 
 //packet processing global variables
@@ -465,9 +473,41 @@ void periodic(void) {
 			ae[3] = ae[1];
 
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
-		}
+
+		
+		} 
+			if ((mode == FULL_CONTROL_INT) && (FULL_CONTROL_LOOP == TRUE))
+		{
+			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+			
+
+
+			ae[0] = lift_setpoint_rpm + (yaw - zr_v) * yaw_P;
+			ae[2] = ae[0];
+			ae[1] = lift_setpoint_rpm - (yaw - zr_v) * yaw_P;
+			ae[3] = ae[1];
+			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+		} 
+
+
 }
 
+void initiliaze_kalman_filter(void)
+{
+	p_bRoll = 0;
+	p_bPitch = 0;
+	p2phi = 0;
+	p_kalmanRoll = 0;
+	q_kalmanPitch = 0;
+	phi_roll = 0;
+	theta_pitch = 0;
+	theta_error  = 0;
+}
+
+void kalman_filter()
+{
+
+}
 /*------------------------------------------------------------------
  * isr_qr_link -- QR link rx interrupt handler
  * This function is executed at 1270Hz
@@ -504,6 +544,24 @@ void isr_qr_link(void) //1270 Hz
 		ae[ae_index] &= 0x3ff;
 	}
 
+	//Check for rapid changes in egine values
+	If (ae[0] > (X32_QR_a0 + (X32_QR_a0/15))
+		ae[0] = X32_QR_a0+(X32_QR_a0/15_);
+	else if (ae[0] < (X32_QR_a0 - (X32_QR_a0/15))	
+		ae[0] = X32_QR_a0+(X32_QR_a0/15_);
+	If (ae[1] > (X32_QR_a1 + (X32_QR_a1/15))
+		ae[1] = X32_QR_a1+(X32_QR_a1/15_);
+	else if (ae[1] < (X32_QR_a1 - (X32_QR_a1/15))	
+		ae[1] = X32_QR_a1+(X32_QR_a1/15_);	
+	If (ae[2] > (X32_QR_a2 + (X32_QR_a2/15))
+		ae[2] = X32_QR_a2+(X32_QR_a2/15_);
+	else if (ae[2] < (X32_QR_a2 - (X32_QR_a2/15))	
+		ae2] = X32_QR_a2+(X32_QR_a2/15_);
+	If (ae[3] > (X32_QR_a1 + (X32_QR_a1/15))
+		ae[3] = X32_QR_a1+(X32_QR_a1/15_);
+	else if (ae[3] < (X32_QR_a3 - (X32_QR_a3/15))	
+		ae[3] = X32_QR_a3+(X32_QR_a3/15_);		
+		
 	/* Send actuator values
 	 * (Need to supply a continous stream, otherwise
 	 * QR will go to safe mode, so just send every ms)
@@ -572,6 +630,7 @@ printf(" => %x\n", fifo[iptr-1]);
  * get_packet -- construct packet. return -1 on failure.
  *------------------------------------------------------------------
  */
+ /
 
 void move_optr()
 {	
