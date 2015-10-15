@@ -162,6 +162,7 @@ int main()
 		// we have lost communication to the qr -> panic
 		if ((X32_ms_clock - timestamp_last_pkt) > THRESHOLD && TERM_CONNECTED) {	
 			panic();
+			YAW_CONTROL_LOOP = FALSE;
 			timestamp_last_pkt = X32_ms_clock;
 			TERM_CONNECTED = 0;
 		}
@@ -189,10 +190,12 @@ void process_packet(void)  //we need to process packet and decide what should be
 	if ((modecommand == SAFE_MODE) )
 		{
 			SET_ALL_ENGINE_RPM(0);
+			YAW_CONTROL_LOOP = FALSE;
 			mode = SAFE_MODE_INT;
 		}
 	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
 		{
+			YAW_CONTROL_LOOP = FALSE;
 			panic();
 		}
 	else if ((modecommand == YAW_CONTROL) && (calibrated == TRUE))
@@ -250,7 +253,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 				}
 			else
 				{
-					yaw = -1 * data2&0x0F;
+					yaw = (-1) * data2&0x0F;
 				}
 		}
 	else if ((modecommand == YAW_CONTROL) && (calibrated == FALSE))
@@ -445,6 +448,7 @@ void calibrate(void)
 void periodic(void) {
 		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
 		{
+			//printf("$YAW = %d\n",yaw );
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 			zr_v = convertIntToFP(zr());
 		    	zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));

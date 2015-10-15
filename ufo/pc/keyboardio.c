@@ -155,14 +155,14 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case 'p': // p2 control pitch/roll
 				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Increased Sensitivity);
-				p_input->sensitivity = within_bounds(p_input->sensitivity+1,20,1);
+				p_input->sensitivity = within_bounds(p_input->sensitivity+1,1,20);
 				p_input->updated = true;
 				break;
 
 			case ';': // p2 control pitch/roll
 				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Decreased Sensitivity);
-				p_input->sensitivity = within_bounds(p_input->sensitivity-1,20,1);
+				p_input->sensitivity = within_bounds(p_input->sensitivity-1,1,20);
 				p_input->updated = true;
 				break;
 
