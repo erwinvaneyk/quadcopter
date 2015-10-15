@@ -57,7 +57,7 @@ float_x32 a1 = 0x1f3;  // 0.0305;
 float_x32 b1 = 0x1f3;  // 0.0305;
 float_x32 zr_v;
 
-//float_x32 p2phi =  // 0.00410
+float_x32 p2phi = 0x43; // 0.00410
 
 int yaw = 0;
 
@@ -82,9 +82,9 @@ int pitch;
 int roll;
 
 
-int p_kalman, phi_kalman, phi_error, p_bias, sp_old, p_bias_old, phi_kalman_old; 
+float_x32 p_kalman, phi_kalman, phi_error, p_bias, sp_old, p_bias_old, phi_kalman_old; 
 
-int q_kalman, theta_kalman,theta_error, q_bias,sq_old,q_bias_old, theta_kalman_old;
+float_x32 q_kalman, theta_kalman,theta_error, q_bias,sq_old,q_bias_old, theta_kalman_old;
 
 
 
@@ -494,27 +494,32 @@ void periodic(void) {
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 			
              p_kalman = sp_old - p_bias_old;
-		     phi_kalman = phi_kalman_old + (p_kalman * p2phi);
-		     phi_error = phi_kalman - zay;
-		     phi_kalman = phi_kalman - (phi_error * (1/C1));
-		     p_bias = p_bias +((phi_error * (1/p2phi)) / C2);
+		     phi_kalman = phi_kalman_old + fp_mul(p_kalman, p2phi);
+		     phi_error = fp_sub(phi_kalman, zay);
+		     phi_kalman = fp_sub(phi_kalman, fp_mul(phi_error, (1/C1)) );
+		     p_bias = fp_add(p_bias + (fp_mul((phi_error,  fp_mul((1/p2phi), (1/C2))));
 		   
 		   	//phi is zay
 		    //theta is zax 
 		    //in resources examples we got C1 = 256 ,C2 = 1000000
 		   
 		     q_kalman = sq_old - q_bias_old;
-		     theta_kalman = theta_kalman_old + (q_kalman * p2phi);
-		     theta_error = theta_kalman - zax;
-		     theta_kalman = theta_kalman - (theta_error * (1/ C1));
-		     q_bias = p_bias + ((phi_error * (1/p2phi)) * (1/C2));
+		     theta_kalman = theta_kalman_old + fp_mul(q_kalman, p2phi);
+		     theta_error = fp_sub(theta_kalman, zax);
+		     theta_kalman = fp_sub(theta_kalman, fp_mul(theta_error, (1/C1)) );
+		     q_bias = fp_add(q_bias + (fp_mul((theta_error,  fp_mul((1/p2phi), (1/C2))));
             
 
 		    zr_v = convertIntToFP(zr());
 		    zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
 			zr_old = zr_v;
 
-			zr_filtered = convertFPToInt(zr_filtered_old); 	
+			zr_filtered = convertFPToInt(zr_filtered_old); 
+
+			theta_kalman = convertFPToInt(theta_kalman);
+			q_kalman = convertFPToInt(q_kalman);
+			phi_kalman = convertFPToInt(phi_kalman);
+			p_kalman = convertFPToInt(p_kalman);
 
 			full_yaw = (yaw - zr_filtered) * yaw_P;
 			
