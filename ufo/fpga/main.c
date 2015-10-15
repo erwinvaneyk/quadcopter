@@ -57,6 +57,7 @@ float_x32 a1 = 0x1f3;  // 0.0305;
 float_x32 b1 = 0x1f3;  // 0.0305;
 float_x32 zr_v;
 
+float_x32 p2phi = 0x3b86594b; // 0.00410
 
 int yaw = 0;
 
@@ -79,6 +80,7 @@ int full_pitch = 0;
 int full_roll = 0;
 int pitch;
 int roll;
+
 
 int p_kalman, phi_kalman, phi_error, p_bias, sp_old, p_bias_old, phi_kalman_old; 
 
@@ -497,6 +499,9 @@ void periodic(void) {
 		     phi_kalman = phi_kalman - (phi_error / C1);
 		     p_bias = p_bias +((phi_error/p2phi) / C2);
 		   
+		   	//phi is zay
+		    //theta is zax 
+		    //in resources examples we got C1 = 256 ,C2 = 1000000
 		   
 		     q_kalman = sq_old - q_bias_old;
 		     theta_kalman = theta_kalman_old + (q_kalman * P2PHI);
