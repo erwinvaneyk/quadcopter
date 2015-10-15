@@ -48,12 +48,12 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 					break;
 				case 68: // roll right
 					if (keyboardInput->roll > -MAX_LEVEL) {
-						keyboardInput->roll--;
+						keyboardInput->roll++;
 					}
 					break;
 				case 67: // roll right
 					if (keyboardInput->roll < MAX_LEVEL) {
-						keyboardInput->roll++;
+						keyboardInput->roll--;
 					}
 					break;
 				default:
