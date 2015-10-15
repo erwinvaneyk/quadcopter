@@ -1,2 +1,0 @@
-#!/bin/sh
-xc3sprog $X32_PACKAGE_ROOT/x32/x32-version/x32.bit 0
