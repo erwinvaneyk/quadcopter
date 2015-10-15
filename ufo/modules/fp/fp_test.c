@@ -92,6 +92,8 @@ int main(int argc, char **argv) {
 	printf("0.0305 -> %x\n", convertFloatToFP(0.0305));
 	printf("1 -> %x\n", convertFloatToFP(1));
 	printf("0 -> %x\n", convertFloatToFP(0));
+	printf("0.00410-> %x\n", convertFloatToFP(0.00410));
+	printf("0 -> %x\n", convertFloatToFP(0));
 
 	// Tests
 	printf("Running tests...\n");

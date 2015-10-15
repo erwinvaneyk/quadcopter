@@ -51,9 +51,9 @@
 
 #define FIFOSIZE 16
 
-#define C1
-#define C2
-#define P2PHI
+#define C1 256
+#define C2 1000000
+
 
 #define SET_ALL_ENGINE_RPM(rpm) ae[0]=ae[1]=ae[2]=ae[3]= rpm;
 
