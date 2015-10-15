@@ -381,14 +381,13 @@ void logs_send() {
 
 void panic() {
 	mode = PANIC_MODE_INT;
-	ENABLE_INTERRUPT(INTERRUPT_XUFO);
 	printf("$********Going to PANIC_MODE!********\n");
 	if (ae[0] > 400)
 	{
 		SET_ALL_ENGINE_RPM(300);
 		epileptic_delay_ms(500);
 		SET_ALL_ENGINE_RPM(250);
-		epileptic_delay_ms(500);
+		epileptic_delay_ms(500);	
 	}
 	printf("$********Engines decreased!**********\n");
 	print_state();
@@ -645,6 +644,9 @@ return 0;
  */
 void delay_ms(int ms) 
 {
+	// Enable interrupts for qr to avoid shutting down the engines
+	ENABLE_INTERRUPT(INTERRUPT_XUFO);
+	
 	int time = X32_ms_clock;
 	while(X32_ms_clock - time < ms);
 }
@@ -652,6 +654,9 @@ void delay_ms(int ms)
 
 void epileptic_delay_ms(int ms) 
 {
+	// Enable interrupts for qr to avoid shutting down the engines
+	ENABLE_INTERRUPT(INTERRUPT_XUFO);
+
 	int time = X32_ms_clock;
 	while(X32_ms_clock - time < ms) {
 		if(X32_ms_clock % 10 == 0)

@@ -51,10 +51,9 @@
 
 #define FIFOSIZE 16
 
-#define SET_ALL_ENGINE_RPM(rpm) \
- 		DISABLE_INTERRUPT(INTERRUPT_GLOBAL); \
- 		ae[0]=ae[1]=ae[2]=ae[3]= rpm; \
- 		ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+
+// Note: interrupts need to be disabled to safely perform this function
+#define SET_ALL_ENGINE_RPM(rpm) ae[0]=ae[1]=ae[2]=ae[3]= rpm; 
 
 #define PRINT_STATE(f) 	if (count%f == 0)\
 			{\
