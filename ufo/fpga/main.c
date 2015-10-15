@@ -265,61 +265,55 @@ void process_packet(void)  //we need to process packet and decide what should be
 		{
 			mode = MANUAL_MODE_INT;
 			//LIFT
-			if ( (data1&0x10) == 0x00) //level up only in MANUAL mode
-				{
-					SET_ALL_ENGINE_RPM(65 * (data1&0x0F));
-				}
+			if ( (data1&0x10) == 0x00)
+			{
+				SET_ALL_ENGINE_RPM(65 * (data1&0x0F));
+			} // Ignoring negative values for lift
 
 			//ROLL
 			if ( (data4&0x10) == 0x00) 
-				{
-					ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
-					if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-						ae[3]=ae[3] - 15 * (data4&0x0F);
-				}
+			{
+				//lean left
+				ae[1] = MIN(ae[1] + 15 * (data4&0x0F), MAXIMUM_ENGINE_SPEED);
+				ae[3] = MAX(ae[3] - 15 * (data4&0x0F), MINIMUM_ENGINE_SPEED);
+			}
 			else
-				{
-					ae[3]=ae[3] + 15 * (data4&0x0F);
-					if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-						ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
-				}
+			{
+				//lean right
+				ae[3] = MIN(ae[3] + 15 * (data4&0x0F), MAXIMUM_ENGINE_SPEED);
+				ae[1] = MAX(ae[1] - 15 * (data4&0x0F), MINIMUM_ENGINE_SPEED);
+			}
 
 			//PITCH
 			if ( (data3&0x10) == 0x00) 
-				{
-					ae[2] = ae[2] + 15 * (data3&0x0F); 
-					if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-						ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
-				}
+			{
+				//lean forward
+				ae[2] = MIN(ae[2] + 15 * (data3&0x0F). MAXIMUM_ENGINE_SPEED); 
+				ae[0] = MAX(ae[0] - 15 * (data3&0x0F), MINIMUM_ENGINE_SPEED); 
+			}
 			else
-				{
-					ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
-					if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-						ae[2] = ae[2] - 15 * (data3&0x0F); 
-				}
+			{
+				 //lean backward
+				ae[0] = MIN(ae[0] + 15 * (data3&0x0F), MAXIMUM_ENGINE_SPEED);
+				ae[2] = MAX(ae[2] - 15 * (data3&0x0F), MINIMUM_ENGINE_SPEED); 
+			}
 
 			//YAW
 			if ( (data2&0x10) == 0x00) 
-				{
-					ae[0] = ae[0] + 25 * (data2&0x0F);
-					ae[2] = ae[2] + 25 * (data2&0x0F);
-					
-					if ((ae[1] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED) && (ae[3] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED))
-					{
-						ae[1] = ae[1] - 25 * (data2&0x0F);
-						ae[3] = ae[3] - 25 * (data2&0x0F);
-					}
-
-				}
+			{
+				// Left?
+				ae[0] = MIN(ae[0] + 25 * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
+				ae[2] = MIN(ae[2] + 25 * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
+				ae[1] = MAX(ae[1] - 25 * (data2&0x0F), MINIMUM_ENGINE_SPEED);
+				ae[3] = MAX(ae[3] - 25 * (data2&0x0F), MINIMUM_ENGINE_SPEED);
+			}
 			else
 			{
-				ae[1] = ae[1] + 25 * (data2&0x0F);
-				ae[3] = ae[3] + 25 * (data2&0x0F);
-				if ((ae[0] - 25 * (data2&0x0F) > MINIMUM_ENGINE_SPEED) && (ae[2] - 25 * (data2&0x0F)  > MINIMUM_ENGINE_SPEED))
-				{
-					ae[0] = ae[0] - 25 * (data2&0x0F);
-					ae[2] = ae[2] - 25 * (data2&0x0F);
-				}
+				// Right?
+				ae[1] = MIN(ae[1] + 25 * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
+				ae[3] = MIN(ae[3] + 25 * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
+				ae[0] = MAX(ae[0] - 25 * (data2&0x0F), MINIMUM_ENGINE_SPEED);
+				ae[2] = MAX(ae[2] - 25 * (data2&0x0F), MINIMUM_ENGINE_SPEED);
 	 		}
 		}
 
