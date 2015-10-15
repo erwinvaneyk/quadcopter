@@ -288,7 +288,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 			if ( (data3&0x10) == 0x00) 
 			{
 				//lean forward
-				ae[2] = MIN(ae[2] + 15 * (data3&0x0F). MAXIMUM_ENGINE_SPEED); 
+				ae[2] = MIN(ae[2] + 15 * (data3&0x0F), MAXIMUM_ENGINE_SPEED); 
 				ae[0] = MAX(ae[0] - 15 * (data3&0x0F), MINIMUM_ENGINE_SPEED); 
 			}
 			else
