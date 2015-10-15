@@ -80,6 +80,7 @@ int startTimestamp, endTimestamp, counter;
 
 void 	delay_ms(int ms);
 void 	delay_us(int us);
+void 	epileptic_delay_ms(int ms);
 void 	toggle_led(int i);
 void 	print_state(void);
 
@@ -217,33 +218,33 @@ void process_packet(void)  //we need to process packet and decide what should be
 					}
 				}
 
-			//ROLL
-			if ( (data4&0x10) == 0x00) 
-				{
-					ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
-					if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-						ae[3]=ae[3] - 15 * (data4&0x0F);
-				}
-			else
-				{
-					ae[3]=ae[3] + 15 * (data4&0x0F);
-					if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-						ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
-				}
+			// //ROLL
+			// if ( (data4&0x10) == 0x00) 
+			// 	{
+			// 		ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
+			// 		if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+			// 			ae[3]=ae[3] - 15 * (data4&0x0F);
+			// 	}
+			// else
+			// 	{
+			// 		ae[3]=ae[3] + 15 * (data4&0x0F);
+			// 		if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
+			// 			ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
+			// 	}
 
-			//PITCH
-			if ( (data3&0x10) == 0x00) 
-				{
-					ae[2] = ae[2] + 15 * (data3&0x0F); 
-					if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-						ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
-				}
-			else
-				{
-					ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
-					if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-						ae[2] = ae[2] - 15 * (data3&0x0F); 
-				}
+			// //PITCH
+			// if ( (data3&0x10) == 0x00) 
+			// 	{
+			// 		ae[2] = ae[2] + 15 * (data3&0x0F); 
+			// 		if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+			// 			ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
+			// 	}
+			// else
+			// 	{
+			// 		ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
+			// 		if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
+			// 			ae[2] = ae[2] - 15 * (data3&0x0F); 
+			// 	}
 
 			//YAW in CONTROL LOOP
 			//set the yaw rate variable that is used in the control loop
@@ -519,18 +520,18 @@ void isr_qr_link(void) //1270 Hz
 	* Logging
 	*/
 #ifdef LOGGING
-	if ((log_counter < LOG_LENGTH) && (mode == YAW_CONTROL_INT) ) {
-		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
+	if ((log_counter < LOG_LENGTH) && (mode == MANUAL_MODE_INT) ) { //mode == YAW_CONTROL_INT
+		log[log_counter].timestamp = X32_ms_clock;
 		log[log_counter].ae[0] = (uint16_t) ae[0];
 		log[log_counter].ae[1] = (uint16_t) ae[1];
 		log[log_counter].ae[2] = (uint16_t) ae[2];
 		log[log_counter].ae[3] = (uint16_t) ae[3];
-		log[log_counter].s[0] = sax;  //should we log these RAW or callibrated values?
-		log[log_counter].s[1] = say;
-		log[log_counter].s[2] = saz;
-		log[log_counter].s[3] = sp;
-		log[log_counter].s[4] = sq;
-		log[log_counter].s[5] = sr;
+		log[log_counter].s[0] = zax();
+		log[log_counter].s[1] = zay();
+		log[log_counter].s[2] = zaz();
+		log[log_counter].s[3] = zp();
+		log[log_counter].s[4] = zq();
+		log[log_counter].s[5] = zr();
 		log[log_counter].lift_point = lift_setpoint_rpm;
 		log_counter++;
 	}
