@@ -57,7 +57,7 @@ float_x32 a1 = 0x1f3;  // 0.0305;
 float_x32 b1 = 0x1f3;  // 0.0305;
 float_x32 zr_v;
 
-float_x32 p2phi = 0x3b86594b; // 0.00410
+//float_x32 p2phi =  // 0.00410
 
 int yaw = 0;
 
