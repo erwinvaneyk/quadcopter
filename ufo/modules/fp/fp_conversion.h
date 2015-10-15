@@ -12,10 +12,10 @@
  * fractalPart >= 0
  * fractalOffset >= 0
  */ 
-int convertIntFloatToFP(int decimalPart, int fractalPart, int fractalOffset);
+float_x32 convertIntFloatToFP(int decimalPart, int fractalPart, int fractalOffset);
 
-int convertIntToFP(int number);
+float_x32 convertIntToFP(int number);
 
-int convertFPToInt(int fpValue);
+int convertFPToInt(float_x32 fpValue);
 
 #endif

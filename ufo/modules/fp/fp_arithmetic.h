@@ -3,9 +3,11 @@
 #ifndef FP_ARITHMETIC_H_
 #define FP_ARITHMETIC_H_
 
-int fp_mul(int c, int d);
+#include "fp.h"
 
-int fp_add(int c, int d);
+float_x32 fp_mul(float_x32 c, float_x32 d);
 
-int fp_min(int c, int d);
+float_x32 fp_add(float_x32 c, float_x32 d);
+
+float_x32 fp_sub(float_x32 c, float_x32 d);
 #endif
