@@ -381,6 +381,7 @@ void logs_send() {
 
 void panic() {
 	mode = PANIC_MODE_INT;
+	ENABLE_INTERRUPT(INTERRUPT_XUFO);
 	printf("$********Going to PANIC_MODE!********\n");
 	if (ae[0] > 400)
 	{
