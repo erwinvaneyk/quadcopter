@@ -1,7 +1,7 @@
 #define LOGGING
 #define TRUE 1
 #define FALSE 0
-#define LOG_LENGTH 10000	//=10 seconds of logging in Manual Mode at 1000Hz
+#define NULL 0
 #define THRESHOLD 2000		//(ms) Communicaton safety mechanism threshold value
 
 /*
@@ -32,6 +32,12 @@
 #define X32_wireless_char			(X32_wireless_stat & 0x02)
 #define X32_button					peripherals[PERIPHERAL_BUTTONS]
 #define X32_switches				peripherals[PERIPHERAL_SWITCHES]
+
+// LEDs
+ #define LED_ALIVE	0
+ #define LED_RS232	1
+ #define LED_QR		2
+ #define LED_OTHER	3
 
  /*
  * more shorthands

@@ -1,6 +1,5 @@
 /*------------------------------------------------------------------
  *  QR
- *
  *------------------------------------------------------------------
  */
 
@@ -9,7 +8,7 @@
 #include "assert.h"
 #include <stdint.h>
 #include <stdlib.h>
-#include "log.h"
+#include "../modules/log/log.h"
 #include "defines.h"
 #include "../modules/pkt/pkt.h"
 #include "../modules/pkt/pkt_checksum.h"
@@ -17,11 +16,9 @@
 uint8_t	fifo[FIFOSIZE]; 
 int	iptr = 0; 
 int optr = 0;
-int TERM_CONNECTED = 0; //communication safety mechanism
 
 // 
-struct LOG log[LOG_LENGTH];
-char	c;
+char c;
 int	ALIVE = 1;
 int mode = SAFE_MODE_INT;
 int	ae[4];
@@ -29,14 +26,12 @@ int	ae[4];
 int	sax, say, saz, sp, sq, sr, timestamp;
 int	sax0, say0, saz0, sp0, sq0, sr0; //Callibration offsets
 
+int log_sent = 0;
+
 int	isr_qr_counter;
 int	isr_qr_time;
 int	button;
 int	inst;
-
-// Logging
-int log_sent = 0;
-int log_counter = 0;
 
 int lift_setpoint = 0;
 int lift_setpoint_rpm = 0;
@@ -53,7 +48,7 @@ unsigned int b1 ;  //0.0305;
 
 int yaw;
 int calibrated = FALSE;
-int YAW_CONTROL_LOOP = FALSE;
+int yaw_control_loop = FALSE;
 
 uint8_t yaw_p = 1;
 uint8_t full_p1 = 1;
@@ -75,6 +70,7 @@ int startTimestamp, endTimestamp, counter;
 
 void 	delay_ms(int ms);
 void 	delay_us(int us);
+void	epileptic_delay_ms(int ms);
 void 	toggle_led(int i);
 void 	print_state(void);
 
@@ -142,7 +138,7 @@ int main()
 
 	while (ALIVE)
 	{
-		c=get_packet();  //<- possibly add no change packet
+		c = get_packet();  //<- possibly add no change packet
 		if (c != -1) {
 			process_packet();
 			timestamp_last_pkt = X32_ms_clock;
@@ -150,27 +146,26 @@ int main()
 
 		// Toogle alive led
 	 	if(X32_ms_clock - timestamp_alive_led_toggle > 1000) {
-			toggle_led(0);
+			toggle_led(LED_ALIVE);
 			timestamp_alive_led_toggle = X32_ms_clock;
 		}  
 
 		// we have lost communication to the qr -> panic
-		if ((X32_ms_clock - timestamp_last_pkt) > THRESHOLD && TERM_CONNECTED) {	
+		if ((X32_ms_clock - timestamp_last_pkt) > THRESHOLD && timestamp_alive_led_toggle != 0) {	
 			panic();
-			timestamp_last_pkt = X32_ms_clock;
-			TERM_CONNECTED = 0;
+			timestamp_last_pkt = 0;
 		}
 		PRINT_STATE(250);
 
 	}
+	printf("Exit\r\n");
+    DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 
 	// If for some reason the qr is not in safe/panic mode -> panic 
 	if(mode != PANIC_MODE_INT || mode != SAFE_MODE_INT) {
 		panic();
 	} 
 
-	printf("Exit\r\n");
-    DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	return 0;
 }
 
@@ -193,7 +188,17 @@ void process_packet(void)  //we need to process packet and decide what should be
 	else if ((modecommand == YAW_CONTROL) && (calibrated == TRUE))
 		{
 			mode = YAW_CONTROL_INT;
-		
+			//check for P value changes
+			printf("\n %x \n", data1&0xE0);
+			if ((data1&0xE0) == 0xE0)
+			{
+				if (yaw_P < 20)	yaw_P ++;
+			}
+			else if ((data1&0xE0) == 0xA0)
+			{
+				if (yaw_P > 1)	yaw_P --;
+			}
+			
 			//LIFT
 			if ( (data1&0x10) == 0x00)
 				{
@@ -204,8 +209,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 						lift_setpoint = (int)(data1&0x0F);
 						lift_setpoint_rpm = lift_setpoint * 65;
 						SET_ALL_ENGINE_RPM(lift_setpoint_rpm);
-						if (lift_setpoint > 2) 	YAW_CONTROL_LOOP = TRUE;
-						else YAW_CONTROL_LOOP = FALSE;
+						yaw_control_loop = lift_setpoint > 2 ? TRUE : FALSE;
 					}
 				}
 
@@ -314,20 +318,24 @@ void process_packet(void)  //we need to process packet and decide what should be
 	 		}
 		}
 
-		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT) && !log_sent ) 
+		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT) && !log_sent) 
 		{
-			logs_send();
+			#ifdef LOGGING
+				logs_send();
+				printf("LOG saved to file.\n");
+			#endif
+			log_sent = 1;
 		}
 		else if ( (modecommand == CALIBRATE_MODE) && (mode == SAFE_MODE_INT) )
 		{
 			delay_ms(1000);
 			calibrate();
 			printf("$QR calibrated...\n");
-			toggle_led(3);
+			toggle_led(LED_OTHER);
 			delay_ms(500);
-			toggle_led(3);
+			toggle_led(LED_OTHER);
 			delay_ms(500);
-			toggle_led(3);
+			toggle_led(LED_OTHER);
 
 			calibrated = TRUE;
 		}
@@ -339,35 +347,6 @@ void process_packet(void)  //we need to process packet and decide what should be
 			sensitivity = within_bounds(data4,1,20);
 		}
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
-}
-
-void logs_send() {
-	int i = 0;
-	#ifdef LOGGING
-		printf("********SENDING LOG DATA!**********\n");
-		for (i=0; i < log_counter; i++)
-		{
-			printf("%d ", log[i].timestamp );
-			printf("%d ", log[i].ae[0] );
-			printf("%d ", log[i].ae[1] );
-			printf("%d ", log[i].ae[2] );
-			printf("%d ", log[i].ae[3] );
-			printf("%d ", log[i].s[0] );
-			printf("%d ", log[i].s[1] );
-			printf("%d ", log[i].s[2] );
-			printf("%d ", log[i].s[3] );
-			printf("%d ", log[i].s[4] );
-			printf("%d ", log[i].s[5] );
-			printf("%d ", log[i].lift_point );
-			printf("\n");
-		}
-		printf("\n");
-		printf("$"); //signal end of transmission
-		log_sent = 1;
-	#endif
-	#ifndef LOGGING
-		printf("$Failed to send logs, because logging was not enabled on quadcopter.\n");
-	#endif
 }
 
 void panic() {
@@ -438,7 +417,7 @@ void calibrate(void)
 */
 
 void periodic(void) {
-		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
+		if ((mode == YAW_CONTROL_INT) && (yaw_control_loop == TRUE))
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 			zr_v = zr();
@@ -483,7 +462,7 @@ void isr_qr_link(void) //1270 Hz
 	 */
 	isr_qr_counter++;
 	if (isr_qr_counter % 500 == 0) {
-		toggle_led(2);
+		toggle_led(LED_QR);
 	}	
 
 	/* Clip engine values to be positive and 10 bits.
@@ -514,49 +493,27 @@ void isr_qr_link(void) //1270 Hz
 	/*
 	* Logging
 	*/
-#ifdef LOGGING
-	if ((log_counter < LOG_LENGTH) && (mode == YAW_CONTROL_INT) ) {
-		log[log_counter].timestamp = X32_ms_clock; //should be replaced with timestamp
-		log[log_counter].ae[0] = (uint16_t) ae[0];
-		log[log_counter].ae[1] = (uint16_t) ae[1];
-		log[log_counter].ae[2] = (uint16_t) ae[2];
-		log[log_counter].ae[3] = (uint16_t) ae[3];
-		log[log_counter].s[0] = sax;  //should we log these RAW or callibrated values?
-		log[log_counter].s[1] = say;
-		log[log_counter].s[2] = saz;
-		log[log_counter].s[3] = sp;
-		log[log_counter].s[4] = sq;
-		log[log_counter].s[5] = sr;
-		log[log_counter].lift_point = lift_setpoint_rpm;
-		log_counter++;
-	}
-#endif
+	#ifdef LOGGING
+		if(mode == YAW_CONTROL_INT) {
+			addLog(X32_ms_clock, ae, sax, say, saz, sp, sq, sr, lift_setpoint_rpm);
+		}
+	#endif
 }
 
 /*------------------------------------------------------------------
  * isr_rs232_rx -- rs232 rx interrupt handler
  *------------------------------------------------------------------
  */
-void isr_rs232_rx(void)
-{
-	int	c;
-
-	/* signal interrupt
-	 */
-	toggle_led(1);
+void isr_rs232_rx(void) {
+	toggle_led(LED_RS232);
 
 	/* may have received > 1 char before IRQ is serviced so loop
 	 */
 	while (X32_rs232_char) {
 		fifo[iptr++] = X32_rs232_data;
-#ifdef DEBUG
-printf("ISR uart: iptr: %d", iptr-1);		
-printf(" => %x\n", fifo[iptr-1]);
-#endif
 		if (iptr >= FIFOSIZE)
 			iptr = 0;
 	}
-
 }
 
 
@@ -565,11 +522,11 @@ printf(" => %x\n", fifo[iptr-1]);
  *------------------------------------------------------------------
  */
 
-void move_optr()
-{	
+void move_optr() {	
 	if (optr == FIFOSIZE-1)
 		optr = 0;
-	else optr++;
+	else 
+		optr++;
 }
 
 int get_packet(void)
@@ -599,28 +556,21 @@ int get_packet(void)
 
 			//hack, because we shouldn't be getting this error. it somehow gets out of sync
 			if (iptr != optr) return -1;
-			//#define DEBUG
+
 			#ifdef DEBUG
-			printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
-			printf("mode is: %x \n", modecommand);
-			printf("LIFT is: %x \n", data1);
-			printf("YAW is: %x \n", data2);
-			printf("PITCH is: %x \n", data3);
-			printf("ROLL is: %x \n", data4);
-			printf("Checksum is: %x \n", checksum);
-			printf("%s\n", checker==0 ? "PASS" : "FAIL");
+				printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
+				printf("mode is: %x \n", modecommand);
+				printf("LIFT is: %x \n", data1);
+				printf("YAW is: %x \n", data2);
+				printf("PITCH is: %x \n", data3);
+				printf("ROLL is: %x \n", data4);
+				printf("Checksum is: %x \n", checksum);
+				printf("%s\n", checker==0 ? "PASS" : "FAIL");
 			#endif
 			//check checksum
-			if ( (int)checker != 0)
-			{
-				#ifdef DEBUG
-				printf("Invalid packet recieved! Discarding!\n");
-				#endif
-			 return -1; //ERROR, invalid packet
+			if ( (int)checker != 0) {
+				return -1; //ERROR, invalid packet
 			}
-			else if (TERM_CONNECTED == 0); {  //a check for communication safety mechanism
-				TERM_CONNECTED = 1;  //maybe we can move this somewhere else
-			}						//such that we do this check only once
 		}
 	else
 	{
@@ -628,7 +578,7 @@ int get_packet(void)
 		optr = iptr = 0;
 		return -1;
 	}
-return 0;
+	return 0;
 }
 
 
@@ -647,8 +597,10 @@ void epileptic_delay_ms(int ms)
 {
 	int time = X32_ms_clock;
 	while(X32_ms_clock - time < ms) {
-		if(X32_ms_clock % 10 == 0)
-		toggle_led(0);
+		if(X32_ms_clock % 20 == 0) {
+			toggle_led(LED_OTHER);
+			toggle_led(LED_ALIVE);
+		}
 	}
 }
 
@@ -678,31 +630,9 @@ void toggle_led(int i)
  */
 void print_state(void) 
 {
-	int i;
-	//char text[100] , a;
 	printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
-	//printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
-		//sax,say,say,sp,sq,sr,isr_qr_time, inst);
-
-	/*printf("%3d %3d %3d %3d %3d %3d | %d | (%3d, %d)\r\n",
-		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, isr_qr_time, inst);
-		*/
-
 	printf("%3d %3d %3d %3d %3d %3d | %d %d %d %d \r\n",
 		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, full_p1, full_p2, sensitivity);
-
-    //wireless transmission
-    /*  
-	sprintf(text, "%d %d %d %d \r\n",ae[0],ae[1],ae[2],ae[3]);
-	i = 0;
-	while( text[i] != 0) {
-		delay_ms(1);
-		// if (X32_switches == 0x03)
-		if (X32_wireless_stat & 0x01 == 0x01)
-			X32_wireless_data = text[i];
-		i++;
-	}
-    */
 }
 
 int within_bounds(int x, int lower_limit, int upper_limit) {
