@@ -494,34 +494,35 @@ void periodic(void) {
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 			
              p_kalman = sp_old - p_bias_old;
-		     phi_kalman = phi_kalman_old + (p_kalman * P2PHI);
+		     phi_kalman = phi_kalman_old + (p_kalman * p2phi);
 		     phi_error = phi_kalman - zay;
-		     phi_kalman = phi_kalman - (phi_error / C1);
-		     p_bias = p_bias +((phi_error/p2phi) / C2);
+		     phi_kalman = phi_kalman - (phi_error * (1/C1));
+		     p_bias = p_bias +((phi_error * (1/p2phi)) / C2);
 		   
 		   	//phi is zay
 		    //theta is zax 
 		    //in resources examples we got C1 = 256 ,C2 = 1000000
 		   
 		     q_kalman = sq_old - q_bias_old;
-		     theta_kalman = theta_kalman_old + (q_kalman * P2PHI);
+		     theta_kalman = theta_kalman_old + (q_kalman * p2phi);
 		     theta_error = theta_kalman - zax;
-		     theta_kalman = theta_kalman - (theta_error / C1);
-		     q_bias = p_bias +((phi_error/p2phi) / C2);
+		     theta_kalman = theta_kalman - (theta_error * (1/ C1));
+		     q_bias = p_bias + ((phi_error * (1/p2phi)) * (1/C2));
+            
 
-			full_yaw = (yaw - zr_v) * yaw_P;
+		    zr_v = convertIntToFP(zr());
+		    zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
+			zr_old = zr_v;
+
+			zr_filtered = convertFPToInt(zr_filtered_old); 	
+
+			full_yaw = (yaw - zr_filtered) * yaw_P;
 			
 			full_pitch = (full_p1*(pitch-theta_kalman) - (full_p2*q_kalman);
 
 			full_roll = (full_p1*(roll-phi_kalman) - (full_p2*p_kalman);
 
-			sp_old = zp;
-			p_bias_old = p_bias;
-			phi_kalman_old = phi_kalman;
-
-			sq_old = zq;
-			q_bias_old = q_bias;
-			theta_kalman_old = theta_kalman;
+			
 
 			ae[0] = lift_setpoint_rpm + (full_pitch - full_yaw);
 			ae[2] = lift_setpoint_rpm - (full_pitch - full_yaw);
@@ -529,6 +530,15 @@ void periodic(void) {
 			ae[1] = lift_setpoint_rpm - (full_roll + full_yaw);
 			ae[3] = lift_setpoint_rpm + (full_roll + full_yaw);
 
+
+			//Save old values
+			sp_old = zp;
+			p_bias_old = p_bias;
+			phi_kalman_old = phi_kalman;
+
+			sq_old = zq;
+			q_bias_old = q_bias;
+			theta_kalman_old = theta_kalman;
 
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		} 
