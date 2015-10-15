@@ -37,6 +37,9 @@
  * more shorthands
  */
 #define MINIMUM_ENGINE_SPEED 65
+#define MAXIMUM_ENGINE_SPEED 1000
+
+#define CONTROLS_THRESHOLD 130
 
 #define SAFE_MODE_INT		0
 #define PANIC_MODE_INT		1
@@ -57,3 +60,5 @@
 			}\
 		else count++;
 
+#define MAX(a,b) (((a) > (b)) ? (a) : (b))
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))

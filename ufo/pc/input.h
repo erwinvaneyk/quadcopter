@@ -41,6 +41,8 @@ struct SPECIAL_INPUT {
 #define MAX_LEVEL 15
 #define MODES 6 // counting from 0
 
+#define CONTROLS_THRESHOLD 2 // = 130rpm
+
 void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT* joystick);
 
 void show_input(struct INPUT* input);
