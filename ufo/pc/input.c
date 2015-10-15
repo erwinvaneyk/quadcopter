@@ -56,6 +56,22 @@ void resetInputModel(struct INPUT* model) {
 	model->pitch 	= 0;
 }
 
+//reset all controls besides the lift; for Threshold purpose
+void resetAllModels(struct INPUT* model, struct INPUT* keyboard, struct INPUT* joystick) {
+
+	model->yaw			= 0;
+	model->roll			= 0;
+	model->pitch		= 0;
+
+	keyboard->yaw		= 0;
+	keyboard->roll		= 0;
+	keyboard->pitch		= 0;
+
+	joystick->yaw		= 0;
+	joystick->roll		= 0;
+	joystick->pitch		= 0;
+}
+
 void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT* joystick) {
 	if (!keyboard->updated && !joystick->updated) {
 		return;
@@ -94,9 +110,16 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 	else if ( (model->mode == MANUAL_MODE_INT) || (model->mode == YAW_CONTROL_INT) )
 	{
 		model->lift = within_bounds(keyboard->lift + joystick->lift,  0, MAX_LEVEL);
-		model->yaw = within_bounds(keyboard->yaw + joystick->yaw, -MAX_LEVEL, MAX_LEVEL);
-		model->roll = within_bounds(keyboard->roll + joystick->roll, -MAX_LEVEL, MAX_LEVEL);
-		model->pitch = within_bounds(keyboard->pitch + joystick->pitch, -MAX_LEVEL, MAX_LEVEL);
+		if (model->lift >=  CONTROLS_THRESHOLD) //disable other controls until rpm=130 is achieved
+		{
+			model->yaw = within_bounds(keyboard->yaw + joystick->yaw, -MAX_LEVEL, MAX_LEVEL);
+			model->roll = within_bounds(keyboard->roll + joystick->roll, -MAX_LEVEL, MAX_LEVEL);
+			model->pitch = within_bounds(keyboard->pitch + joystick->pitch, -MAX_LEVEL, MAX_LEVEL);
+		}
+		else 
+		{
+			resetAllModels(model,keyboard,joystick); //resets all but lift
+		}
 	}
 
 	// Update flags
