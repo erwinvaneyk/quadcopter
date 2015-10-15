@@ -321,6 +321,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		{
 			#ifdef LOGGING
 				logs_send();
+				printf("LOG saved to file.\n");
 			#endif
 			log_sent = 1;
 		}
