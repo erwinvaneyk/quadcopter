@@ -23,6 +23,7 @@ uint8_t	fifo[FIFOSIZE];
 int	iptr = 0; 
 int optr = 0;
 int TERM_CONNECTED = 0; //communication safety mechanism
+int communication_lost = FALSE;
 
 // 
 struct LOG log[LOG_LENGTH];
@@ -166,6 +167,7 @@ int main()
 			YAW_CONTROL_LOOP = FALSE;
 			timestamp_last_pkt = X32_ms_clock;
 			TERM_CONNECTED = 0;
+			communication_lost = TRUE;
 		}
 		PRINT_STATE(250);
 
@@ -182,7 +184,7 @@ int main()
 }
 
 void process_packet(void)  //we need to process packet and decide what should be done
-{
+{;
 	if (mode == PANIC_MODE_INT){
 		return;	
 	}
@@ -193,6 +195,13 @@ void process_packet(void)  //we need to process packet and decide what should be
 			SET_ALL_ENGINE_RPM(0);
 			YAW_CONTROL_LOOP = FALSE;
 			mode = SAFE_MODE_INT;
+			communication_lost = FALSE; //it's safe now, resume	
+		}
+	else if (communication_lost)
+		{
+			printf("$Communication failure: switch to SAFE MODE now!\n");
+			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+			return; //do nothing until term switches to safe mode
 		}
 	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
 		{
