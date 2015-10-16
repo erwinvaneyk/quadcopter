@@ -39,7 +39,7 @@
 #include "tui.h"
 
 int serial_device = 1;
-char* js_device = "/dev/input/js0";
+char* js_device = "/dev/input/js2";
 int fd;
 char c;
 bool DEBUG;

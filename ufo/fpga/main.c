@@ -240,13 +240,15 @@ void process_packet(void)  //we need to process packet and decide what should be
 
 				if ( (data2&0x10) == 0x00) 
 					{
-						yaw  = (int)data2&0x0F;
-						//printf("$YAW (+++) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+						yaw  = ((int)data2&0x0F)*2; //the coeff
+						printf("$YAW (+++) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
 					}
 				else
 					{
-						yaw = -(int)data2&0x0F;
-						//printf("$YAW (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+						yaw = ((int)data2&0x0F)*2; //quick fix + the coeff
+						//printf("$YAW before (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+						yaw = (yaw) *(-2);
+						//printf("$YAW after (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
 					}
 			}
 		} 
@@ -332,7 +334,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		}
 		else if (modecommand==P_VALUES_MODE) //((mode==YAW_CONTROL_INT) || (mode==FULL_CONTROL_INT))  &&  
 		{
-			yaw_p 	= within_bounds(data1,1,15);
+			yaw_p 	= within_bounds(data1,1,20);
 			full_p1 = within_bounds(data2,1,20);
 			full_p2 = within_bounds(data3,1,20);
 			sensitivity = within_bounds(data4,0,60);
@@ -457,9 +459,9 @@ void periodic(void) {
 			zr_old = zr_v;
 			zr_filtered = convertFPToInt(zr_filtered_old);
 
-			ae[0] = lift_setpoint_rpm + (yaw - zr_filtered) * yaw_p;
+			ae[0] = within_bounds(lift_setpoint_rpm + (yaw - zr_filtered) * yaw_p,300,800);
 			ae[2] = ae[0];
-			ae[1] = lift_setpoint_rpm - (yaw - zr_filtered) * yaw_p;
+			ae[1] = within_bounds(lift_setpoint_rpm - (yaw - zr_filtered) * yaw_p,300,800);
 			ae[3] = ae[1];
 
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
