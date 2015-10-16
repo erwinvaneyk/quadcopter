@@ -105,7 +105,7 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case 'u': // p control yaw
 				//printf("Incremented P value for YAW!\n");
 				TUI_PRINT_MESSAGE(Incremented P value for YAW!);
-				p_input->yaw_p = within_bounds(p_input->yaw_p+1,1,20);
+				p_input->yaw_p = within_bounds(p_input->yaw_p+1,1,15);
 				p_input->updated = true;
 				/*#define DEBUG
 				#ifdef DEBUG
@@ -117,7 +117,7 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case 'j': // p control yaw
 				//printf("Decremented P value for YAW!\n");
 				TUI_PRINT_MESSAGE(Decremented P value for YAW!);
-				p_input->yaw_p = within_bounds(p_input->yaw_p-1,1,20);
+				p_input->yaw_p = within_bounds(p_input->yaw_p-1,1,15);
 				p_input->updated = true;
 				break;
 			case 'i': // p1 control pitch/roll
@@ -155,14 +155,14 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case 'p': // p2 control pitch/roll
 				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Increased Sensitivity);
-				p_input->sensitivity = within_bounds(p_input->sensitivity+1,1,20);
+				p_input->sensitivity = within_bounds(p_input->sensitivity+1,0,60); //needs more modifications for negative values, hence from 0 to 60
 				p_input->updated = true;
 				break;
 
 			case ';': // p2 control pitch/roll
 				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Decreased Sensitivity);
-				p_input->sensitivity = within_bounds(p_input->sensitivity-1,1,20);
+				p_input->sensitivity = within_bounds(p_input->sensitivity-1,0,60);
 				p_input->updated = true;
 				break;
 
