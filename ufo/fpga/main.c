@@ -232,18 +232,6 @@ void process_packet(void)  //we need to process packet and decide what should be
 						else YAW_CONTROL_LOOP = FALSE;
 					}
 				}
-<<<<<<< HEAD
-			if ( (data2&0x10) == 0x00) 
-				{
-					yaw  = data2&0x0F;
-				}
-			else
-				{
-					yaw = (-1) * data2&0x0F;
-				}
-		}
-=======
-
 			//YAW in CONTROL LOOP
 			//set the yaw rate variable that is used in the control loop
 			if (data2 != data2_old) //save time if no changes in yaw input
@@ -262,7 +250,6 @@ void process_packet(void)  //we need to process packet and decide what should be
 					}
 			}
 		} 
->>>>>>> minor additions to optimize yaw
 	else if ((modecommand == YAW_CONTROL) && (calibrated == FALSE))
 		{
 			printf("$QR must be calibrated first! \n");
