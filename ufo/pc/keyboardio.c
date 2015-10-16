@@ -105,7 +105,7 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case 'u': // p control yaw
 				//printf("Incremented P value for YAW!\n");
 				TUI_PRINT_MESSAGE(Incremented P value for YAW!);
-				p_input->yaw_p = within_bounds(p_input->yaw_p+1,1,15);
+				p_input->yaw_p = within_bounds(p_input->yaw_p+1,1,20);
 				p_input->updated = true;
 				/*#define DEBUG
 				#ifdef DEBUG
