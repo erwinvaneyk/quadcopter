@@ -213,6 +213,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		{
 			YAW_CONTROL_LOOP = FALSE;
 			panic();
+			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		}
 	else if ((modecommand == YAW_CONTROL) && (calibrated == TRUE))
 		{
@@ -380,6 +381,9 @@ void logs_send() {
 }
 
 void panic() {
+	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+	DISABLE_INTERRUPT(INTERRUPT_TIMER1);
+	DISABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
 	mode = PANIC_MODE_INT;
 	printf("$********Going to PANIC_MODE!********\n");
 	if (ae[0] > 400)
@@ -409,8 +413,11 @@ void panic() {
 	}
 	SET_ALL_ENGINE_RPM(0);
 	printf("$********Going to SAFE MODE!*********\n");
+	ENABLE_INTERRUPT(INTERRUPT_TIMER1);
+	ENABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
 	mode = SAFE_MODE_INT;
 	YAW_CONTROL_LOOP = FALSE;
+	// NOTE: INTERRUPT_GLOBAL is enabled now!
 }
 
 /*------------------------------------------------------------------
@@ -644,9 +651,6 @@ return 0;
  */
 void delay_ms(int ms) 
 {
-	// Enable interrupts for qr to avoid shutting down the engines
-	ENABLE_INTERRUPT(INTERRUPT_XUFO);
-	
 	int time = X32_ms_clock;
 	while(X32_ms_clock - time < ms);
 }
@@ -654,9 +658,6 @@ void delay_ms(int ms)
 
 void epileptic_delay_ms(int ms) 
 {
-	// Enable interrupts for qr to avoid shutting down the engines
-	ENABLE_INTERRUPT(INTERRUPT_XUFO);
-
 	int time = X32_ms_clock;
 	while(X32_ms_clock - time < ms) {
 		if(X32_ms_clock % 10 == 0)
