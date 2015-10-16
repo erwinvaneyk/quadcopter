@@ -399,7 +399,7 @@ void panic() {
 	SET_ALL_ENGINE_RPM(0);
 	printf("$********Going to SAFE MODE!*********\n");
 	mode = SAFE_MODE_INT;
-	YAW_CONTROL_LOOP == FALSE;
+	YAW_CONTROL_LOOP = FALSE;
 }
 
 /*------------------------------------------------------------------
