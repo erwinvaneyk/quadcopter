@@ -107,7 +107,7 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 		resetInputModel(keyboard);
 		resetInputModel(joystick);
 	} 
-	else if ( (model->mode == MANUAL_MODE_INT) || (model->mode == YAW_CONTROL_INT) )
+	else if ( (model->mode == MANUAL_MODE_INT) || (model->mode == YAW_CONTROL_INT) || (model->mode == FULL_CONTROL_INT)  )
 	{
 		model->lift = within_bounds(keyboard->lift + joystick->lift,  0, MAX_LEVEL);
 		if (model->lift >=  CONTROLS_THRESHOLD) //disable other controls until rpm=130 is achieved

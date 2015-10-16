@@ -48,6 +48,7 @@ int lift_setpoint = 0;
 int lift_setpoint_rpm = 0;
 
 //filter & yaw control
+
 int zr_filtered = 0; // = rounded(zr_filtered_old)
 float_x32 zr_filtered_old = 0x0;
 float_x32 zr_old = 0x0;
@@ -56,16 +57,47 @@ float_x32 a1 = 0x1f3;  // 0.0305;
 float_x32 b1 = 0x1f3;  // 0.0305;
 float_x32 zr_v;
 
+float_x32 p2phi = 0x43; // 0.00410
+
 
 int yaw = 0;
+float_x32 p2phi_inv;
+
+
 int calibrated = FALSE;
 int YAW_CONTROL_LOOP = FALSE;
+int FULL_CONTROL_LOOP = FALSE;
+
+
+float_x32 C1_inv; 
+float_x32 C2_inv; 
+
+float_x32 C1; 
+float_x32 C2;
+
+
 
 uint8_t yaw_p = 1;
 uint8_t full_p1 = 1;
 uint8_t full_p2 = 1;
 
 uint8_t sensitivity = 30;
+
+
+//Full control variables
+//bias pitch,roll etc
+
+int full_yaw =0;
+int full_pitch = 0;
+int full_roll = 0;
+int pitch;
+int roll;
+
+
+float_x32 p_kalman, phi_kalman, phi_error, p_bias, sp_old, p_bias_old, phi_kalman_old; 
+
+float_x32 q_kalman, theta_kalman,theta_error, q_bias,sq_old,q_bias_old, theta_kalman_old;
+
 
 
 //packet processing global variables
@@ -98,6 +130,8 @@ int 	zr(void)	{return sr - sr0;}
 void 	periodic(void);
 void 	isr_qr_link(void);
 void 	isr_rs232_rx(void);
+
+void     initiliaze_kalman_filter();
 
 void	move_optr();
 int 	get_packet(void);
@@ -150,6 +184,7 @@ int main()
 	/* initialize some other stuff
 	*/
 	X32_leds = 0;
+	initiliaze_kalman_filter();
 
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
 
@@ -171,6 +206,7 @@ int main()
 		if ((X32_ms_clock - timestamp_last_pkt) > THRESHOLD && TERM_CONNECTED) {	
 			panic();
 			YAW_CONTROL_LOOP = FALSE;
+			FULL_CONTROL_LOOP = FALSE;
 			timestamp_last_pkt = X32_ms_clock;
 			TERM_CONNECTED = 0;
 			communication_lost = TRUE;
@@ -190,7 +226,7 @@ int main()
 }
 
 void process_packet(void)  //we need to process packet and decide what should be done
-{;
+{
 	if (mode == PANIC_MODE_INT){
 		return;	
 	}
@@ -200,6 +236,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 		{
 			SET_ALL_ENGINE_RPM(0);
 			YAW_CONTROL_LOOP = FALSE;
+			FULL_CONTROL_LOOP = FALSE;
 			mode = SAFE_MODE_INT;
 			communication_lost = FALSE; //it's safe now, resume	
 		}
@@ -212,6 +249,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
 		{
 			YAW_CONTROL_LOOP = FALSE;
+			FULL_CONTROL_LOOP = FALSE;
 			panic();
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		}
@@ -233,26 +271,52 @@ void process_packet(void)  //we need to process packet and decide what should be
 						else YAW_CONTROL_LOOP = FALSE;
 					}
 				}
+
+		
 			//YAW in CONTROL LOOP
 			//set the yaw rate variable that is used in the control loop
 			if (data2 != data2_old) //save time if no changes in yaw input
-			{
-				data2_old = data2;
+				{
+					data2_old = data2;
 
-				if ( (data2&0x10) == 0x00) 
+					if ( (data2&0x10) == 0x00) 
+						{
+							yaw  = ((int)data2&0x0F)*2; //the coeff
+							//printf("$YAW (+++) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+						}
+					else
+						{
+							yaw = ((int)data2&0x0F)*2; //quick fix + the coeff
+							//printf("$YAW before (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+							yaw = (yaw) *(-2);
+							//printf("$YAW after (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+						}
+				}
+		}
+	else if ((modecommand == FULL_CONTROL) && (calibrated == TRUE))
+		{
+			mode = FULL_CONTROL_INT;
+		
+			//LIFT
+			if ( (data1&0x10) == 0x00)
+				{
+					//modify engine values if lift is changed!
+					//DND the yaw control
+					if (lift_setpoint != (int)data1&0x0F)
 					{
-						yaw  = ((int)data2&0x0F)*2; //the coeff
-						//printf("$YAW (+++) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+						lift_setpoint = (int)(data1&0x0F);
+						lift_setpoint_rpm = lift_setpoint * 65;
+						SET_ALL_ENGINE_RPM(lift_setpoint_rpm);
+						if (lift_setpoint > 2) 	FULL_CONTROL_LOOP = TRUE;
+						else FULL_CONTROL_LOOP = FALSE;
 					}
-				else
-					{
-						yaw = ((int)data2&0x0F)*2; //quick fix + the coeff
-						//printf("$YAW before (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
-						yaw = (yaw) *(-2);
-						//printf("$YAW after (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
-					}
-			}
-		} 
+				}
+				
+		}
+	else if ((modecommand == FULL_CONTROL) && (calibrated == FALSE))
+		{
+			printf("$QR must be calibrated first! \n");
+		}
 	else if ((modecommand == YAW_CONTROL) && (calibrated == FALSE))
 		{
 			printf("$QR must be calibrated first! \n");
@@ -457,7 +521,7 @@ void calibrate(void)
 */
 
 void periodic(void) {
-		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
+	if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 
@@ -472,9 +536,80 @@ void periodic(void) {
 			ae[3] = ae[1];
 
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
-		}
+		} 
+	else if ((mode == FULL_CONTROL_INT) && (FULL_CONTROL_LOOP == TRUE))
+		{
+			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
+
+			//these are temprorary fixes 
+			//we can declare them as constants 
+            C1 = 0x400000;
+            C2 = 0x3d0000;
+
+
+            C1_inv = 0x40;
+            C1_inv = 0x1;
+
+            p2phi_inv = 0x3d0000;
+            
+            //DEfault caluclations for kalman filter
+			p_kalman = fp_sub(sp_old, p_bias_old);
+			phi_kalman = fp_add(phi_kalman_old ,fp_mul(p_kalman, p2phi));
+			phi_error = fp_sub(phi_kalman, zay());
+			phi_kalman = fp_sub(phi_kalman, fp_mul(phi_error, C1_inv) );
+			p_bias = fp_add(p_bias, fp_mul(phi_error, fp_mul(p2phi_inv, C2_inv)));
+
+			//phi is zay
+			//theta is zax 
+			//in resources examples we got C1 = 256 ,C2 = 1000000
+
+			q_kalman = fp_sub(sq_old, q_bias_old);
+			theta_kalman = fp_add(theta_kalman_old, fp_mul(q_kalman, p2phi));
+			theta_error = fp_sub(theta_kalman, zax());
+			theta_kalman = fp_sub(theta_kalman, fp_mul(theta_error, C1_inv) );
+			q_bias = fp_add(q_bias, fp_mul(theta_error, fp_mul(p2phi_inv, C2_inv)));
+
+
+			zr_v = convertIntToFP(zr());
+			zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
+			zr_old = zr_v;
+
+			zr_filtered = convertFPToInt(zr_filtered_old); 
+			theta_kalman = convertFPToInt(theta_kalman);
+			q_kalman = convertFPToInt(q_kalman);
+			phi_kalman = convertFPToInt(phi_kalman);
+			p_kalman = convertFPToInt(p_kalman);
+             
+
+            //These are the correction control values for yaw,pitch and roll 
+			full_yaw = (yaw - zr_filtered) * yaw_p;
+
+			full_pitch = (full_p1 * (pitch-theta_kalman)) - (full_p2*q_kalman);
+
+			full_roll = (full_p1*(roll-phi_kalman)) - (full_p2*p_kalman);
+             
+            //Assign control values to the motors
+			ae[0] = within_bounds(lift_setpoint_rpm + (full_pitch - full_yaw),300,700);
+			ae[2] = within_bounds(lift_setpoint_rpm - (full_pitch - full_yaw),300,700);
+
+			ae[1] = within_bounds(lift_setpoint_rpm - (full_roll + full_yaw),300,700);
+			ae[3] = within_bounds(lift_setpoint_rpm + (full_roll + full_yaw),300,700);
+
+			sp_old = zp();
+			p_bias_old = p_bias;
+			phi_kalman_old = phi_kalman;
+
+			sq_old = zq();
+			q_bias_old = q_bias;
+			theta_kalman_old = theta_kalman;
+			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
+		} 
 }
 
+void initiliaze_kalman_filter()
+{
+	p_kalman = phi_kalman = phi_error = phi_kalman =p_bias = q_kalman = theta_kalman = theta_error = theta_kalman = q_bias = 0;
+}
 /*------------------------------------------------------------------
  * isr_qr_link -- QR link rx interrupt handler
  * This function is executed at 1270Hz
@@ -579,6 +714,7 @@ printf(" => %x\n", fifo[iptr-1]);
  * get_packet -- construct packet. return -1 on failure.
  *------------------------------------------------------------------
  */
+ 
 
 void move_optr()
 {	
