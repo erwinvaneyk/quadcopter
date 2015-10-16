@@ -57,7 +57,7 @@ float_x32 b1 = 0x1f3;  // 0.0305;
 float_x32 zr_v;
 
 
-int yaw;
+int yaw = 0;
 int calibrated = FALSE;
 int YAW_CONTROL_LOOP = FALSE;
 
@@ -76,6 +76,8 @@ uint8_t data3;
 uint8_t data4;
 uint8_t checksum;
 uint8_t checker;
+
+uint8_t data2_old = 0;
 
 int startTimestamp, endTimestamp, counter;
 
@@ -230,15 +232,24 @@ void process_packet(void)  //we need to process packet and decide what should be
 						else YAW_CONTROL_LOOP = FALSE;
 					}
 				}
-			if ( (data2&0x10) == 0x00) 
-				{
-					yaw  = data2&0x0F;
-				}
-			else
-				{
-					yaw = (-1) * data2&0x0F;
-				}
-		}
+			//YAW in CONTROL LOOP
+			//set the yaw rate variable that is used in the control loop
+			if (data2 != data2_old) //save time if no changes in yaw input
+			{
+				data2_old = data2;
+
+				if ( (data2&0x10) == 0x00) 
+					{
+						yaw  = (int)data2&0x0F;
+						//printf("$YAW (+++) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+					}
+				else
+					{
+						yaw = -(int)data2&0x0F;
+						//printf("$YAW (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+					}
+			}
+		} 
 	else if ((modecommand == YAW_CONTROL) && (calibrated == FALSE))
 		{
 			printf("$QR must be calibrated first! \n");
@@ -399,6 +410,7 @@ void panic() {
 	SET_ALL_ENGINE_RPM(0);
 	printf("$********Going to SAFE MODE!*********\n");
 	mode = SAFE_MODE_INT;
+	YAW_CONTROL_LOOP = FALSE;
 }
 
 /*------------------------------------------------------------------
@@ -438,18 +450,18 @@ void calibrate(void)
 void periodic(void) {
 		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
 		{
-			//printf("$YAW = %d\n",yaw );
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
-			zr_v = convertIntToFP(zr());
-		    	zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
-			zr_old = zr_v;
 
+			zr_v = convertIntToFP(zr());
+			zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
+			zr_old = zr_v;
 			zr_filtered = convertFPToInt(zr_filtered_old);
 
 			ae[0] = lift_setpoint_rpm + (yaw - zr_filtered) * yaw_p;
 			ae[2] = ae[0];
 			ae[1] = lift_setpoint_rpm - (yaw - zr_filtered) * yaw_p;
 			ae[3] = ae[1];
+
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		}
 }
