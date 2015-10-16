@@ -330,9 +330,11 @@ void process_packet(void)  //we need to process packet and decide what should be
 			yaw_step =  MAX(-5+sensitivity, 10);	//10 should be the minumum
 			other_step = MAX(-15+sensitivity, 10);	//10 should be the minumum
 
-			printf("$ Lift step = %d", lift_step);
-			printf("$ Yaw step = %d", yaw_step);
-			printf("$ Other step = %d", other_step);
+			/* leave this here for now. issue # 109
+			printf("$ Lift step = %d |", lift_step);
+			printf("$ Yaw step = %d |", yaw_step);
+			printf("$ Other step = %d \n", other_step);
+			*/
 		}
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
