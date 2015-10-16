@@ -241,7 +241,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 				if ( (data2&0x10) == 0x00) 
 					{
 						yaw  = ((int)data2&0x0F)*2; //the coeff
-						printf("$YAW (+++) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+						//printf("$YAW (+++) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
 					}
 				else
 					{
