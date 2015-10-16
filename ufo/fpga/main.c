@@ -65,7 +65,7 @@ uint8_t yaw_p = 1;
 uint8_t full_p1 = 1;
 uint8_t full_p2 = 1;
 
-uint8_t sensitivity = 1;
+uint8_t sensitivity = 30;
 
 
 //packet processing global variables
@@ -105,6 +105,10 @@ void	process_packet(void);
 void 	panic();
 void	logs_send();
 int within_bounds(int x, int lower_limit, int upper_limit);
+
+int lift_step = 35; 	 //65-30
+int yaw_step =  -5; 	 //25-30
+int other_step = -15;    //15-30
 
 /*------------------------------------------------------------------
  * main loop
@@ -226,37 +230,6 @@ void process_packet(void)  //we need to process packet and decide what should be
 						else YAW_CONTROL_LOOP = FALSE;
 					}
 				}
-
-			// //ROLL
-			// if ( (data4&0x10) == 0x00) 
-			// 	{
-			// 		ae[1]=ae[1] + 15 * (data4&0x0F); //lean left
-			// 		if (ae[3] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-			// 			ae[3]=ae[3] - 15 * (data4&0x0F);
-			// 	}
-			// else
-			// 	{
-			// 		ae[3]=ae[3] + 15 * (data4&0x0F);
-			// 		if (ae[1] - 15 * (data4&0x0F) > MINIMUM_ENGINE_SPEED)
-			// 			ae[1]=ae[1] - 15 * (data4&0x0F); //lean right
-			// 	}
-
-			// //PITCH
-			// if ( (data3&0x10) == 0x00) 
-			// 	{
-			// 		ae[2] = ae[2] + 15 * (data3&0x0F); 
-			// 		if (ae[0] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-			// 			ae[0] = ae[0] - 15 * (data3&0x0F); //lean forward
-			// 	}
-			// else
-			// 	{
-			// 		ae[0] = ae[0] + 15 * (data3&0x0F); //lean backward
-			// 		if (ae[2] - 15 * (data3&0x0F) > MINIMUM_ENGINE_SPEED)
-			// 			ae[2] = ae[2] - 15 * (data3&0x0F); 
-			// 	}
-
-			//YAW in CONTROL LOOP
-			//set the yaw rate variable that is used in the control loop
 			if ( (data2&0x10) == 0x00) 
 				{
 					yaw  = data2&0x0F;
@@ -276,7 +249,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 			//LIFT
 			if ( (data1&0x10) == 0x00)
 			{
-				SET_ALL_ENGINE_RPM(65 * (data1&0x0F));
+				SET_ALL_ENGINE_RPM(lift_step * (data1&0x0F));
 			} // Ignoring negative values for lift
 
 			if (ae[0] >= CONTROLS_THRESHOLD) //allow other controls if engines are at sufficient rpm
@@ -285,46 +258,46 @@ void process_packet(void)  //we need to process packet and decide what should be
 				if ( (data4&0x10) == 0x00) 
 				{
 					//lean left
-					ae[1] = MIN(ae[1] + 15 * (data4&0x0F), MAXIMUM_ENGINE_SPEED);
-					ae[3] = MAX(ae[3] - 15 * (data4&0x0F), MINIMUM_ENGINE_SPEED);
+					ae[1] = MIN(ae[1] + other_step * (data4&0x0F), MAXIMUM_ENGINE_SPEED);
+					ae[3] = MAX(ae[3] - other_step * (data4&0x0F), MINIMUM_ENGINE_SPEED);
 				}
 				else
 				{
 					//lean right
-					ae[3] = MIN(ae[3] + 15 * (data4&0x0F), MAXIMUM_ENGINE_SPEED);
-					ae[1] = MAX(ae[1] - 15 * (data4&0x0F), MINIMUM_ENGINE_SPEED);
+					ae[3] = MIN(ae[3] + other_step * (data4&0x0F), MAXIMUM_ENGINE_SPEED);
+					ae[1] = MAX(ae[1] - other_step * (data4&0x0F), MINIMUM_ENGINE_SPEED);
 				}
 
 				//PITCH
 				if ( (data3&0x10) == 0x00) 
 				{
 					//lean forward
-					ae[2] = MIN(ae[2] + 15 * (data3&0x0F), MAXIMUM_ENGINE_SPEED); 
-					ae[0] = MAX(ae[0] - 15 * (data3&0x0F), MINIMUM_ENGINE_SPEED); 
+					ae[2] = MIN(ae[2] + other_step * (data3&0x0F), MAXIMUM_ENGINE_SPEED); 
+					ae[0] = MAX(ae[0] - other_step * (data3&0x0F), MINIMUM_ENGINE_SPEED); 
 				}
 				else
 				{
 					 //lean backward
-					ae[0] = MIN(ae[0] + 15 * (data3&0x0F), MAXIMUM_ENGINE_SPEED);
-					ae[2] = MAX(ae[2] - 15 * (data3&0x0F), MINIMUM_ENGINE_SPEED); 
+					ae[0] = MIN(ae[0] + other_step * (data3&0x0F), MAXIMUM_ENGINE_SPEED);
+					ae[2] = MAX(ae[2] - other_step * (data3&0x0F), MINIMUM_ENGINE_SPEED); 
 				}
 
 				//YAW
 				if ( (data2&0x10) == 0x00) 
 				{
 					// Left?
-					ae[0] = MIN(ae[0] + 25 * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
-					ae[2] = MIN(ae[2] + 25 * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
-					ae[1] = MAX(ae[1] - 25 * (data2&0x0F), MINIMUM_ENGINE_SPEED);
-					ae[3] = MAX(ae[3] - 25 * (data2&0x0F), MINIMUM_ENGINE_SPEED);
+					ae[0] = MIN(ae[0] + yaw_step * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
+					ae[2] = MIN(ae[2] + yaw_step * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
+					ae[1] = MAX(ae[1] - yaw_step * (data2&0x0F), MINIMUM_ENGINE_SPEED);
+					ae[3] = MAX(ae[3] - yaw_step * (data2&0x0F), MINIMUM_ENGINE_SPEED);
 				}
 				else
 				{
 					// Right?
-					ae[1] = MIN(ae[1] + 25 * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
-					ae[3] = MIN(ae[3] + 25 * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
-					ae[0] = MAX(ae[0] - 25 * (data2&0x0F), MINIMUM_ENGINE_SPEED);
-					ae[2] = MAX(ae[2] - 25 * (data2&0x0F), MINIMUM_ENGINE_SPEED);
+					ae[1] = MIN(ae[1] + yaw_step * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
+					ae[3] = MIN(ae[3] + yaw_step * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
+					ae[0] = MAX(ae[0] - yaw_step * (data2&0x0F), MINIMUM_ENGINE_SPEED);
+					ae[2] = MAX(ae[2] - yaw_step * (data2&0x0F), MINIMUM_ENGINE_SPEED);
 		 		}
 			}
 		}
@@ -348,10 +321,20 @@ void process_packet(void)  //we need to process packet and decide what should be
 		}
 		else if (modecommand==P_VALUES_MODE) //((mode==YAW_CONTROL_INT) || (mode==FULL_CONTROL_INT))  &&  
 		{
-			yaw_p 	= within_bounds(data1,1,20);
+			yaw_p 	= within_bounds(data1,1,15);
 			full_p1 = within_bounds(data2,1,20);
 			full_p2 = within_bounds(data3,1,20);
-			sensitivity = within_bounds(data4,1,20);
+			sensitivity = within_bounds(data4,0,60);
+
+			lift_step = MAX(35+sensitivity, 35);	//35 is okay for lift
+			yaw_step =  MAX(-5+sensitivity, 10);	//10 should be the minumum
+			other_step = MAX(-15+sensitivity, 10);	//10 should be the minumum
+
+			/* leave this here for now. issue # 109
+			printf("$ Lift step = %d |", lift_step);
+			printf("$ Yaw step = %d |", yaw_step);
+			printf("$ Other step = %d \n", other_step);
+			*/
 		}
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }

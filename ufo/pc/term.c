@@ -203,7 +203,7 @@ int main(int argc, char **argv)
 	p_input.yaw_p = 1;
 	p_input.full_p1 = 1;
 	p_input.full_p2 = 1;
-	p_input.sensitivity = 1;
+	p_input.sensitivity = 30;
 	p_input.updated = true; //this fill force the values to be sent over once
 
 	getch();
