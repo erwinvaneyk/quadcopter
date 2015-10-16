@@ -399,6 +399,7 @@ void panic() {
 	SET_ALL_ENGINE_RPM(0);
 	printf("$********Going to SAFE MODE!*********\n");
 	mode = SAFE_MODE_INT;
+	YAW_CONTROL_LOOP == FALSE;
 }
 
 /*------------------------------------------------------------------
@@ -438,10 +439,10 @@ void calibrate(void)
 void periodic(void) {
 		if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
 		{
-			//printf("$YAW = %d\n",yaw );
+			//printf("$YAW = %d | yaw_p = %d\n",yaw, yaw_p );
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 			zr_v = convertIntToFP(zr());
-		    	zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
+			zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
 			zr_old = zr_v;
 
 			zr_filtered = convertFPToInt(zr_filtered_old);
