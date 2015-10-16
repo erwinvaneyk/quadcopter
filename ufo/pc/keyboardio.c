@@ -117,7 +117,7 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			case 'j': // p control yaw
 				//printf("Decremented P value for YAW!\n");
 				TUI_PRINT_MESSAGE(Decremented P value for YAW!);
-				p_input->yaw_p = within_bounds(p_input->yaw_p-1,1,15);
+				p_input->yaw_p = within_bounds(p_input->yaw_p-1,1,20);
 				p_input->updated = true;
 				break;
 			case 'i': // p1 control pitch/roll
