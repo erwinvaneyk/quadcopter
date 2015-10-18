@@ -61,7 +61,6 @@ float_x32 p2phi = 0x43; // 0.00410
 
 
 int yaw = 0;
-float_x32 p2phi_inv;
 
 
 int calibrated = FALSE;
@@ -69,13 +68,12 @@ int YAW_CONTROL_LOOP = FALSE;
 int FULL_CONTROL_LOOP = FALSE;
 
 
-float_x32 C1_inv; 
-float_x32 C2_inv; 
 
-float_x32 C1; 
-float_x32 C2;
-
-
+float_x32 C1 = 0x400000; 
+float_x32 C2 = 0x3d0000;
+float_x32 C1_inv = 0x40; 
+float_x32 C2_inv = 0x1; 
+float_x32 p2phi_inv = 0x3d0000;
 
 uint8_t yaw_p = 1;
 uint8_t full_p1 = 1;
@@ -87,11 +85,11 @@ uint8_t sensitivity = 30;
 //Full control variables
 //bias pitch,roll etc
 
-int full_yaw =0;
+int full_yaw = 0;
 int full_pitch = 0;
 int full_roll = 0;
-int pitch;
-int roll;
+int pitch = 0;
+int roll = 0;
 
 
 float_x32 p_kalman, phi_kalman, phi_error, p_bias, sp_old, p_bias_old, phi_kalman_old; 
@@ -540,28 +538,14 @@ void periodic(void) {
 	else if ((mode == FULL_CONTROL_INT) && (FULL_CONTROL_LOOP == TRUE))
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
-
-			//these are temprorary fixes 
-			//we can declare them as constants 
-            C1 = 0x400000;
-            C2 = 0x3d0000;
-
-
-            C1_inv = 0x40;
-            C1_inv = 0x1;
-
-            p2phi_inv = 0x3d0000;
             
-            //DEfault caluclations for kalman filter
+            // Default caluclations for kalman filter
 			p_kalman = fp_sub(sp_old, p_bias_old);
 			phi_kalman = fp_add(phi_kalman_old ,fp_mul(p_kalman, p2phi));
 			phi_error = fp_sub(phi_kalman, zay());
 			phi_kalman = fp_sub(phi_kalman, fp_mul(phi_error, C1_inv) );
 			p_bias = fp_add(p_bias, fp_mul(phi_error, fp_mul(p2phi_inv, C2_inv)));
 
-			//phi is zay
-			//theta is zax 
-			//in resources examples we got C1 = 256 ,C2 = 1000000
 
 			q_kalman = fp_sub(sq_old, q_bias_old);
 			theta_kalman = fp_add(theta_kalman_old, fp_mul(q_kalman, p2phi));
@@ -569,12 +553,12 @@ void periodic(void) {
 			theta_kalman = fp_sub(theta_kalman, fp_mul(theta_error, C1_inv) );
 			q_bias = fp_add(q_bias, fp_mul(theta_error, fp_mul(p2phi_inv, C2_inv)));
 
-
+			// Yaw Control Feedback Control
 			zr_v = convertIntToFP(zr());
 			zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
 			zr_old = zr_v;
-
 			zr_filtered = convertFPToInt(zr_filtered_old); 
+
 			theta_kalman = convertFPToInt(theta_kalman);
 			q_kalman = convertFPToInt(q_kalman);
 			phi_kalman = convertFPToInt(phi_kalman);
@@ -582,11 +566,9 @@ void periodic(void) {
              
 
             //These are the correction control values for yaw,pitch and roll 
-			full_yaw = (yaw - zr_filtered) * yaw_p;
-
-			full_pitch = (full_p1 * (pitch-theta_kalman)) - (full_p2*q_kalman);
-
-			full_roll = (full_p1*(roll-phi_kalman)) - (full_p2*p_kalman);
+			full_yaw 	= (yaw - zr_filtered) * yaw_p;
+			full_pitch 	= (full_p1 * (pitch - theta_kalman)) - (full_p2 * q_kalman);
+			full_roll 	= (full_p1 * (roll - phi_kalman)) - (full_p2 * p_kalman);
              
             //Assign control values to the motors
 			ae[0] = within_bounds(lift_setpoint_rpm + (full_pitch - full_yaw),300,700);
@@ -598,7 +580,6 @@ void periodic(void) {
 			sp_old = zp();
 			p_bias_old = p_bias;
 			phi_kalman_old = phi_kalman;
-
 			sq_old = zq();
 			q_bias_old = q_bias;
 			theta_kalman_old = theta_kalman;
