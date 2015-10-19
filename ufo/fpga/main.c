@@ -811,30 +811,9 @@ void toggle_led(int i)
 void print_state(void) 
 {
 	int i;
-	//char text[100] , a;
 	printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
-	//printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
-		//sax,say,say,sp,sq,sr,isr_qr_time, inst);
-
-	/*printf("%3d %3d %3d %3d %3d %3d | %d | (%3d, %d)\r\n",
-		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, isr_qr_time, inst);
-		*/
-
 	printf("%3d %3d %3d %3d %3d %3d | %d %d %d %d \n",
 		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, full_p1, full_p2, sensitivity);
-
-    //wireless transmission
-    /*  
-	sprintf(text, "%d %d %d %d \r\n",ae[0],ae[1],ae[2],ae[3]);
-	i = 0;
-	while( text[i] != 0) {
-		delay_ms(1);
-		// if (X32_switches == 0x03)
-		if (X32_wireless_stat & 0x01 == 0x01)
-			X32_wireless_data = text[i];
-		i++;
-	}
-    */
 }
 
 int within_bounds(int x, int lower_limit, int upper_limit) {
