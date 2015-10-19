@@ -141,6 +141,7 @@ void	process_packet(void);
 void 	panic();
 void	logs_send();
 int within_bounds(int x, int lower_limit, int upper_limit);
+int process_data_field (uint8_t * data, uint8_t * data_old, int * knob);
 
 int lift_step = 35; 	 //65-30
 int yaw_step =  -5; 	 //25-30
@@ -316,14 +317,14 @@ void process_packet(void)  //we need to process packet and decide what should be
 					data2_old = data2;
 					if ( (data2&0x10) == 0x00) 
 						{
-							yaw  = ((int)data2&0x0F)*2; //the coeff
-							printf("$YAW (+++) changed to: %d \n", yaw);
+							yaw  = ((int)data2&0x0F)*2; //2 is the coefficient, otherwise very weak
+							//printf("$YAW (+++) changed to: %d \n", yaw);
 						}
 					else
 						{
 							yaw = ((int)data2&0x0F); //quick fix + the coeff
 							yaw = (yaw) *(-2);
-							printf("$YAW after (---) changed to: %d \n", yaw);
+							//printf("$YAW after (---) changed to: %d \n", yaw);
 						}
 				}
 			//PITCH 3
@@ -333,13 +334,13 @@ void process_packet(void)  //we need to process packet and decide what should be
 					if ( (data3&0x10) == 0x00) 
 						{
 							pitch  = ((int)data3&0x0F)*2; //the coeff
-							printf("$PITCH (+++) changed to: %d \n", pitch);
+							//printf("$PITCH (+++) changed to: %d \n", pitch);
 						}
 					else
 						{
 							pitch = ((int)data3&0x0F); //quick fix + the coeff
 							pitch = (pitch) *(-2);
-							printf("$PITCH (---) changed to: %d \n", pitch);
+							//printf("$PITCH (---) changed to: %d \n", pitch);
 						}
 				}
 
@@ -350,13 +351,13 @@ void process_packet(void)  //we need to process packet and decide what should be
 					if ( (data4&0x10) == 0x00) 
 						{
 							roll  = ((int)data4&0x0F)*2; //the coeff
-							printf("$roll (+++) changed to: %d \n", roll);
+							//printf("$roll (+++) changed to: %d \n", roll);
 						}
 					else
 						{
 							roll = ((int)data4&0x0F); //quick fix + the coeff
 							roll = (roll) *(-2);
-							printf("$roll after (---) changed to: %d \n", roll);
+							//printf("$roll after (---) changed to: %d \n", roll);
 						}
 				}
 				
@@ -875,4 +876,24 @@ int within_bounds(int x, int lower_limit, int upper_limit) {
 		return lower_limit;
 	}
 	return x;
+}
+
+int process_data_field (uint8_t * data, uint8_t * data_old, int * knob)
+{
+	if (data != data_old) //save time if no changes in pitch input
+	{
+		data_old = data;
+		if ( (data&0x10) == 0x00) 
+			{
+				knob  = ((int)data3&0x0F)*2; //the coeff
+			}
+		else
+			{
+				knob = ((int)data&0x0F);
+				knob = (knob) *(-2);
+			}
+		return 1;
+	}
+	else 
+		return 0; //no change in data field
 }
