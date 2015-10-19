@@ -59,14 +59,9 @@ float_x32 zr_v;
 
 float_x32 p2phi = 0x43; // 0.00410
 
-
-int yaw = 0;
-
-
 int calibrated = FALSE;
 int YAW_CONTROL_LOOP = FALSE;
 int FULL_CONTROL_LOOP = FALSE;
-
 
 
 float_x32 C1 = 0x400000; 
@@ -88,6 +83,7 @@ uint8_t sensitivity = 30;
 int full_yaw = 0;
 int full_pitch = 0;
 int full_roll = 0;
+int yaw = 0;
 int pitch = 0;
 int roll = 0;
 
@@ -272,25 +268,10 @@ void process_packet(void)  //we need to process packet and decide what should be
 						else YAW_CONTROL_LOOP = FALSE;
 					}
 				}
+			process_data_field (&data2, &data2_old, &yaw);
 
-		
-			//YAW in CONTROL LOOP
-			//set the yaw rate variable that is used in the control loop
-			if (data2 != data2_old) //save time if no changes in yaw input
-				{
-					data2_old = data2;
-					if ( (data2&0x10) == 0x00) 
-						{
-							yaw  = ((int)data2&0x0F)*2; //the coeff
-							//printf("$YAW (+++) changed to: %d \n", yaw);
-						}
-					else
-						{
-							yaw = ((int)data2&0x0F)*2; //quick fix + the coeff
-							yaw = (yaw) *(-2);
-							//printf("$YAW after (---) changed to: %d \n", yaw);
-						}
-				}
+			printf("$YAW is: %d \n", yaw);
+
 		}
 	else if ((modecommand == FULL_CONTROL) && (calibrated == TRUE))
 		{
@@ -308,59 +289,14 @@ void process_packet(void)  //we need to process packet and decide what should be
 						else FULL_CONTROL_LOOP = FALSE;
 					}
 				}
-
-
-			//YAW in CONTROL LOOP
-			//set the yaw rate variable that is used in the control loop
-			if (data2 != data2_old) //save time if no changes in yaw input
-				{
-					data2_old = data2;
-					if ( (data2&0x10) == 0x00) 
-						{
-							yaw  = ((int)data2&0x0F)*2; //2 is the coefficient, otherwise very weak
-							//printf("$YAW (+++) changed to: %d \n", yaw);
-						}
-					else
-						{
-							yaw = ((int)data2&0x0F); //quick fix + the coeff
-							yaw = (yaw) *(-2);
-							//printf("$YAW after (---) changed to: %d \n", yaw);
-						}
-				}
-			//PITCH 3
-			if (data3 != data3_old) //save time if no changes in pitch input
-				{
-					data3_old = data3;
-					if ( (data3&0x10) == 0x00) 
-						{
-							pitch  = ((int)data3&0x0F)*2; //the coeff
-							//printf("$PITCH (+++) changed to: %d \n", pitch);
-						}
-					else
-						{
-							pitch = ((int)data3&0x0F); //quick fix + the coeff
-							pitch = (pitch) *(-2);
-							//printf("$PITCH (---) changed to: %d \n", pitch);
-						}
-				}
-
-			//ROLL
-			if (data4 != data4_old) //save time if no changes in roll input
-				{
-					data4_old = data4;
-					if ( (data4&0x10) == 0x00) 
-						{
-							roll  = ((int)data4&0x0F)*2; //the coeff
-							//printf("$roll (+++) changed to: %d \n", roll);
-						}
-					else
-						{
-							roll = ((int)data4&0x0F); //quick fix + the coeff
-							roll = (roll) *(-2);
-							//printf("$roll after (---) changed to: %d \n", roll);
-						}
-				}
-				
+			process_data_field (&data2, &data2_old, &yaw);
+			process_data_field (&data3, &data3_old, &pitch);
+			process_data_field (&data4, &data4_old, &roll);
+			/*
+			printf("$YAW is: %d \n", yaw);
+			printf("$PITCH is: %d \n", pitch);
+			printf("$ROLL is: %d \n", roll);
+			*/			
 		}
 	else if ((modecommand == FULL_CONTROL) && (calibrated == FALSE))
 		{
@@ -880,17 +816,17 @@ int within_bounds(int x, int lower_limit, int upper_limit) {
 
 int process_data_field (uint8_t * data, uint8_t * data_old, int * knob)
 {
-	if (data != data_old) //save time if no changes in pitch input
+	if (*data != *data_old) //save time if no changes in pitch input
 	{
-		data_old = data;
-		if ( (data&0x10) == 0x00) 
+		*data_old = *data;
+		if ( (*data&0x10) == 0x00) 
 			{
-				knob  = ((int)data3&0x0F)*2; //the coeff
+				*knob  = ((int)*data&0x0F)*2; //the coeff
 			}
 		else
 			{
-				knob = ((int)data&0x0F);
-				knob = (knob) *(-2);
+				*knob = ((int)*data&0x0F);
+				*knob = (*knob) *(-2);
 			}
 		return 1;
 	}
