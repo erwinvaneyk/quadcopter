@@ -14,9 +14,9 @@ void TUI_frame_init(void)
 
 	attron(COLOR_PAIR(2));
 	attron(A_UNDERLINE);
-	mvprintw(3,0, "***ENGINE RPM***|    ***SENSOR values***    | ***CONTROL values***     ");
+	mvprintw(3,0, "***ENGINE RPM***|   ***SENSOR values***   | ***CONTROL values***    ");
 	attroff(A_UNDERLINE);
-	mvprintw(4,0, "AE0 AE1 AE2 AE3 | AX   AY   AZ   P   Q   R  | yaw P                    ");
+	mvprintw(4,0, "AE0 AE1 AE2 AE3 |AX   AY   AZ   P   Q   R |YP:P1:P2:S               ");
 	attroff(COLOR_PAIR(2));
 	attroff(A_BOLD | A_STANDOUT );
 
