@@ -16,6 +16,7 @@ extern int msg_cursor;
 #define MODE_LINE 30			// y coordinate of where MODE is printed
 #define BASE_Y 15				// NOT_USED //Engines graph y coordinate
 #define BASE_X 65				// NOT_USED //Engines graph x coordinate
+#define HELP_FIELD 32
 
 #define CURRENT_MSG_CURSOR MESSAGE_FIELD_START + msg_cursor
 
