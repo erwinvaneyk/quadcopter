@@ -253,9 +253,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 	else if ((modecommand == YAW_CONTROL) && (calibrated == TRUE))
 		{
 			mode = YAW_CONTROL_INT;
-		
-			//LIFT
-			if ( (data1&0x10) == 0x00)
+			if ( (data1&0x10) == 0x00) //LIFT
 				{
 					//modify engine values if lift is changed!
 					//DND the yaw control otherwise
@@ -269,16 +267,12 @@ void process_packet(void)  //we need to process packet and decide what should be
 					}
 				}
 			process_data_field (&data2, &data2_old, &yaw);
-
-			printf("$YAW is: %d \n", yaw);
-
+			//printf("$YAW is: %d \n", yaw);
 		}
 	else if ((modecommand == FULL_CONTROL) && (calibrated == TRUE))
 		{
 			mode = FULL_CONTROL_INT;
-		
-			//LIFT
-			if ( (data1&0x10) == 0x00)
+			if ( (data1&0x10) == 0x00) //LIFT
 				{
 					if (lift_setpoint != (int)data1&0x0F)
 					{
