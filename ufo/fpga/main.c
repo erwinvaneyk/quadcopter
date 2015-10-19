@@ -259,7 +259,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 			if ( (data1&0x10) == 0x00)
 				{
 					//modify engine values if lift is changed!
-					//DND the yaw control
+					//DND the yaw control otherwise
 					if (lift_setpoint != (int)data1&0x0F)
 					{
 						lift_setpoint = (int)(data1&0x0F);
@@ -276,18 +276,16 @@ void process_packet(void)  //we need to process packet and decide what should be
 			if (data2 != data2_old) //save time if no changes in yaw input
 				{
 					data2_old = data2;
-
 					if ( (data2&0x10) == 0x00) 
 						{
 							yaw  = ((int)data2&0x0F)*2; //the coeff
-							//printf("$YAW (+++) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+							//printf("$YAW (+++) changed to: %d \n", yaw);
 						}
 					else
 						{
 							yaw = ((int)data2&0x0F)*2; //quick fix + the coeff
-							//printf("$YAW before (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
 							yaw = (yaw) *(-2);
-							//printf("$YAW after (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
+							//printf("$YAW after (---) changed to: %d \n", yaw);
 						}
 				}
 		}
@@ -298,8 +296,6 @@ void process_packet(void)  //we need to process packet and decide what should be
 			//LIFT
 			if ( (data1&0x10) == 0x00)
 				{
-					//modify engine values if lift is changed!
-					//DND the yaw control
 					if (lift_setpoint != (int)data1&0x0F)
 					{
 						lift_setpoint = (int)(data1&0x0F);
@@ -662,7 +658,7 @@ void isr_qr_link(void) //1270 Hz
 		log[log_counter].lift_point = lift_setpoint_rpm;
 		log_counter++;
 	}
-#endif
+#endif 
 }
 
 /*------------------------------------------------------------------
