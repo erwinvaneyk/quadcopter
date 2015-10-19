@@ -14,22 +14,22 @@ void TUI_frame_init(void)
 
 	attron(COLOR_PAIR(2));
 	attron(A_UNDERLINE);
-	mvprintw(3,0, "***ENGINE RPM***|    ***SENSOR values***    | ***CONTROL values***     ");
+	mvprintw(3,0, "***ENGINE RPM***|   ***SENSOR values***   | ***CONTROL values***    ");
 	attroff(A_UNDERLINE);
-	mvprintw(4,0, "AE0 AE1 AE2 AE3 | AX   AY   AZ   P   Q   R  | yaw P                    ");
+	mvprintw(4,0, "AE0 AE1 AE2 AE3 |AX   AY   AZ   P   Q   R |YP:P1:P2:S               ");
 	attroff(COLOR_PAIR(2));
-	attroff(A_BOLD | A_STANDOUT );
 
-	attron(A_BOLD | A_STANDOUT );
 	attron(COLOR_PAIR(1));
 	mvprintw(6,0, "                                                                                ");
-	attroff(COLOR_PAIR(1));
-
-	attron(A_BOLD | A_STANDOUT ); 
-	attron(COLOR_PAIR(1));
 	mvprintw(7,0, "MESSAGES:                                                                       ");
-	attroff(COLOR_PAIR(1));
+	mvprintw(HELP_FIELD,0, "COMMANDS:                                                              ");
+    mvprintw(HELP_FIELD+4,0, "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ");
+    attroff(COLOR_PAIR(1));
 	attroff(A_BOLD | A_STANDOUT ); 
+	mvprintw(HELP_FIELD+1,0, "MODES:         SAFE - 0 | PANIC - 1     | MANUAL - 2     | CALIBRATE - 3 | YAW CONTROL - 4 | FULL CONTROL - 5");
+	mvprintw(HELP_FIELD+2,0, "CONTROLS:  LIFT +/- A/Z | YAW L/R - Q/W | PITCH F/B - ^/v| ROLL L/R - </> ");
+	mvprintw(HELP_FIELD+3,0, "Adjustments:  Yaw P u/j | Full P1 - i/k | Full P2 - o/l  | Sensitivity - p/;");
+
 }
 
 void TUI_engines_init(void)
