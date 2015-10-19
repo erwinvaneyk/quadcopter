@@ -808,7 +808,7 @@ int within_bounds(int x, int lower_limit, int upper_limit) {
 	return x;
 }
 
-int process_data_field (uint8_t * data, uint8_t * data_old, int * knob)
+int process_data_field (uint8_t* data, uint8_t* data_old, int* knob)
 {
 	if (*data != *data_old) //save time if no changes in pitch input
 	{
