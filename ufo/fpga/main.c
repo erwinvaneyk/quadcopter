@@ -108,6 +108,8 @@ uint8_t checksum;
 uint8_t checker;
 
 uint8_t data2_old = 0;
+uint8_t data3_old = 0;
+uint8_t data4_old = 0;
 
 int startTimestamp, endTimestamp, counter;
 
@@ -304,6 +306,58 @@ void process_packet(void)  //we need to process packet and decide what should be
 						if (lift_setpoint > 2) 	FULL_CONTROL_LOOP = TRUE;
 						else FULL_CONTROL_LOOP = FALSE;
 					}
+				}
+
+
+			//YAW in CONTROL LOOP
+			//set the yaw rate variable that is used in the control loop
+			if (data2 != data2_old) //save time if no changes in yaw input
+				{
+					data2_old = data2;
+					if ( (data2&0x10) == 0x00) 
+						{
+							yaw  = ((int)data2&0x0F)*2; //the coeff
+							printf("$YAW (+++) changed to: %d \n", yaw);
+						}
+					else
+						{
+							yaw = ((int)data2&0x0F); //quick fix + the coeff
+							yaw = (yaw) *(-2);
+							printf("$YAW after (---) changed to: %d \n", yaw);
+						}
+				}
+			//PITCH 3
+			if (data3 != data3_old) //save time if no changes in pitch input
+				{
+					data3_old = data3;
+					if ( (data3&0x10) == 0x00) 
+						{
+							pitch  = ((int)data3&0x0F)*2; //the coeff
+							printf("$PITCH (+++) changed to: %d \n", pitch);
+						}
+					else
+						{
+							pitch = ((int)data3&0x0F); //quick fix + the coeff
+							pitch = (pitch) *(-2);
+							printf("$PITCH (---) changed to: %d \n", pitch);
+						}
+				}
+
+			//ROLL
+			if (data4 != data4_old) //save time if no changes in roll input
+				{
+					data4_old = data4;
+					if ( (data4&0x10) == 0x00) 
+						{
+							roll  = ((int)data4&0x0F)*2; //the coeff
+							printf("$roll (+++) changed to: %d \n", roll);
+						}
+					else
+						{
+							roll = ((int)data4&0x0F); //quick fix + the coeff
+							roll = (roll) *(-2);
+							printf("$roll after (---) changed to: %d \n", roll);
+						}
 				}
 				
 		}
