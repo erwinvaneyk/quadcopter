@@ -137,7 +137,7 @@ void	process_packet(void);
 void 	panic();
 void	logs_send();
 int within_bounds(int x, int lower_limit, int upper_limit);
-int process_data_field (uint8_t * data, uint8_t * data_old, int * knob);
+int process_data_field (uint8_t* data, uint8_t* data_old, int* knob);
 
 int lift_step = 35; 	 //65-30
 int yaw_step =  -5; 	 //25-30
