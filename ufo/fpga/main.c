@@ -59,14 +59,9 @@ float_x32 zr_v;
 
 float_x32 p2phi = 0x43; // 0.00410
 
-
-int yaw = 0;
-
-
 int calibrated = FALSE;
 int YAW_CONTROL_LOOP = FALSE;
 int FULL_CONTROL_LOOP = FALSE;
-
 
 
 float_x32 C1 = 0x400000; 
@@ -88,6 +83,7 @@ uint8_t sensitivity = 30;
 int full_yaw = 0;
 int full_pitch = 0;
 int full_roll = 0;
+int yaw = 0;
 int pitch = 0;
 int roll = 0;
 
@@ -108,6 +104,8 @@ uint8_t checksum;
 uint8_t checker;
 
 uint8_t data2_old = 0;
+uint8_t data3_old = 0;
+uint8_t data4_old = 0;
 
 int startTimestamp, endTimestamp, counter;
 
@@ -139,6 +137,7 @@ void	process_packet(void);
 void 	panic();
 void	logs_send();
 int within_bounds(int x, int lower_limit, int upper_limit);
+int process_data_field (uint8_t* data, uint8_t* data_old, int* knob);
 
 int lift_step = 35; 	 //65-30
 int yaw_step =  -5; 	 //25-30
@@ -254,12 +253,10 @@ void process_packet(void)  //we need to process packet and decide what should be
 	else if ((modecommand == YAW_CONTROL) && (calibrated == TRUE))
 		{
 			mode = YAW_CONTROL_INT;
-		
-			//LIFT
-			if ( (data1&0x10) == 0x00)
+			if ( (data1&0x10) == 0x00) //LIFT
 				{
 					//modify engine values if lift is changed!
-					//DND the yaw control
+					//DND the yaw control otherwise
 					if (lift_setpoint != (int)data1&0x0F)
 					{
 						lift_setpoint = (int)(data1&0x0F);
@@ -269,37 +266,14 @@ void process_packet(void)  //we need to process packet and decide what should be
 						else YAW_CONTROL_LOOP = FALSE;
 					}
 				}
-
-		
-			//YAW in CONTROL LOOP
-			//set the yaw rate variable that is used in the control loop
-			if (data2 != data2_old) //save time if no changes in yaw input
-				{
-					data2_old = data2;
-
-					if ( (data2&0x10) == 0x00) 
-						{
-							yaw  = ((int)data2&0x0F)*2; //the coeff
-							//printf("$YAW (+++) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
-						}
-					else
-						{
-							yaw = ((int)data2&0x0F)*2; //quick fix + the coeff
-							//printf("$YAW before (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
-							yaw = (yaw) *(-2);
-							//printf("$YAW after (---) changed to: %d \n", yaw);  //Issue #99. Need to show you something.
-						}
-				}
+			process_data_field (&data2, &data2_old, &yaw);
+			//printf("$YAW is: %d \n", yaw);
 		}
 	else if ((modecommand == FULL_CONTROL) && (calibrated == TRUE))
 		{
 			mode = FULL_CONTROL_INT;
-		
-			//LIFT
-			if ( (data1&0x10) == 0x00)
+			if ( (data1&0x10) == 0x00) //LIFT
 				{
-					//modify engine values if lift is changed!
-					//DND the yaw control
 					if (lift_setpoint != (int)data1&0x0F)
 					{
 						lift_setpoint = (int)(data1&0x0F);
@@ -309,7 +283,14 @@ void process_packet(void)  //we need to process packet and decide what should be
 						else FULL_CONTROL_LOOP = FALSE;
 					}
 				}
-				
+			process_data_field (&data2, &data2_old, &yaw);
+			process_data_field (&data3, &data3_old, &pitch);
+			process_data_field (&data4, &data4_old, &roll);
+			/*
+			printf("$YAW is: %d \n", yaw);
+			printf("$PITCH is: %d \n", pitch);
+			printf("$ROLL is: %d \n", roll);
+			*/			
 		}
 	else if ((modecommand == FULL_CONTROL) && (calibrated == FALSE))
 		{
@@ -445,6 +426,8 @@ void logs_send() {
 }
 
 void panic() {
+	YAW_CONTROL_LOOP = FALSE;
+	FULL_CONTROL_LOOP = FALSE;
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	DISABLE_INTERRUPT(INTERRUPT_TIMER1);
 	DISABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
@@ -480,7 +463,6 @@ void panic() {
 	ENABLE_INTERRUPT(INTERRUPT_TIMER1);
 	ENABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
 	mode = SAFE_MODE_INT;
-	YAW_CONTROL_LOOP = FALSE;
 	// NOTE: INTERRUPT_GLOBAL is enabled now!
 }
 
@@ -661,7 +643,7 @@ void isr_qr_link(void) //1270 Hz
 		log[log_counter].lift_point = lift_setpoint_rpm;
 		log_counter++;
 	}
-#endif
+#endif 
 }
 
 /*------------------------------------------------------------------
@@ -811,30 +793,9 @@ void toggle_led(int i)
 void print_state(void) 
 {
 	int i;
-	//char text[100] , a;
 	printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
-	//printf("%3d %3d %3d %3d %3d %3d (%3d, %d)\r\n",
-		//sax,say,say,sp,sq,sr,isr_qr_time, inst);
-
-	/*printf("%3d %3d %3d %3d %3d %3d | %d | (%3d, %d)\r\n",
-		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, isr_qr_time, inst);
-		*/
-
 	printf("%3d %3d %3d %3d %3d %3d | %d %d %d %d \n",
 		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, full_p1, full_p2, sensitivity);
-
-    //wireless transmission
-    /*  
-	sprintf(text, "%d %d %d %d \r\n",ae[0],ae[1],ae[2],ae[3]);
-	i = 0;
-	while( text[i] != 0) {
-		delay_ms(1);
-		// if (X32_switches == 0x03)
-		if (X32_wireless_stat & 0x01 == 0x01)
-			X32_wireless_data = text[i];
-		i++;
-	}
-    */
 }
 
 int within_bounds(int x, int lower_limit, int upper_limit) {
@@ -845,4 +806,24 @@ int within_bounds(int x, int lower_limit, int upper_limit) {
 		return lower_limit;
 	}
 	return x;
+}
+
+int process_data_field (uint8_t* data, uint8_t* data_old, int* knob)
+{
+	if (*data != *data_old) //save time if no changes in pitch input
+	{
+		*data_old = *data;
+		if ( (*data&0x10) == 0x00) 
+			{
+				*knob  = ((int)*data&0x0F)*2; //the coeff
+			}
+		else
+			{
+				*knob = ((int)*data&0x0F);
+				*knob = (*knob) *(-2);
+			}
+		return 1;
+	}
+	else 
+		return 0; //no change in data field
 }
