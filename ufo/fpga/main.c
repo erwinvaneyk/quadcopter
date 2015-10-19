@@ -820,7 +820,7 @@ void print_state(void)
 		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, isr_qr_time, inst);
 		*/
 
-	printf("%3d %3d %3d %3d %3d %3d | %d %d %d %d \r\n",
+	printf("%3d %3d %3d %3d %3d %3d | %d %d %d %d \n",
 		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, full_p1, full_p2, sensitivity);
 
     //wireless transmission
