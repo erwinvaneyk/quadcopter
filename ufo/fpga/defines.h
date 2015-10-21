@@ -64,3 +64,6 @@
 
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
+
+//put this in PRINT_STATE when d-oing time analysis
+//printf("$ measurement t = %d\n", endTimestamp);\
