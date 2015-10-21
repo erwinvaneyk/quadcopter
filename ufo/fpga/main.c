@@ -152,6 +152,7 @@ int main()
 	// Initialize timestamp variables
 	int timestamp_alive_led_toggle = 0;
 	int timestamp_last_pkt = 0;
+	int count = 1;
 	
 	// Initialize sensor readings
 	sax = say = saz = sp = sq = sr = 0;
@@ -377,7 +378,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 			full_p1 = within_bounds(data2,1,20);
 			full_p2 = within_bounds(data3,1,20);
 			sensitivity = within_bounds(data4,0,60);
-			updateControlModifiers();
+			// REPLACE
 		}
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
