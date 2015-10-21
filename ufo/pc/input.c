@@ -87,12 +87,10 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 
 	// Update mode (keyboard's mode overrides joystick's mode)
 	if(keyboard->mode != model->mode) {
-		//printf("Keyboard switched mode: %x\n", keyboard->mode);
 		mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "Keyboard switched mode: %x", keyboard->mode);
 		TUI_MOVE_CURSOR;
 		updateModeIfValid(model, keyboard->mode);
 	} else if(joystick->mode != model->mode) {
-		//printf("Joystick switched mode: %x\n", joystick->mode);
 		mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "Joystick switched mode: %x", joystick->mode);
 		TUI_MOVE_CURSOR;
 		updateModeIfValid(model, joystick->mode);
@@ -144,5 +142,4 @@ void show_input(struct INPUT* input) {
 	mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "show_input:   mode: %i }\n", input->mode);
 	TUI_MOVE_CURSOR;
 	attroff(COLOR_PAIR(6));
-
 }

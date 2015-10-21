@@ -256,14 +256,14 @@ int main(int argc, char **argv)
 			//if we are logging save to a file
 			if (inputModel.mode == SEND_TELEMETRY_INT)
 			{
-				printf("Saving to a file...\n");
+				TUI_PRINT_MESSAGE(Saving to a file...);
 				if (link_status > -1)
 				{
 					c=' ';
 					f = fopen("logs/log", "w");
 					if (f == NULL)
 					{
-						printf("Error opening file!\n");
+						TUI_PRINT_MESSAGE(Error opening file!);
 						exit(1); //change this
 					}
 					//artificailly sent a packet
@@ -279,7 +279,7 @@ int main(int argc, char **argv)
 					}
 					fclose(f);
 				}
-				printf("LOG saved to file.\n");
+				TUI_PRINT_MESSAGE(LOG saved to file);
 				inputModel.mode = SAFE_MODE_INT;
 			}
 		}

@@ -64,47 +64,39 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 		}	
 
 		switch(c) {
-
 			// Modes 
 			case '0': // Safe mode
-				//printf("Set to safe mode (%x)\n", SAFE_MODE_INT);
-				TUI_PRINT_MESSAGE(Set to safe mode);
+				//TUI_PRINT_MESSAGE(Set to safe mode);
 				keyboardInput->mode = SAFE_MODE_INT;
 				break;
 			case '1': // Panic mode
-				//printf("Set to panic mode (%x)\n", PANIC_MODE_INT);
-				TUI_PRINT_MESSAGE(Set to panic mode);
+				//TUI_PRINT_MESSAGE(Set to panic mode);
 				keyboardInput->mode = PANIC_MODE_INT;
 				break;
 			case '2': // Manual mode
-				//printf("Set to manual mode (%x)\n", MANUAL_MODE_INT);
-				TUI_PRINT_MESSAGE(Set to manual mode);
+				//TUI_PRINT_MESSAGE(Set to manual mode);
 				keyboardInput->mode = MANUAL_MODE_INT;
 				break;
 			case '3': // Calibrate mode
-				//printf("Set to calibrate mode (%x)\n", CALIBRATE_MODE_INT);
-				TUI_PRINT_MESSAGE(Set to calibrate mode);
+				//TUI_PRINT_MESSAGE(Set to calibrate mode);
 				keyboardInput->mode = CALIBRATE_MODE_INT;
 				break;
 			case '4': // Yaw control mode
-				//printf("Set to 'Yaw control' mode (%x)\n", YAW_CONTROL_INT);
-				TUI_PRINT_MESSAGE(Set to 'Yaw control' mode);
+				//TUI_PRINT_MESSAGE(Set to 'Yaw control' mode);
 				keyboardInput->mode = YAW_CONTROL_INT;
 				break;
 			case '5': // Manual mode
-				//printf("Set to 'Full Control' mode (%x)\n", FULL_CONTROL_INT);
-				TUI_PRINT_MESSAGE(Set to 'Full Control' mode);
+				//TUI_PRINT_MESSAGE(Set to 'Full Control' mode);
 				keyboardInput->mode = FULL_CONTROL_INT;
 				break;
 			case 27: // Escape
-				//printf("Not implemented yet!\n");
-				TUI_PRINT_MESSAGE(Not implemented yet!);
+				//TUI_PRINT_MESSAGE(Set to panic mode);
+				keyboardInput->mode = PANIC_MODE_INT;
 				updated = false;
 				break;
 
 			// Controls for p values
 			case 'u': // p control yaw
-				//printf("Incremented P value for YAW!\n");
 				TUI_PRINT_MESSAGE(Incremented P value for YAW!);
 				p_input->yaw_p = within_bounds(p_input->yaw_p+1,1,20);
 				p_input->updated = true;
@@ -122,25 +114,21 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 				p_input->updated = true;
 				break;
 			case 'i': // p1 control pitch/roll
-				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Incremented P1 value for FULL CONTROL!);
 				p_input->full_p1 = within_bounds(p_input->full_p1+1,1,20);
 				p_input->updated = true;
 				break;
 			case 'k': // p1 control pitch/roll
-				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Decremented P1 value for FULL CONTROL!);
 				p_input->full_p1 = within_bounds(p_input->full_p1-1,1,20);
 				p_input->updated = true;
 				break;
 			case 'o': // p2 control pitch/roll
-				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Incremented P2 value for FULL CONTROL!);
 				p_input->full_p2 = within_bounds(p_input->full_p2+1,1,20);
 				p_input->updated = true;
 				break;
 			case 'l': // p2 control pitch/roll
-				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Decremented P2 value for FULL CONTROL!);
 				p_input->full_p2 = within_bounds(p_input->full_p2-1,1,20);
 				p_input->updated = true;
@@ -154,14 +142,12 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 				break;
 
 			case 'p': // p2 control pitch/roll
-				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Increased Sensitivity);
 				p_input->sensitivity = within_bounds(p_input->sensitivity+1,0,60); //needs more modifications for negative values, hence from 0 to 60
 				p_input->updated = true;
 				break;
 
 			case ';': // p2 control pitch/roll
-				//printf("Not implemented yet!\n");
 				TUI_PRINT_MESSAGE(Decreased Sensitivity);
 				p_input->sensitivity = within_bounds(p_input->sensitivity-1,0,60);
 				p_input->updated = true;
@@ -180,7 +166,6 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 			default:
 				if(unknownKey) {
 					#ifdef DEBUG_KEYBOARD
-						//printf("Unknown key: %i\n", c);
 						attron(COLOR_PAIR(6));
 						mvprintw(MESSAGE_FIELD_START + msg_cursor,0,"Unknown key: %i\n", c);
 						attroff(COLOR_PAIR(6));
@@ -188,7 +173,6 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 					#endif
 					updated = false;
 				}
-				// TODO: add other keys for P
 		}
 		keyboardInput->updated = updated;
 	}
