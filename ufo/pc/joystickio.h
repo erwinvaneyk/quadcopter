@@ -36,6 +36,12 @@ struct JOYSTICK {
 
 #define JS_BUTTON_MANUAL_MODE 2
 
+#define JS_BUTTON_CALIBRATION_MODE 3
+
+#define JS_BUTTON_YAW_CONTROL_MODE 4
+
+#define JS_BUTTON_FULL_CONTROL_MODE 2
+
  // Buttons are numbered 0 - 11
 
 short normalizeAxis(short axis_value, short buckets);

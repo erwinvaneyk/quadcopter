@@ -69,6 +69,15 @@ void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK*
 				case JS_BUTTON_MANUAL_MODE:
 					joystickInputModel->mode = MANUAL_MODE_INT;
 					break;
+				case JS_BUTTON_CALIBRATE_MODE:
+					joystickInputModel->mode = CALIBRATE_MODE_INT;
+					break;
+				case JS_BUTTON_YAW_CONTROL_MODE:
+					joystickInputModel->mode = YAW_CONTROL_INT;
+					break;
+				case JS_BUTTON_FULL_CONTROL_MODE:
+					joystickInputModel->mode = FULL_CONTROL_INT;
+					break;
 				default:
 					mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "Unknown joystick mode: %d\n", i);
 					TUI_MOVE_CURSOR;
