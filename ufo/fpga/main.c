@@ -74,7 +74,9 @@ uint8_t yaw_p = 1;
 uint8_t full_p1 = 1;
 uint8_t full_p2 = 1;
 
+// Manual Control sensitivity modifier
 uint8_t sensitivity = 30;
+int lift_step, yaw_step, other_step;
 
 
 //Full control variables
@@ -86,7 +88,6 @@ int full_roll = 0;
 int yaw = 0;
 int pitch = 0;
 int roll = 0;
-
 
 float_x32 p_kalman, phi_kalman, phi_error, p_bias, sp_old, p_bias_old, phi_kalman_old; 
 
@@ -139,10 +140,6 @@ void	logs_send();
 int within_bounds(int x, int lower_limit, int upper_limit);
 int process_data_field (uint8_t* data, uint8_t* data_old, int* knob);
 
-int lift_step = 35; 	 //65-30
-int yaw_step =  -5; 	 //25-30
-int other_step = -15;    //15-30
-
 /*------------------------------------------------------------------
  * main loop
  *------------------------------------------------------------------
@@ -182,6 +179,7 @@ int main()
 	*/
 	X32_leds = 0;
 	initiliaze_kalman_filter();
+	updateControlModifiers();
 
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
 
@@ -371,16 +369,18 @@ void process_packet(void)  //we need to process packet and decide what should be
 
 			calibrated = TRUE;
 		}
-		else if (modecommand==P_VALUES_MODE) //((mode==YAW_CONTROL_INT) || (mode==FULL_CONTROL_INT))  &&  
+		else if (modecommand == P_VALUES_MODE)  
 		{
 			yaw_p 	= within_bounds(data1,1,20);
 			full_p1 = within_bounds(data2,1,20);
 			full_p2 = within_bounds(data3,1,20);
 			sensitivity = within_bounds(data4,0,60);
-
-			lift_step = MAX(35+sensitivity, 35);	//35 is okay for lift
-			yaw_step =  MAX(-5+sensitivity, 10);	//10 should be the minumum
-			other_step = MAX(-15+sensitivity, 10);	//10 should be the minumum
+			updateControlModifiers();
+			/* leave this here for now. issue # 109
+			printf("$ Lift step = %d |", lift_step);
+			printf("$ Yaw step = %d |", yaw_step);
+			printf("$ Other step = %d \n", other_step);
+			*/
 		}
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
@@ -464,7 +464,7 @@ void calibrate(void)
 	int i;
 	DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	sax0 = say0 = saz0 = sp0 = sq0 = sr0 = 0;
-	for (i=0; i<128; i++)
+	for (i = 0; i < CALIBRATE_ITERATIONS; i++)
 	{
 		sax0 += sax;
 		say0 += say;
@@ -635,6 +635,12 @@ void isr_qr_link(void) //1270 Hz
 		log_counter++;
 	}
 #endif 
+}
+
+void updateControlModifiers() {
+	lift_step = MAX(35+sensitivity, 35);	//35 is okay for lift
+	yaw_step =  MAX(-5+sensitivity, 10);	//10 should be the minumum
+	other_step = MAX(-15+sensitivity, 10);	//10 should be the minumum
 }
 
 /*------------------------------------------------------------------

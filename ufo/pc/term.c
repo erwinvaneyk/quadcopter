@@ -152,6 +152,15 @@ int main(int argc, char **argv)
 	int PRINT_MODE = STATUS;
 	initscr();
 	//int ae0, ae1, ae2, ae3; //needed for engine TUI
+	
+	//init p values input
+	p_input.current_yaw_p = 1; // must match the initial P value on QR
+	p_input.yaw_p = 1;
+	p_input.full_p1 = 1;
+	p_input.full_p2 = 1;
+	p_input.sensitivity = 30;
+	p_input.updated = true; //this fill force the values to be sent over once
+
 
 	printw("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
 	getch();
@@ -197,14 +206,6 @@ int main(int argc, char **argv)
 	/* Timer init
 	*/
 	struct timeval timer1, timer2;
-
-	//init p values input
-	p_input.current_yaw_p = 1; // must match the initial P value on QR
-	p_input.yaw_p = 1;
-	p_input.full_p1 = 1;
-	p_input.full_p2 = 1;
-	p_input.sensitivity = 30;
-	p_input.updated = true; //this fill force the values to be sent over once
 
 	getch();
 	refresh();

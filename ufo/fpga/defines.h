@@ -3,6 +3,7 @@
 #define FALSE 0
 #define LOG_LENGTH 10000	//=10 seconds of logging in Manual Mode at 1000Hz
 #define THRESHOLD 2000		//(ms) Communicaton safety mechanism threshold value
+#define CALIBRATE_ITERATIONS 128 // Number of sensor readings needed for calibratio
 
 /*
  * define some peripheral short hands
@@ -38,6 +39,7 @@
  */
 #define MINIMUM_ENGINE_SPEED 65
 #define MAXIMUM_ENGINE_SPEED 1000
+
 
 #define CONTROLS_THRESHOLD 130
 
