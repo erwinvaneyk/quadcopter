@@ -111,7 +111,7 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 	{
 		resetInputModel(model);
 		resetInputModel(keyboard);
-		resetInputModel(joystick);
+	//	resetInputModel(joystick);
 	} 
 	else if ( (model->mode == MANUAL_MODE_INT) || (model->mode == YAW_CONTROL_INT) || (model->mode == FULL_CONTROL_INT)  )
 	{
