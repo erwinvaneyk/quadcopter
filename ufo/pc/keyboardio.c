@@ -5,6 +5,7 @@
 
 //TUI related
 extern int msg_cursor;
+int i;
 
 void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_INPUT* p_input) {
 	bool updated;
@@ -164,6 +165,16 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 				TUI_PRINT_MESSAGE(Decreased Sensitivity);
 				p_input->sensitivity = within_bounds(p_input->sensitivity-1,0,60);
 				p_input->updated = true;
+				break;
+
+			case 'c': // clean messages
+				for (i = MESSAGE_FIELD_START; i <= (MESSAGE_FIELD_START + MESSAGE_FIELD_SIZE); i++)
+				{
+					move(i, 0);  // move to begining of line
+					clrtoeol();  // clear line
+				}
+				move(MESSAGE_FIELD_START, 0); 
+				msg_cursor = 0;
 				break;
 
 			default:
