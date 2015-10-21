@@ -90,7 +90,8 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 				keyboardInput->mode = FULL_CONTROL_INT;
 				break;
 			case 27: // Escape
-				TUI_PRINT_MESSAGE(Not implemented yet!);
+				TUI_PRINT_MESSAGE(Set to panic mode);
+				keyboardInput->mode = PANIC_MODE_INT;
 				updated = false;
 				break;
 
