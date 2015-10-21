@@ -267,7 +267,6 @@ void process_packet(void)  //we need to process packet and decide what should be
 					}
 				}
 			process_data_field (&data2, &data2_old, &yaw);
-			//printf("$YAW is: %d \n", yaw);
 		}
 	else if ((modecommand == FULL_CONTROL) && (calibrated == TRUE))
 		{
@@ -285,12 +284,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 				}
 			process_data_field (&data2, &data2_old, &yaw);
 			process_data_field (&data3, &data3_old, &pitch);
-			process_data_field (&data4, &data4_old, &roll);
-			/*
-			printf("$YAW is: %d \n", yaw);
-			printf("$PITCH is: %d \n", pitch);
-			printf("$ROLL is: %d \n", roll);
-			*/			
+			process_data_field (&data4, &data4_old, &roll);		
 		}
 	else if ((modecommand == FULL_CONTROL) && (calibrated == FALSE))
 		{
@@ -386,12 +380,6 @@ void process_packet(void)  //we need to process packet and decide what should be
 			lift_step = MAX(35+sensitivity, 35);	//35 is okay for lift
 			yaw_step =  MAX(-5+sensitivity, 10);	//10 should be the minumum
 			other_step = MAX(-15+sensitivity, 10);	//10 should be the minumum
-
-			/* leave this here for now. issue # 109
-			printf("$ Lift step = %d |", lift_step);
-			printf("$ Yaw step = %d |", yaw_step);
-			printf("$ Other step = %d \n", other_step);
-			*/
 		}
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
@@ -501,6 +489,7 @@ void calibrate(void)
 */
 
 void periodic(void) {
+//	startTimestamp = X32_us_clock; //time measurements
 	if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
@@ -567,6 +556,7 @@ void periodic(void) {
 			theta_kalman_old = theta_kalman;
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		} 
+	//	endTimestamp = X32_us_clock - startTimestamp;
 }
 
 void initiliaze_kalman_filter()
