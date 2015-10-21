@@ -69,7 +69,7 @@ void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK*
 				case JS_BUTTON_MANUAL_MODE:
 					joystickInputModel->mode = MANUAL_MODE_INT;
 					break;
-				case JS_BUTTON_CALIBRATE_MODE:
+				case JS_BUTTON_CALIBRATION_MODE:
 					joystickInputModel->mode = CALIBRATE_MODE_INT;
 					break;
 				case JS_BUTTON_YAW_CONTROL_MODE:

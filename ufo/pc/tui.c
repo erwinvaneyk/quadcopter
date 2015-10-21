@@ -2,6 +2,7 @@
 
 void TUI_frame_init(void)
 {
+	clear();
 	start_color();
 	TUI_INIT_COLORS;
 
