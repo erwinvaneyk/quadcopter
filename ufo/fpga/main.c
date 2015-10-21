@@ -24,9 +24,6 @@ uint8_t	fifo[FIFOSIZE];
 int	iptr = 0; 
 int optr = 0;
 char c;
-
-// Communication safety variables
-int TERM_CONNECTED = 0;
 int communication_lost = FALSE;
 
 // 
@@ -203,13 +200,12 @@ int main()
 		}  
 
 		// we have lost communication to the qr -> panic
-		if ((X32_ms_clock - timestamp_last_pkt) > THRESHOLD && TERM_CONNECTED) {	
+		if ((X32_ms_clock - timestamp_last_pkt) > THRESHOLD && timestamp_last_pkt != 0) {	
 			panic();
 			YAW_CONTROL_LOOP = FALSE;
 			FULL_CONTROL_LOOP = FALSE;
-			timestamp_last_pkt = X32_ms_clock;
-			TERM_CONNECTED = 0;
 			communication_lost = TRUE;
+			timestamp_last_pkt = 0;
 		}
 		PRINT_STATE(250);
 		//endTimestamp = X32_us_clock - startTimestamp;
