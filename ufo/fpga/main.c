@@ -1,16 +1,17 @@
-/*------------------------------------------------------------------
+/*
+ *------------------------------------------------------------------
  *  QR
- *
  *------------------------------------------------------------------
  */
-
 #include <stdio.h>
 #include <x32.h>
-#include "assert.h"
 #include <stdint.h>
 #include <stdlib.h>
+
 #include "log.h"
 #include "defines.h"
+#include "assert.h"
+
 #include "../modules/pkt/pkt.h"
 #include "../modules/pkt/pkt_checksum.h"
 
@@ -18,23 +19,31 @@
 #include "../modules/fp/fp_conversion.h"
 #include "../modules/fp/fp_arithmetic.h"
 
-
+// RS232 input buffers
 uint8_t	fifo[FIFOSIZE]; 
 int	iptr = 0; 
 int optr = 0;
-int TERM_CONNECTED = 0; //communication safety mechanism
+char c;
+
+// Communication safety variables
+int TERM_CONNECTED = 0;
 int communication_lost = FALSE;
 
 // 
 struct LOG log[LOG_LENGTH];
-char	c;
 int	ALIVE = 1;
-int mode = SAFE_MODE_INT;
 int	ae[4];
+
+// State variables
+int mode = SAFE_MODE_INT;
+int calibrated = FALSE;
+int YAW_CONTROL_LOOP = FALSE;
+int FULL_CONTROL_LOOP = FALSE;
 
 int	sax, say, saz, sp, sq, sr, timestamp;
 int	sax0, say0, saz0, sp0, sq0, sr0; //Callibration offsets
 
+// X32 variables
 int	isr_qr_counter;
 int	isr_qr_time;
 int	button;
@@ -47,40 +56,22 @@ int log_counter = 0;
 int lift_setpoint = 0;
 int lift_setpoint_rpm = 0;
 
-//filter & yaw control
-
-int zr_filtered = 0; // = rounded(zr_filtered_old)
-float_x32 zr_filtered_old = 0x0;
-float_x32 zr_old = 0x0;
-float_x32 a0 = 0x4000; // 1
-float_x32 a1 = 0x1f3;  // 0.0305;
-float_x32 b1 = 0x1f3;  // 0.0305;
+// filter & yaw control
+float_x32 zr_filtered_old = 0x0; // 0
+float_x32 zr_old = 0x0; // = 0
+float_x32 a0 = 0x4000; // = 1
+float_x32 a1 = 0x1f3;  // = 0.0305;
+float_x32 b1 = 0x1f3;  // = 0.0305;
 float_x32 zr_v;
+float_x32 p2phi = 0x43; // = 0.00410
+int zr_filtered = 0; // = rounded(zr_filtered_old) = 0
 
-float_x32 p2phi = 0x43; // 0.00410
-
-int calibrated = FALSE;
-int YAW_CONTROL_LOOP = FALSE;
-int FULL_CONTROL_LOOP = FALSE;
-
-
+// Full Control constants
 float_x32 C1 = 0x400000; 
 float_x32 C2 = 0x3d0000;
 float_x32 C1_inv = 0x40; 
 float_x32 C2_inv = 0x1; 
 float_x32 p2phi_inv = 0x3d0000;
-
-uint8_t yaw_p = 1;
-uint8_t full_p1 = 1;
-uint8_t full_p2 = 1;
-
-// Manual Control sensitivity modifier
-uint8_t sensitivity = 30;
-int lift_step, yaw_step, other_step;
-
-
-//Full control variables
-//bias pitch,roll etc
 
 int full_yaw = 0;
 int full_pitch = 0;
@@ -89,13 +80,19 @@ int yaw = 0;
 int pitch = 0;
 int roll = 0;
 
-float_x32 p_kalman, phi_kalman, phi_error, p_bias, sp_old, p_bias_old, phi_kalman_old; 
-
+// phi variable
+float_x32 p_kalman, phi_kalman, phi_error, p_bias, sp_old, p_bias_old, phi_kalman_old;
+// theta variables 
 float_x32 q_kalman, theta_kalman,theta_error, q_bias,sq_old,q_bias_old, theta_kalman_old;
 
+// P Values + sensitivity
+uint8_t yaw_p = 1;
+uint8_t full_p1 = 1;
+uint8_t full_p2 = 1;
+uint8_t sensitivity = 30;
+int lift_step, yaw_step, other_step;
 
-
-//packet processing global variables
+// Start packet protocol variables
 uint8_t modecommand;
 uint8_t data1;
 uint8_t data2;
@@ -103,6 +100,7 @@ uint8_t data3;
 uint8_t data4;
 uint8_t checksum;
 uint8_t checker;
+// End packet
 
 uint8_t data2_old = 0;
 uint8_t data3_old = 0;
@@ -110,10 +108,12 @@ uint8_t data4_old = 0;
 
 int startTimestamp, endTimestamp, counter;
 
+// Define functions in main
 void 	delay_ms(int ms);
 void 	delay_us(int us);
 void 	epileptic_delay_ms(int ms);
 void 	toggle_led(int i);
+void 	reset_leds(void);
 void 	print_state(void);
 
 void 	calibrate(void);
@@ -137,6 +137,7 @@ void	process_packet(void);
 // QR behaviour
 void 	panic();
 void	logs_send();
+
 int within_bounds(int x, int lower_limit, int upper_limit);
 int process_data_field (uint8_t* data, uint8_t* data_old, int* knob);
 void updateControlModifiers();
@@ -148,10 +149,11 @@ void updateControlModifiers();
 
 int main() 
 {
+	// Initialize timestamp variables
 	int timestamp_alive_led_toggle = 0;
 	int timestamp_last_pkt = 0;
-	int count = 1;
-
+	
+	// Initialize sensor readings
 	sax = say = saz = sp = sq = sr = 0;
 
 	/* prepare QR rx interrupt handler
@@ -178,7 +180,7 @@ int main()
 
 	/* initialize some other stuff
 	*/
-	X32_leds = 0;
+	reset_leds();
 	initiliaze_kalman_filter();
 	updateControlModifiers();
 
@@ -336,7 +338,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 				//YAW
 				if ( (data2&0x10) == 0x00) 
 				{
-					// Left?
+					// Left
 					ae[0] = MIN(ae[0] + yaw_step * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
 					ae[2] = MIN(ae[2] + yaw_step * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
 					ae[1] = MAX(ae[1] - yaw_step * (data2&0x0F), MINIMUM_ENGINE_SPEED);
@@ -344,7 +346,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 				}
 				else
 				{
-					// Right?
+					// Right
 					ae[1] = MIN(ae[1] + yaw_step * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
 					ae[3] = MIN(ae[3] + yaw_step * (data2&0x0F), MAXIMUM_ENGINE_SPEED);
 					ae[0] = MAX(ae[0] - yaw_step * (data2&0x0F), MINIMUM_ENGINE_SPEED);
@@ -352,7 +354,6 @@ void process_packet(void)  //we need to process packet and decide what should be
 		 		}
 			}
 		}
-
 		else if ( (modecommand == SEND_TELEMETRY) && (mode == SAFE_MODE_INT) && !log_sent ) 
 		{
 			logs_send();
@@ -377,11 +378,6 @@ void process_packet(void)  //we need to process packet and decide what should be
 			full_p2 = within_bounds(data3,1,20);
 			sensitivity = within_bounds(data4,0,60);
 			updateControlModifiers();
-			/* leave this here for now. issue # 109
-			printf("$ Lift step = %d |", lift_step);
-			printf("$ Yaw step = %d |", yaw_step);
-			printf("$ Other step = %d \n", other_step);
-			*/
 		}
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 }
@@ -489,18 +485,19 @@ void calibrate(void)
  * Periodic execution via Timer1 interrupt
  *------------------------------------------------------------------
 */
-
 void periodic(void) {
 //	startTimestamp = X32_us_clock; //time measurements
 	if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 
+			// Yaw feedback control with Butterworth filter
 			zr_v = convertIntToFP(zr());
 			zr_filtered_old = fp_sub(fp_add(fp_mul(a0, zr_v), fp_mul(a1, zr_old)), fp_mul(b1, zr_filtered_old));
 			zr_old = zr_v;
 			zr_filtered = convertFPToInt(zr_filtered_old);
 
+			// Apply corrections to current engine values
 			ae[0] = within_bounds(lift_setpoint_rpm + (yaw - zr_filtered) * yaw_p,300,800);
 			ae[2] = ae[0];
 			ae[1] = within_bounds(lift_setpoint_rpm - (yaw - zr_filtered) * yaw_p,300,800);
@@ -512,13 +509,12 @@ void periodic(void) {
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
             
-            // Default caluclations for kalman filter
+            // kalman filter calculations
 			p_kalman = fp_sub(sp_old, p_bias_old);
 			phi_kalman = fp_add(phi_kalman_old ,fp_mul(p_kalman, p2phi));
 			phi_error = fp_sub(phi_kalman, zay());
 			phi_kalman = fp_sub(phi_kalman, fp_mul(phi_error, C1_inv) );
 			p_bias = fp_add(p_bias, fp_mul(phi_error, fp_mul(p2phi_inv, C2_inv)));
-
 
 			q_kalman = fp_sub(sq_old, q_bias_old);
 			theta_kalman = fp_add(theta_kalman_old, fp_mul(q_kalman, p2phi));
@@ -574,14 +570,20 @@ void initiliaze_kalman_filter()
 void isr_qr_link(void) //1270 Hz
 {
 	int	ae_index;
+	
 	/* record time
 	 */
 	isr_qr_time = X32_us_clock;
-        inst = X32_instruction_counter;
+    inst = X32_instruction_counter;
+	
 	/* get sensor and timestamp values
 	 */
-	sax = X32_QR_s0; say = X32_QR_s1; saz = X32_QR_s2; 
-	sp = X32_QR_s3; sq = X32_QR_s4; sr = X32_QR_s5;
+	sax = X32_QR_s0; 
+	say = X32_QR_s1; 
+	saz = X32_QR_s2; 
+	sp = X32_QR_s3; 
+	sq = X32_QR_s4; 
+	sr = X32_QR_s5;
 	timestamp = X32_QR_timestamp;
 
 	/* monitor presence of interrupts 
@@ -589,7 +591,7 @@ void isr_qr_link(void) //1270 Hz
 	isr_qr_counter++;
 	if (isr_qr_counter % 500 == 0) {
 		toggle_led(2);
-	}	
+	}
 
 	/* Clip engine values to be positive and 10 bits.
 	 */
@@ -614,7 +616,6 @@ void isr_qr_link(void) //1270 Hz
 	 */
 	inst = X32_instruction_counter - inst;
 	isr_qr_time = X32_us_clock - isr_qr_time;
-
 
 	/*
 	* Logging
@@ -694,24 +695,25 @@ int get_packet(void)
 	if (c == HEADER) //start of the packet
 		{
 			fifo[optr-1] = 0x00; //corrupt the header, otherwise we get into loops later
-			if (optr==FIFOSIZE) optr=0;
+			if (optr==FIFOSIZE) optr = 0;
+
 			modecommand	= (uint8_t)fifo[optr];
 			move_optr();
-			data1 	=	(uint8_t)fifo[optr];
+			data1 =	(uint8_t)fifo[optr];
 			move_optr();
-			data2 	=	(uint8_t)fifo[optr];
+			data2 =	(uint8_t)fifo[optr];
 			move_optr();
-			data3 	=	(uint8_t)fifo[optr];
+			data3 =	(uint8_t)fifo[optr];
 			move_optr();
-			data4 	=	(uint8_t)fifo[optr];
+			data4 =	(uint8_t)fifo[optr];
 			move_optr();
-			checksum =	(uint8_t)fifo[optr];
+			checksum = (uint8_t)fifo[optr];
 			move_optr();
 			checker = VERIFY_CHECKSUM(modecommand, data1, data2, data3, data4, checksum);
 
 			//hack, because we shouldn't be getting this error. it somehow gets out of sync
 			if (iptr != optr) return -1;
-			//#define DEBUG
+
 			#ifdef DEBUG
 			printf("\niptr is: %d,  optr id: %d \n", iptr, optr);
 			printf("mode is: %x \n", modecommand);
@@ -722,6 +724,7 @@ int get_packet(void)
 			printf("Checksum is: %x \n", checksum);
 			printf("%s\n", checker==0 ? "PASS" : "FAIL");
 			#endif
+			
 			//check checksum
 			if ( (int)checker != 0)
 			{
@@ -824,4 +827,8 @@ int process_data_field (uint8_t* data, uint8_t* data_old, int* knob)
 	}
 	else 
 		return 0; //no change in data field
+}
+
+void reset_leds() {
+	X32_leds = 0;
 }
