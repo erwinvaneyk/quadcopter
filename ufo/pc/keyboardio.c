@@ -66,31 +66,31 @@ void processKeyboardEvent(char c, struct INPUT* keyboardInput, struct SPECIAL_IN
 		switch(c) {
 			// Modes 
 			case '0': // Safe mode
-				TUI_PRINT_MESSAGE(Set to safe mode);
+				//TUI_PRINT_MESSAGE(Set to safe mode);
 				keyboardInput->mode = SAFE_MODE_INT;
 				break;
 			case '1': // Panic mode
-				TUI_PRINT_MESSAGE(Set to panic mode);
+				//TUI_PRINT_MESSAGE(Set to panic mode);
 				keyboardInput->mode = PANIC_MODE_INT;
 				break;
 			case '2': // Manual mode
-				TUI_PRINT_MESSAGE(Set to manual mode);
+				//TUI_PRINT_MESSAGE(Set to manual mode);
 				keyboardInput->mode = MANUAL_MODE_INT;
 				break;
 			case '3': // Calibrate mode
-				TUI_PRINT_MESSAGE(Set to calibrate mode);
+				//TUI_PRINT_MESSAGE(Set to calibrate mode);
 				keyboardInput->mode = CALIBRATE_MODE_INT;
 				break;
 			case '4': // Yaw control mode
-				TUI_PRINT_MESSAGE(Set to 'Yaw control' mode);
+				//TUI_PRINT_MESSAGE(Set to 'Yaw control' mode);
 				keyboardInput->mode = YAW_CONTROL_INT;
 				break;
 			case '5': // Manual mode
-				TUI_PRINT_MESSAGE(Set to 'Full Control' mode);
+				//TUI_PRINT_MESSAGE(Set to 'Full Control' mode);
 				keyboardInput->mode = FULL_CONTROL_INT;
 				break;
 			case 27: // Escape
-				TUI_PRINT_MESSAGE(Set to panic mode);
+				//TUI_PRINT_MESSAGE(Set to panic mode);
 				keyboardInput->mode = PANIC_MODE_INT;
 				updated = false;
 				break;
