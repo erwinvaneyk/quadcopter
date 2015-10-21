@@ -139,6 +139,7 @@ void 	panic();
 void	logs_send();
 int within_bounds(int x, int lower_limit, int upper_limit);
 int process_data_field (uint8_t* data, uint8_t* data_old, int* knob);
+void updateControlModifiers();
 
 /*------------------------------------------------------------------
  * main loop
@@ -299,7 +300,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 			//LIFT
 			if ( (data1&0x10) == 0x00)
 			{
-				SET_ALL_ENGINE_RPM(lift_step * (data1&0x0F));
+				SET_ALL_ENGINE_RPM(MIN(lift_step * (data1&0x0F),MAXIMUM_ENGINE_SPEED));
 			} // Ignoring negative values for lift
 
 			if (ae[0] >= CONTROLS_THRESHOLD) //allow other controls if engines are at sufficient rpm
