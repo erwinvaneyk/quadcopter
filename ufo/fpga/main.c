@@ -730,9 +730,6 @@ int get_packet(void)
 				#endif
 			 return -1; //ERROR, invalid packet
 			}
-			else if (TERM_CONNECTED == 0); {  //a check for communication safety mechanism
-				TERM_CONNECTED = 1;  //maybe we can move this somewhere else
-			}						//such that we do this check only once
 		}
 	else
 	{
