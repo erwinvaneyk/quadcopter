@@ -26,9 +26,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <signal.h>
-
 #include <ncurses.h>
-
 
 #include "rs232.h"
 #include "../modules/pkt/pkt_generation.h"
@@ -117,13 +115,11 @@ int parseArgs(int argc, char **argv) {
 	return 0;
 }
 
-void periodic_send(struct timeval* timer_main, struct timeval* timer_r, struct PACKET* pkt, int link_status)
+void periodic_send(struct timeval* timer_main, struct timeval* timer_r, struct PACKET* pkt)
 {
 	if ((labs(((timer_main->tv_usec + timer_main->tv_sec*1000000) - (timer_r->tv_usec + timer_r->tv_sec*1000000))) > COMM_T))
 	{	
-		if(link_status > -1) {
-			rs232_put_pkt(pkt);
-		}
+		rs232_put_pkt(pkt);
 		//reset timer
 		gettimeofday(timer_r, NULL);	
 	}
@@ -146,8 +142,6 @@ void processInput() {
 int main(int argc, char **argv)
 {
 	struct PACKET pkt;
-	int bad_input = 0;
-	int link_status;
 	int cursor;
 	int PRINT_MODE = STATUS;
 	initscr();
@@ -156,12 +150,11 @@ int main(int argc, char **argv)
 	printw("Quadcopter terminal\n-----------------------\nType ./term --help for usage details\n");
 	getch();
 	refresh();
+
 	/* 
 	 * Check input 
 	 */
-	bad_input = parseArgs(argc, argv);
-
-	if (bad_input == -1) 
+	if (parseArgs(argc, argv) == -1) 
 	{
 		printHelp();
 		getch();
@@ -182,8 +175,7 @@ int main(int argc, char **argv)
 	 * init
 	 */
 	term_initio();
-	link_status = rs232_open(serial_device);
-	if(link_status == -1) {
+	if(rs232_open(serial_device) == -1) {
 		printw("FPGA not detected! Connect it to communicate.\n");
 	}
 
@@ -219,9 +211,7 @@ int main(int argc, char **argv)
 		if(inputModel.updated) {
 			if(DEBUG) {
 				show_input(&inputModel);
-				if(link_status > -1) {
-					show_pkt(&pkt);
-				}
+				show_pkt(&pkt);
 			}
 
 			//TUI: Print Current MODE
@@ -284,10 +274,10 @@ int main(int argc, char **argv)
 		}
 		// Send the packet periodically
 		gettimeofday(&timer1, NULL);
-		periodic_send (&timer1, &timer2, &pkt, link_status);
+		periodic_send(&timer1, &timer2, &pkt);
 
 		//printing to screen
-		if (link_status > -1 && (c = rs232_getchar_nb()) != -1)
+		if ((c = rs232_getchar_nb()) != RS232_ERROR)
 		{
 			if (c=='$') //msg from QR
 			{
@@ -328,9 +318,7 @@ int main(int argc, char **argv)
 
 	endwin();
 	term_exitio();
-	if(link_status > -1) {
-		rs232_close();
-	}
+	rs232_close();
 	term_puts("\n<exit>\n");
 	return 0;
 }

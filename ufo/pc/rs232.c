@@ -13,11 +13,11 @@
 #include <time.h>
 #include "rs232.h"
 #include "../modules/pkt/pkt_generation.h"
-
+ 
 int rs232_open(int serial_device)
 {
-  	char 		*name;
-  	int 		result;  
+  	char *name;
+  	int result;  
   	struct termios	tty;
 
 	if (serial_device == 0) 
@@ -73,15 +73,15 @@ int rs232_open(int serial_device)
 	result = tcsetattr (fd_RS232, TCSANOW, &tty); /* non-canonical */
 
 	tcflush(fd_RS232, TCIOFLUSH); /* flush I/O buffer */
+	link_status = result;
 	return result;
 }
 
 
 int rs232_close(void)
 {
-  	int result;
-
-  	result = close(fd_RS232);
+  	if(link_status == RS232_ERROR) return RS232_ERROR;
+  	int result = close(fd_RS232);
   	assert (result==0);
   	return result;
 }
@@ -89,6 +89,7 @@ int rs232_close(void)
 
 int	rs232_getchar_nb()
 {
+	if(link_status == RS232_ERROR) return RS232_ERROR;
 	int 		result;
 	unsigned char 	c;
 
@@ -105,20 +106,19 @@ int	rs232_getchar_nb()
 }
 
 
-int 	rs232_getchar()
+int rs232_getchar()
 {
-	int 	c;
-
-	while ((c = rs232_getchar_nb()) == -1) 
-		;
+	if(link_status == RS232_ERROR) return RS232_ERROR;
+	int c;
+	while ((c = rs232_getchar_nb()) == -1);
 	return c;
 }
 
 
-int 	rs232_putchar(char c)
+int rs232_putchar(char c)
 { 
+	if(link_status == RS232_ERROR) return RS232_ERROR;
 	int result;
-
 	do {
 		result = (int) write(fd_RS232, &c, 1);
 	} while (result == 0);   
@@ -129,6 +129,7 @@ int 	rs232_putchar(char c)
 
 int rs232_put_pkt(struct PACKET* packet)
 { 
+	if(link_status == RS232_ERROR) return RS232_ERROR;
 	int result;
 	char *data = (char*)packet;
 	do {
