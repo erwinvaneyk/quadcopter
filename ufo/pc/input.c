@@ -56,7 +56,7 @@ void resetInputModel(struct INPUT* model) {
 	model->pitch 	= 0;
 }
 
-//reset all controls besides the lift; for Threshold purpose
+//re1all controls besides the lift; for Threshold purpose
 void resetAllModels(struct INPUT* model, struct INPUT* keyboard, struct INPUT* joystick) {
 
 	model->yaw			= 0;
@@ -80,6 +80,14 @@ void updateInputModel(struct INPUT* model, struct INPUT* keyboard, struct INPUT*
 	// Do not allow control updates in safe mode
 	if(model->mode == SAFE_MODE_INT && !(isSafeInputModel(joystick) && isSafeInputModel(model) && isSafeInputModel(keyboard))) {
 		// Just to be sure, reset all models again
+		if(!isSafeInputModel(joystick)) {
+			mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "Joystick unsafe!");
+			TUI_MOVE_CURSOR;
+		}
+		if(!isSafeInputModel(keyboard)) {
+			mvprintw(MESSAGE_FIELD_START + msg_cursor, 0, "Keyboard unsafe!");
+			TUI_MOVE_CURSOR;
+		}
 		resetInputModel(model);
 		keyboard->mode = joystick->mode = model->mode = SAFE_MODE_INT;
 		return;
