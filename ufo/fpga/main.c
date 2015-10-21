@@ -187,6 +187,7 @@ int main()
 
 	while (ALIVE)
 	{
+		//startTimestamp = X32_us_clock; //time measurements
 		c=get_packet();  //<- possibly add no change packet
 		if (c != -1) {
 			process_packet();
@@ -209,7 +210,7 @@ int main()
 			communication_lost = TRUE;
 		}
 		PRINT_STATE(250);
-
+		//endTimestamp = X32_us_clock - startTimestamp;
 	}
 
 	// If for some reason the qr is not in safe/panic mode -> panic 

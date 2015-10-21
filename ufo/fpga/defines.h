@@ -66,4 +66,4 @@
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
 //put this in PRINT_STATE when d-oing time analysis
-//printf("$ periodic() t = %d\n", endTimestamp);\
+//printf("$ measurement t = %d\n", endTimestamp);\
