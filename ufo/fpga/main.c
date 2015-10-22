@@ -261,7 +261,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 						lift_setpoint = (int)(data1&0x0F);
 						lift_setpoint_rpm = lift_setpoint * 65;
 						SET_ALL_ENGINE_RPM(lift_setpoint_rpm);
-						if (lift_setpoint > 2) 	YAW_CONTROL_LOOP = TRUE;
+						if (lift_setpoint > 4) YAW_CONTROL_LOOP = TRUE;
 						else YAW_CONTROL_LOOP = FALSE;
 					}
 				}
@@ -277,7 +277,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 						lift_setpoint = (int)(data1&0x0F);
 						lift_setpoint_rpm = lift_setpoint * 65;
 						SET_ALL_ENGINE_RPM(lift_setpoint_rpm);
-						if (lift_setpoint > 2) 	FULL_CONTROL_LOOP = TRUE;
+						if (lift_setpoint > 4) 	FULL_CONTROL_LOOP = TRUE;
 						else FULL_CONTROL_LOOP = FALSE;
 					}
 				}
@@ -495,9 +495,9 @@ void periodic(void) {
 			zr_filtered = convertFPToInt(zr_filtered_old);
 
 			// Apply corrections to current engine values
-			ae[0] = within_bounds(lift_setpoint_rpm + (yaw - zr_filtered) * yaw_p,300,800);
+			ae[0] = within_bounds(lift_setpoint_rpm + (yaw - zr_filtered) * yaw_p,240,800);
 			ae[2] = ae[0];
-			ae[1] = within_bounds(lift_setpoint_rpm - (yaw - zr_filtered) * yaw_p,300,800);
+			ae[1] = within_bounds(lift_setpoint_rpm - (yaw - zr_filtered) * yaw_p,240,800);
 			ae[3] = ae[1];
 
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
@@ -537,11 +537,11 @@ void periodic(void) {
 			full_roll 	= (full_p1 * (roll - phi_kalman)) - (full_p2 * p_kalman);
              
             //Assign control values to the motors
-			ae[0] = within_bounds(lift_setpoint_rpm + (full_pitch - full_yaw),300,700);
-			ae[2] = within_bounds(lift_setpoint_rpm - (full_pitch - full_yaw),300,700);
+			ae[0] = within_bounds(lift_setpoint_rpm + (full_pitch - full_yaw),240,800);
+			ae[2] = within_bounds(lift_setpoint_rpm - (full_pitch - full_yaw),240,800);
 
-			ae[1] = within_bounds(lift_setpoint_rpm - (full_roll + full_yaw),300,700);
-			ae[3] = within_bounds(lift_setpoint_rpm + (full_roll + full_yaw),300,700);
+			ae[1] = within_bounds(lift_setpoint_rpm - (full_roll + full_yaw),240,800);
+			ae[3] = within_bounds(lift_setpoint_rpm + (full_roll + full_yaw),240,800);
 
 			sp_old = zp();
 			p_bias_old = p_bias;
@@ -729,7 +729,7 @@ int get_packet(void)
 				printf("Invalid packet recieved! Discarding!\n");
 				#endif
 			 return -1; //ERROR, invalid packet
-			}
+			}						//such that we do this check only once
 		}
 	else
 	{
