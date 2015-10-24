@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "log.h"
+#include "../modules/log/log.h"
 #include "defines.h"
 #include "assert.h"
 
@@ -34,8 +34,8 @@ int	ae[4];
 // State variables
 int mode = SAFE_MODE_INT;
 int calibrated = FALSE;
-int YAW_CONTROL_LOOP = FALSE;
-int FULL_CONTROL_LOOP = FALSE;
+int yaw_control_loop = FALSE;
+int full_control_loop = FALSE;
 
 int	sax, say, saz, sp, sq, sr, timestamp;
 int	sax0, say0, saz0, sp0, sq0, sr0; //Callibration offsets
@@ -125,8 +125,6 @@ void 	periodic(void);
 void 	isr_qr_link(void);
 void 	isr_rs232_rx(void);
 
-void     initiliaze_kalman_filter();
-
 void	move_optr();
 int 	get_packet(void);
 void	process_packet(void);
@@ -150,9 +148,10 @@ int main()
 	int timestamp_alive_led_toggle = 0;
 	int timestamp_last_pkt = 0;
 	int count = 1;
+	p_kalman = phi_kalman = phi_error = phi_kalman =p_bias = q_kalman = theta_kalman = theta_error = theta_kalman = q_bias = 0;
 	
 	// Initialize sensor readings
-	sax = say = saz = sp = sq = sr = 0;
+	SET_ALL_ENGINE_RPM(0);
 
 	/* prepare QR rx interrupt handler
 	*/
@@ -173,21 +172,21 @@ int main()
 	*/
 	SET_INTERRUPT_VECTOR(INTERRUPT_PRIMARY_RX, &isr_rs232_rx);
 	SET_INTERRUPT_PRIORITY(INTERRUPT_PRIMARY_RX, 20);
-	while (X32_rs232_char) c = X32_rs232_data; // empty buffer
+	while (X32_rs232_char) {
+		c = X32_rs232_data; // empty buffer
+	}
 	ENABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
 
 	/* initialize some other stuff
 	*/
 	reset_leds();
-	initiliaze_kalman_filter();
 	updateControlModifiers();
 
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL); 
 
 	while (ALIVE)
 	{
-		//startTimestamp = X32_us_clock; //time measurements
-		c=get_packet();  //<- possibly add no change packet
+		c = get_packet();  //<- possibly add no change packet
 		if (c != -1) {
 			process_packet();
 			timestamp_last_pkt = X32_ms_clock;
@@ -202,13 +201,19 @@ int main()
 		// we have lost communication to the qr -> panic
 		if ((X32_ms_clock - timestamp_last_pkt) > THRESHOLD && timestamp_last_pkt != 0) {	
 			panic();
-			YAW_CONTROL_LOOP = FALSE;
-			FULL_CONTROL_LOOP = FALSE;
+			yaw_control_loop = FALSE;
+			full_control_loop = FALSE;
 			communication_lost = TRUE;
 			timestamp_last_pkt = 0;
 		}
-		PRINT_STATE(250);
-		//endTimestamp = X32_us_clock - startTimestamp;
+
+		// Send telemetry
+		if (count % TELEMETRY_FREQUENCY == 0) {
+			print_state();
+			count = 1;
+		} else {
+			count++;
+		}
 	}
 
 	// If for some reason the qr is not in safe/panic mode -> panic 
@@ -231,8 +236,8 @@ void process_packet(void)  //we need to process packet and decide what should be
 	if ((modecommand == SAFE_MODE) )
 		{
 			SET_ALL_ENGINE_RPM(0);
-			YAW_CONTROL_LOOP = FALSE;
-			FULL_CONTROL_LOOP = FALSE;
+			yaw_control_loop = FALSE;
+			full_control_loop = FALSE;
 			mode = SAFE_MODE_INT;
 			communication_lost = FALSE; //it's safe now, resume	
 		}
@@ -244,8 +249,8 @@ void process_packet(void)  //we need to process packet and decide what should be
 		}
 	else if ( (modecommand == PANIC_MODE) && (mode != SAFE_MODE_INT))
 		{
-			YAW_CONTROL_LOOP = FALSE;
-			FULL_CONTROL_LOOP = FALSE;
+			yaw_control_loop = FALSE;
+			full_control_loop = FALSE;
 			panic();
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		}
@@ -261,8 +266,11 @@ void process_packet(void)  //we need to process packet and decide what should be
 						lift_setpoint = (int)(data1&0x0F);
 						lift_setpoint_rpm = lift_setpoint * 65;
 						SET_ALL_ENGINE_RPM(lift_setpoint_rpm);
-						if (lift_setpoint > 4) YAW_CONTROL_LOOP = TRUE;
-						else YAW_CONTROL_LOOP = FALSE;
+						if (lift_setpoint > 4) {
+							yaw_control_loop = TRUE;
+						} else  {
+							yaw_control_loop = FALSE;
+						}
 					}
 				}
 			process_data_field (&data2, &data2_old, &yaw);
@@ -277,8 +285,8 @@ void process_packet(void)  //we need to process packet and decide what should be
 						lift_setpoint = (int)(data1&0x0F);
 						lift_setpoint_rpm = lift_setpoint * 65;
 						SET_ALL_ENGINE_RPM(lift_setpoint_rpm);
-						if (lift_setpoint > 4) 	FULL_CONTROL_LOOP = TRUE;
-						else FULL_CONTROL_LOOP = FALSE;
+						if (lift_setpoint > 4) 	full_control_loop = TRUE;
+						else full_control_loop = FALSE;
 					}
 				}
 			process_data_field (&data2, &data2_old, &yaw);
@@ -409,8 +417,8 @@ void logs_send() {
 }
 
 void panic() {
-	YAW_CONTROL_LOOP = FALSE;
-	FULL_CONTROL_LOOP = FALSE;
+	yaw_control_loop = FALSE;
+	full_control_loop = FALSE;
 	ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 	DISABLE_INTERRUPT(INTERRUPT_TIMER1);
 	DISABLE_INTERRUPT(INTERRUPT_PRIMARY_RX);
@@ -479,12 +487,12 @@ void calibrate(void)
 }
 
 /*------------------------------------------------------------------
- * Periodic execution via Timer1 interrupt
+ * Periodic execution via Timer1 interrupt, used for control loops
  *------------------------------------------------------------------
 */
 void periodic(void) {
 //	startTimestamp = X32_us_clock; //time measurements
-	if ((mode == YAW_CONTROL_INT) && (YAW_CONTROL_LOOP == TRUE))
+	if ((mode == YAW_CONTROL_INT) && (yaw_control_loop == TRUE))
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
 
@@ -502,7 +510,7 @@ void periodic(void) {
 
 			ENABLE_INTERRUPT(INTERRUPT_GLOBAL);
 		} 
-	else if ((mode == FULL_CONTROL_INT) && (FULL_CONTROL_LOOP == TRUE))
+	else if ((mode == FULL_CONTROL_INT) && (full_control_loop == TRUE))
 		{
 			DISABLE_INTERRUPT(INTERRUPT_GLOBAL);
             
@@ -554,10 +562,6 @@ void periodic(void) {
 	//	endTimestamp = X32_us_clock - startTimestamp;
 }
 
-void initiliaze_kalman_filter()
-{
-	p_kalman = phi_kalman = phi_error = phi_kalman =p_bias = q_kalman = theta_kalman = theta_error = theta_kalman = q_bias = 0;
-}
 /*------------------------------------------------------------------
  * isr_qr_link -- QR link rx interrupt handler
  * This function is executed at 1270Hz
