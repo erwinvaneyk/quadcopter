@@ -21,3 +21,12 @@ See the [project resource page](http://www.st.ewi.tudelft.nl/~koen/in4073/Resour
 - The quadcopter is by default in **safe mode**. This means that the quadcopter will remain stationary and will not respond to any control input.
 - To start flying, press `2` to enable manual mode for example. You will now be able to fly using the quadcopter using the controls listed in the terminal. For the full specification of the controls see section C in the [project manual](http://www.st.ewi.tudelft.nl/~koen/in4073/assignment.pdf).
 
+
+## Report
+
+Read-only overleaf:
+https://www.overleaf.com/read/vvwwhdwckfrh
+
+## Architecture
+
+https://drive.google.com/file/d/0B7ptJ-oV8EigZ29sT0FNdzBqT1k/view?usp=sharing
