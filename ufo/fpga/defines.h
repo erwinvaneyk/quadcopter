@@ -1,9 +1,10 @@
-
 #ifndef DEFINES_H_
 #define DEFINES_H_
 /*
- * define some peripheral short hands
+ * Header file containing all of the constants and shorthands for the applciation
  */
+
+// define some peripheral short hands
 #define X32_instruction_counter     peripherals[0x03]
 #define X32_timer_per				peripherals[PERIPHERAL_TIMER1_PERIOD]
 #define X32_leds					peripherals[PERIPHERAL_LEDS]
@@ -37,6 +38,7 @@
 #define MAXIMUM_ENGINE_SPEED 1000
 #define TRUE 1
 #define FALSE 0
+#define NULL 0
 #define LOG_LENGTH 10000	//=10 seconds of logging in Manual Mode at 1000Hz
 #define THRESHOLD 2000		//(ms) Communicaton safety mechanism threshold value
 #define CALIBRATE_ITERATIONS 128 // Number of sensor readings needed for calibratio

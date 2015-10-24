@@ -2,6 +2,9 @@
 
 #ifndef FP_ARITHMETIC_H_
 #define FP_ARITHMETIC_H_
+/*
+ * Arithmetic for float_x32
+ */
 
 #include "fp.h"
 
