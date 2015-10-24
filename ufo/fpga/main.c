@@ -10,7 +10,7 @@
 
 #include "../modules/log/log.h"
 #include "defines.h"
-#include "assert.h"
+#include "util.c"
 
 #include "../modules/pkt/pkt.h"
 #include "../modules/pkt/pkt_checksum.h"
@@ -677,8 +677,6 @@ printf(" => %x\n", fifo[iptr-1]);
  * get_packet -- construct packet. return -1 on failure.
  *------------------------------------------------------------------
  */
- 
-
 void move_optr()
 {	
 	if (optr == FIFOSIZE-1)
@@ -744,47 +742,6 @@ int get_packet(void)
 return 0;
 }
 
-
-/*------------------------------------------------------------------
- * delay_ms -- busy-wait for ms milliseconds
- *------------------------------------------------------------------
- */
-void delay_ms(int ms) 
-{
-	int time = X32_ms_clock;
-	while(X32_ms_clock - time < ms);
-}
-
-
-void epileptic_delay_ms(int ms) 
-{
-	int time = X32_ms_clock;
-	while(X32_ms_clock - time < ms) {
-		if(X32_ms_clock % 10 == 0)
-		toggle_led(0);
-	}
-}
-
-/*------------------------------------------------------------------
- * delay_us -- busy-wait for us microseconds
- *------------------------------------------------------------------
- */
-void delay_us(int us) 
-{
-	int time = X32_us_clock;
-	while(X32_us_clock - time < us);
-}
-
-/*------------------------------------------------------------------
- * toggle_led -- toggle led # i
- *------------------------------------------------------------------
- */
-void toggle_led(int i) 
-{
-	X32_leds = (X32_leds ^ (1 << i));
-}
-
-
 /*------------------------------------------------------------------
  * print_state -- print all sensors and actuators
  *------------------------------------------------------------------
@@ -795,16 +752,6 @@ void print_state(void)
 	printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
 	printf("%3d %3d %3d %3d %3d %3d | %d %d %d %d \n",
 		zax(),zay(),zaz(),zp(),zq(),zr(), yaw_p, full_p1, full_p2, sensitivity);
-}
-
-int within_bounds(int x, int lower_limit, int upper_limit) {
-	if(x > upper_limit) {
-		return upper_limit;
-	}
-	if(x < lower_limit) {
-		return lower_limit;
-	}
-	return x;
 }
 
 int process_data_field (uint8_t* data, uint8_t* data_old, int* knob)
@@ -825,8 +772,4 @@ int process_data_field (uint8_t* data, uint8_t* data_old, int* knob)
 	}
 	else 
 		return 0; //no change in data field
-}
-
-void reset_leds() {
-	X32_leds = 0;
 }
