@@ -1,6 +1,10 @@
 #ifndef _JOYSTICKIOH_
 #define _JOYSTICKIOH_
 
+/*
+ * Provides interface for mapping a standard usb-joystick to the INPUT-model.
+ */
+
 #include "driver_joystick.h"
 #include "input.h"
 #include <stdbool.h>
@@ -8,7 +12,6 @@
 /*
  * Definitions for the output of the joystick
  */
-
 struct JOYSTICK {
 	short	axis[6];
 	bool	button[12];
@@ -28,7 +31,6 @@ struct JOYSTICK {
 // throttle: [-32767 = down, 32767 = up]
 #define JS_AXIS_LIFT	 	3
 
-
 // Note that the numbers displayed on the JS are x + 1
 #define JS_BUTTON_SAFE_MODE	 1
 
@@ -42,11 +44,12 @@ struct JOYSTICK {
 
 #define JS_BUTTON_FULL_CONTROL_MODE 5
 
- // Buttons are numbered 0 - 11
-
 short normalizeAxis(short axis_value, short buckets);
+
 void processJoystickEvent(int fd, struct js_event js, struct JOYSTICK* joystick);
+
 void updateJoystickInputModel(struct INPUT* joystickInputModel, struct JOYSTICK* joystick);
+
 void show_joystick(struct JOYSTICK* joystick);
 
 #endif

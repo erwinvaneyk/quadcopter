@@ -1,8 +1,14 @@
 #ifndef _INPUTH_
 #define _INPUTH_
 
+/*
+ * This header provides the interface for updating and interacting with the InputModel (or INPUT)
+ * and the SPECIAL_INPUT, which contains all p-values.
+ */
+
 #include <stdbool.h>
 #include <stdint.h>
+ 
 /*
  * The input model, which is derived from the 
  * Lift, yaw, pitch, roll in levels
@@ -14,7 +20,6 @@ struct INPUT {
 	int roll;
 	int mode;
 	bool updated; // a simple flag to indicate whether the input has been updated
-	// TODO: add control params and others when we have those implemented..
 };
 
 struct SPECIAL_INPUT {
@@ -24,7 +29,7 @@ struct SPECIAL_INPUT {
 	uint8_t full_p2;
 	uint8_t sensitivity;
 
-	bool updated; // updated?
+	bool updated;
 };
 
 #define SAFE_MODE_INT		0
