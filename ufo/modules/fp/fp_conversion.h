@@ -2,6 +2,9 @@
 
 #ifndef FP_CONVERSION_H_
 #define FP_CONVERSION_H_
+/*
+ * Interface for converting integers to and from the float_x32 domain.
+ */
 
 #include "fp.h"
 

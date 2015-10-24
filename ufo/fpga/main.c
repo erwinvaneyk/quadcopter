@@ -293,11 +293,7 @@ void process_packet(void)  //we need to process packet and decide what should be
 			process_data_field (&data3, &data3_old, &pitch);
 			process_data_field (&data4, &data4_old, &roll);		
 		}
-	else if ((modecommand == FULL_CONTROL) && (calibrated == FALSE))
-		{
-			printf("$QR must be calibrated first! \n");
-		}
-	else if ((modecommand == YAW_CONTROL) && (calibrated == FALSE))
+	else if (((modecommand == FULL_CONTROL) && (calibrated == FALSE)) || ((modecommand == YAW_CONTROL) && (calibrated == FALSE)))
 		{
 			printf("$QR must be calibrated first! \n");
 		}
@@ -710,7 +706,7 @@ int get_packet(void)
 			move_optr();
 			checker = VERIFY_CHECKSUM(modecommand, data1, data2, data3, data4, checksum);
 
-			//hack, because we shouldn't be getting this error. it somehow gets out of sync
+			//hack, because we shouldn't be getting this error. it somehow gets out of sync.
 			if (iptr != optr) return -1;
 
 			#ifdef DEBUG
