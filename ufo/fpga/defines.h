@@ -43,6 +43,7 @@
 #define THRESHOLD 2000		//(ms) Communicaton safety mechanism threshold value
 #define CALIBRATE_ITERATIONS 128 // Number of sensor readings needed for calibratio
 #define TELEMETRY_FREQUENCY 250
+#define CONTROL_LOOP_MIN_LIFT 4
 //#define LOGGING
 
 
