@@ -1,0 +1,3 @@
+wc -l pc/*.{h,c} >> linecount
+wc -l fpga/*.{h,c} >> linecount
+wc -l modules/*/*.{h,c} >> linecount
