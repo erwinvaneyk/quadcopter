@@ -1,11 +1,11 @@
+#ifndef TUI_H
+#define TUI_H
 /*
 * Terminal User Interface Useful Code
 * 
 * int msg_cursor is the current cursor for the message field
-* globally declared in 
+* globally declared in the relevant file.
 */
-#ifndef TUI_H
-#define TUI_H
 
 #include <ncurses.h>
 
@@ -61,6 +61,3 @@ void TUI_engines_init(void);
 void TUI_frame_init(void);
 
 #endif
-
-//Alternatively:
-//mvprintw(MESSAGE_FIELD_START + msg_cursor,0,"Set to safe mode (%d)\n", SAFE_MODE_INT);

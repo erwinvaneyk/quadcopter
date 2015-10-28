@@ -1,2 +1,3 @@
+cd ../ufo/pc/
 make clean && make term
 ./term
