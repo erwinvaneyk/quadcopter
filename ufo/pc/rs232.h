@@ -1,6 +1,8 @@
-
+#ifndef _RS232_H_
+#define _RS232_H_
 /*------------------------------------------------------------
- * Serial I/O 
+ * Serial I/O interface
+ *
  * 8 bits, 1 stopbit, no parity, 
  * 115,200 baud wired and 9,600 baud wireless.
  *------------------------------------------------------------
@@ -20,3 +22,5 @@ int	rs232_getchar_nb();
 int rs232_getchar();
 int rs232_putchar(char c);
 int rs232_put_pkt(struct PACKET* packet);
+
+#endif

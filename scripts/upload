@@ -1,0 +1,2 @@
+cd ../ufo/fpga/
+make uploadrun

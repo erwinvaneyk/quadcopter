@@ -12,7 +12,7 @@
 
 struct termios 	savetty;
 
-void	term_initio()
+void term_initio()
 {
 	struct termios tty;
 
@@ -26,17 +26,17 @@ void	term_initio()
 	tcsetattr(0, TCSADRAIN, &tty);
 }
 
-void	term_exitio()
+void term_exitio()
 {
 	tcsetattr(0, TCSADRAIN, &savetty);
 }
 
-void	term_puts(char *s) 
+void term_puts(char *s) 
 { 
 	fprintf(stderr,"%s",s); 
 }
 
-void	term_putchar(char c) 
+void term_putchar(char c) 
 { 
 	putc(c,stderr); 
 }

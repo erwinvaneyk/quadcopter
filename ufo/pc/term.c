@@ -151,7 +151,6 @@ int main(int argc, char **argv)
 	int cursor;
 	int PRINT_MODE = STATUS;
 	initscr();
-	//int ae0, ae1, ae2, ae3; //needed for engine TUI
 	
 	//init p values input
 	p_input.current_yaw_p = 1; // must match the initial P value on QR
@@ -250,8 +249,6 @@ int main(int argc, char **argv)
 
 			input_to_pkt(&inputModel, &pkt, &p_input);
 			inputModel.updated = false;
-			//show_input(&inputModel);
-			//show_pkt(&pkt);
 
 			//if we are logging save to a file
 			if (inputModel.mode == SEND_TELEMETRY_INT)
@@ -283,6 +280,7 @@ int main(int argc, char **argv)
 				inputModel.mode = SAFE_MODE_INT;
 			}
 		}
+
 		// Send the packet periodically
 		gettimeofday(&timer1, NULL);
 		periodic_send (&timer1, &timer2, &pkt, link_status);
@@ -323,9 +321,7 @@ int main(int argc, char **argv)
 				break;
 			}			
 		}
-		//term_putchar(c);
 	} //end of inf. loop
-
 
 	endwin();
 	term_exitio();

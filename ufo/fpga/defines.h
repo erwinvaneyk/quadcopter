@@ -1,13 +1,10 @@
-#define LOGGING
-#define TRUE 1
-#define FALSE 0
-#define LOG_LENGTH 10000	//=10 seconds of logging in Manual Mode at 1000Hz
-#define THRESHOLD 2000		//(ms) Communicaton safety mechanism threshold value
-#define CALIBRATE_ITERATIONS 128 // Number of sensor readings needed for calibratio
-
+#ifndef DEFINES_H_
+#define DEFINES_H_
 /*
- * define some peripheral short hands
+ * Header file containing all of the constants and shorthands for the applciation
  */
+
+// define some peripheral short hands
 #define X32_instruction_counter     peripherals[0x03]
 #define X32_timer_per				peripherals[PERIPHERAL_TIMER1_PERIOD]
 #define X32_leds					peripherals[PERIPHERAL_LEDS]
@@ -39,6 +36,15 @@
  */
 #define MINIMUM_ENGINE_SPEED 65
 #define MAXIMUM_ENGINE_SPEED 1000
+#define TRUE 1
+#define FALSE 0
+#define NULL 0
+#define LOG_LENGTH 10000	//=10 seconds of logging in Manual Mode at 1000Hz
+#define THRESHOLD 2000		//(ms) Communicaton safety mechanism threshold value
+#define CALIBRATE_ITERATIONS 128 // Number of sensor readings needed for calibratio
+#define TELEMETRY_FREQUENCY 250
+#define CONTROL_LOOP_MIN_LIFT 4
+//#define LOGGING
 
 
 #define CONTROLS_THRESHOLD 130
@@ -57,15 +63,9 @@
 // Note: interrupts need to be disabled to safely perform this function
 #define SET_ALL_ENGINE_RPM(rpm) ae[0]=ae[1]=ae[2]=ae[3]= rpm; 
 
-#define PRINT_STATE(f) 	if (count%f == 0)\
-			{\
-				print_state();\
-				count = 1;\
-			}\
-		else count++;
+#define PRINT_STATE(f) 	
 
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
-//put this in PRINT_STATE when d-oing time analysis
-//printf("$ measurement t = %d\n", endTimestamp);\
+#endif

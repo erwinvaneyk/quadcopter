@@ -1,8 +1,11 @@
 #ifndef LOG_H_
 #define LOG_H_
 
+/*
+ * Logging header file that is used on the fpga.
+ */
+
 #include <stdint.h>
-#define NULL 0
 
 struct LOG {
 		int timestamp;
